@@ -3,36 +3,42 @@
 
 extern crate alloc;
 
-use alloc::{string::String, vec::Vec};
+use alloc::{string::String, vec::Vec, format};
 use casper_contract::{
     contract_api::{runtime, storage},
     unwrap_or_revert::UnwrapOrRevert,
 };
 use casper_types::{
-    runtime_args, CLType, CLValue, ContractHash, EntryPoint, EntryPointAccess,
-    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U512,
+    runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess,
+    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U512, URef,
 };
 
 // Constantes
-const CONTRACT_NAME: &str = "stakevue_contract";
+const CONTRACT_HASH_KEY: &str = "stakevue_contract_hash";
 const CONTRACT_VERSION: &str = "contract_version";
-const TOTAL_STAKED: &str = "total_staked";
-const USER_STAKES: &str = "user_stakes";
+const TOTAL_STAKED_KEY: &str = "total_staked";
+const USER_STAKES_DICT: &str = "user_stakes_dict";
 
 /// Initialisation du contrat
 #[no_mangle]
 pub extern "C" fn init() {
-    // Stocker le total staké initial à 0
-    storage::new_dictionary(USER_STAKES).unwrap_or_revert();
-    runtime::put_key(TOTAL_STAKED, storage::new_uref(U512::zero()).into());
+    // Créer le dictionnaire pour les stakes utilisateurs
+    let dict_uref = storage::new_dictionary(USER_STAKES_DICT).unwrap_or_revert();
+    runtime::put_key(USER_STAKES_DICT, dict_uref.into());
+
+    // Initialiser le total staké à 0
+    let total_uref = storage::new_uref(U512::zero());
+    runtime::put_key(TOTAL_STAKED_KEY, total_uref.into());
 }
 
 /// Fonction pour récupérer le montant total staké
 #[no_mangle]
 pub extern "C" fn get_total_staked() {
-    let total: U512 = storage::read(runtime::get_key(TOTAL_STAKED).unwrap_or_revert())
+    let total_key = runtime::get_key(TOTAL_STAKED_KEY).unwrap_or_revert();
+    let total_uref = total_key.into_uref().unwrap_or_revert();
+    let total: U512 = storage::read(total_uref)
         .unwrap_or_revert()
-        .unwrap_or_revert();
+        .unwrap_or(U512::zero());
 
     runtime::ret(CLValue::from_t(total).unwrap_or_revert());
 }
@@ -40,15 +46,13 @@ pub extern "C" fn get_total_staked() {
 /// Fonction pour récupérer le montant staké par un utilisateur
 #[no_mangle]
 pub extern "C" fn get_user_stake() {
-    let user_key: Key = runtime::get_named_arg("user");
-    let user_key_string = user_key.to_formatted_string();
+    let user_account: Key = runtime::get_named_arg("user");
+    let user_key_str = format!("{:?}", user_account);
 
-    let stakes_dict = *runtime::get_key(USER_STAKES)
-        .unwrap_or_revert()
-        .as_uref()
-        .unwrap_or_revert();
+    let dict_key = runtime::get_key(USER_STAKES_DICT).unwrap_or_revert();
+    let dict_uref = dict_key.into_uref().unwrap_or_revert();
 
-    let user_stake: U512 = storage::dictionary_get(stakes_dict, &user_key_string)
+    let user_stake: U512 = storage::dictionary_get(dict_uref, &user_key_str)
         .unwrap_or_revert()
         .unwrap_or(U512::zero());
 
@@ -61,16 +65,14 @@ pub extern "C" fn stake() {
     let amount: U512 = runtime::get_named_arg("amount");
     let caller = runtime::get_caller();
     let caller_key = Key::from(caller);
-    let caller_key_string = caller_key.to_formatted_string();
+    let caller_key_str = format!("{:?}", caller_key);
 
     // Récupérer le dictionnaire des stakes
-    let stakes_dict = *runtime::get_key(USER_STAKES)
-        .unwrap_or_revert()
-        .as_uref()
-        .unwrap_or_revert();
+    let dict_key = runtime::get_key(USER_STAKES_DICT).unwrap_or_revert();
+    let dict_uref = dict_key.into_uref().unwrap_or_revert();
 
     // Récupérer le stake actuel de l'utilisateur
-    let current_stake: U512 = storage::dictionary_get(stakes_dict, &caller_key_string)
+    let current_stake: U512 = storage::dictionary_get(dict_uref, &caller_key_str)
         .unwrap_or_revert()
         .unwrap_or(U512::zero());
 
@@ -78,13 +80,11 @@ pub extern "C" fn stake() {
     let new_stake = current_stake + amount;
 
     // Mettre à jour le stake de l'utilisateur
-    storage::dictionary_put(stakes_dict, &caller_key_string, new_stake);
+    storage::dictionary_put(dict_uref, &caller_key_str, new_stake);
 
     // Mettre à jour le total
-    let total_uref = runtime::get_key(TOTAL_STAKED)
-        .unwrap_or_revert()
-        .into_uref()
-        .unwrap_or_revert();
+    let total_key = runtime::get_key(TOTAL_STAKED_KEY).unwrap_or_revert();
+    let total_uref = total_key.into_uref().unwrap_or_revert();
 
     let current_total: U512 = storage::read(total_uref)
         .unwrap_or_revert()
@@ -117,11 +117,11 @@ pub extern "C" fn call() {
     ));
 
     // Entry point: get_user_stake
-    let mut params = Vec::new();
-    params.push(Parameter::new("user", CLType::Key));
+    let mut get_params = Vec::new();
+    get_params.push(Parameter::new("user", CLType::Key));
     entry_points.add_entry_point(EntryPoint::new(
         "get_user_stake",
-        params,
+        get_params,
         CLType::U512,
         EntryPointAccess::Public,
         EntryPointType::Contract,
@@ -142,11 +142,11 @@ pub extern "C" fn call() {
     let (contract_hash, contract_version) = storage::new_contract(
         entry_points,
         None,
-        Some(CONTRACT_NAME.to_string()),
+        Some(String::from("stakevue_package")),
         None,
     );
 
-    runtime::put_key(CONTRACT_NAME, contract_hash.into());
+    runtime::put_key(CONTRACT_HASH_KEY, contract_hash.into());
     runtime::put_key(CONTRACT_VERSION, storage::new_uref(contract_version).into());
 
     // Initialiser automatiquement
