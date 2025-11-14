@@ -86,6 +86,7 @@ pub extern "C" fn call() {
 
     runtime::put_key(CONTRACT_KEY, contract_hash.into());
 
-    // Auto-init
-    runtime::call_contract::<()>(contract_hash, "init", runtime_args! {});
+    // Initialize immediately without call_contract
+    let total_staked_uref = storage::new_uref(U512::zero());
+    runtime::put_key(TOTAL_STAKED, total_staked_uref.into());
 }
