@@ -12,14 +12,11 @@ use casper_types::{
     CLType, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Parameter, U512,
 };
 
-const KEY_NAME: &str = "total_staked";
-const CONTRACT_VERSION: &str = "contract_version";
+const COUNTER_KEY: &str = "counter";
 
 #[no_mangle]
-pub extern "C" fn stake() {
-    let amount: U512 = runtime::get_named_arg("amount");
-
-    let key = runtime::get_key(KEY_NAME)
+pub extern "C" fn increment() {
+    let key = runtime::get_key(COUNTER_KEY)
         .unwrap_or_revert()
         .into_uref()
         .unwrap_or_revert();
@@ -28,12 +25,12 @@ pub extern "C" fn stake() {
         .unwrap_or_revert()
         .unwrap_or(U512::zero());
 
-    storage::write(key, current + amount);
+    storage::write(key, current + U512::one());
 }
 
 #[no_mangle]
-pub extern "C" fn get_total() {
-    let key = runtime::get_key(KEY_NAME)
+pub extern "C" fn get_count() {
+    let key = runtime::get_key(COUNTER_KEY)
         .unwrap_or_revert()
         .into_uref()
         .unwrap_or_revert();
@@ -50,33 +47,31 @@ pub extern "C" fn call() {
     let mut entry_points = EntryPoints::new();
 
     entry_points.add_entry_point(EntryPoint::new(
-        "stake",
-        alloc::vec![Parameter::new("amount", CLType::U512)],
+        "increment",
+        alloc::vec![],
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     ));
 
     entry_points.add_entry_point(EntryPoint::new(
-        "get_total",
+        "get_count",
         alloc::vec![],
         CLType::U512,
         EntryPointAccess::Public,
         EntryPointType::Contract,
     ));
 
-    let (contract_hash, contract_version) = storage::new_contract(
+    let (contract_hash, _) = storage::new_contract(
         entry_points,
         None,
-        Some("stakevue".to_string()),
+        Some("counter".to_string()),
         None,
     );
 
-    let version_uref = storage::new_uref(contract_version);
-    runtime::put_key(CONTRACT_VERSION, version_uref.into());
-    runtime::put_key("stakevue_contract", contract_hash.into());
+    runtime::put_key("counter_contract", contract_hash.into());
 
-    // Initialize storage
-    let total_uref = storage::new_uref(U512::zero());
-    runtime::put_key(KEY_NAME, total_uref.into());
+    // Initialize counter
+    let counter_uref = storage::new_uref(U512::zero());
+    runtime::put_key(COUNTER_KEY, counter_uref.into());
 }
