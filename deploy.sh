@@ -13,7 +13,7 @@ NODE_ADDRESS="https://node.testnet.casper.network/rpc"
 CONTRACT_WASM="smart-contract/target/wasm32-unknown-unknown/release/stakevue_contract.wasm"
 SECRET_KEY="keys/secret_key.pem"
 PUBLIC_KEY="keys/public_key_hex"
-PAYMENT_AMOUNT="200000000000"  # 200 CSPR (en motes)
+PAYMENT_AMOUNT="150000000000"  # 150 CSPR (en motes)
 
 # Vérification des fichiers
 echo "📁 Vérification des fichiers..."
