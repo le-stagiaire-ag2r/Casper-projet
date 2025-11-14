@@ -9,7 +9,7 @@ echo ""
 
 # Configuration
 CHAIN_NAME="casper-test"
-NODE_ADDRESS="http://95.216.67.162:7777"
+NODE_ADDRESS="https://node.testnet.casper.network/rpc"
 CONTRACT_WASM="smart-contract/target/wasm32-unknown-unknown/release/stakevue_contract.wasm"
 SECRET_KEY="keys/secret_key.pem"
 PUBLIC_KEY="keys/public_key_hex"
