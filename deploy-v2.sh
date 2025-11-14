@@ -53,8 +53,7 @@ casper-client put-transaction session \
     --payment-amount "$PAYMENT_AMOUNT" \
     --standard-payment true \
     --gas-price-tolerance "$GAS_PRICE_TOLERANCE" \
-    --ttl "$TTL" \
-    --install-upgrade
+    --ttl "$TTL"
 
 if [ $? -eq 0 ]; then
     echo ""
