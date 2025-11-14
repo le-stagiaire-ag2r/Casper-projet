@@ -10,7 +10,7 @@ use casper_contract::{
 };
 use casper_types::{
     runtime_args, CLType, CLValue, EntryPoint, EntryPointAccess,
-    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U512, URef,
+    EntryPointType, EntryPoints, Key, Parameter, RuntimeArgs, U512,
 };
 
 // Constantes
