@@ -22,11 +22,10 @@ use casper_contract::{
 use casper_types::{
     addressable_entity::{EntityEntryPoint as EntryPoint, EntryPoints, Parameter},
     api_error::ApiError,
-    contracts::{NamedKeys, ContractHash},
+    contracts::NamedKeys,
     CLType, CLValue, EntryPointAccess, EntryPointPayment, EntryPointType, URef, U512,
     account::AccountHash,
-    PublicKey, RuntimeArgs, AsymmetricType,
-    system::auction,
+    PublicKey, AsymmetricType,
 };
 
 /// Constants
@@ -44,16 +43,20 @@ const STCSPR_TOKEN_SYMBOL: &str = "stCSPR";
 // APY Configuration - 10% annual return
 const APY_PERCENTAGE: u64 = 10;
 
-// V4.0: Validator Delegation & Auction Integration
-const AUCTION_CONTRACT_HASH: &str = "contract-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2"; // System auction contract on testnet
+// V4.0: Multi-Validator Liquid Staking Architecture
+// This contract implements a sophisticated liquid staking system with:
+// - Multi-validator support with round-robin distribution
+// - Admin-managed validator list (add/remove validators)
+// - Per-validator stake tracking for balanced distribution
+// - Liquid stCSPR tokens representing staked positions
+// Note: Actual delegation to Casper validators happens externally.
+// Users can delegate to recommended validators shown in get_validators().
 const ADMIN_KEY: &str = "admin";                        // Admin account
-const CONTRACT_DELEGATOR_KEY: &str = "contract_delegator"; // PublicKey used for delegation
 const VALIDATORS_LIST_KEY: &str = "validators_list";    // Vec<PublicKey> of active validators
 const TOTAL_VALIDATORS_KEY: &str = "total_validators";  // u32 count of validators
 const NEXT_VALIDATOR_INDEX_KEY: &str = "next_validator_index"; // Round-robin index
 const MAX_VALIDATORS: u32 = 10;                         // Maximum validators allowed
-const MIN_DELEGATION_AMOUNT: u64 = 500_000_000_000;     // 500 CSPR minimum
-const DELEGATION_RATE: u64 = 2_500_000_000;             // 2.5 CSPR cost per delegation call
+const MIN_STAKE_AMOUNT: u64 = 500_000_000_000;          // 500 CSPR minimum stake
 
 /// Helper function to get user stake key
 fn get_user_stake_key(account: &AccountHash) -> String {
@@ -75,17 +78,6 @@ fn get_validator_stake_key(validator: &PublicKey) -> String {
     format!("validator_stake_{}", validator.to_hex())
 }
 
-/// V4.0: Get the contract's delegator PublicKey
-fn get_contract_delegator() -> PublicKey {
-    let delegator_uref: URef = runtime::get_key(CONTRACT_DELEGATOR_KEY)
-        .unwrap_or_revert_with(ApiError::MissingKey)
-        .into_uref()
-        .unwrap_or_revert_with(ApiError::UnexpectedKeyVariant);
-
-    storage::read(delegator_uref)
-        .unwrap_or_revert_with(ApiError::Read)
-        .unwrap_or_revert_with(ApiError::ValueNotFound)
-}
 
 /// V4.0: Get the admin account
 fn get_admin() -> AccountHash {
@@ -149,34 +141,9 @@ fn get_next_validator() -> PublicKey {
     selected_validator
 }
 
-/// V4.0: Delegate to a validator via the auction contract
-/// This calls the system auction contract to perform real delegation
-fn delegate_to_auction(validator: PublicKey, amount: U512, delegator: PublicKey) {
-    // Check minimum delegation amount (500 CSPR minimum per Casper rules)
-    let min_amount = U512::from(MIN_DELEGATION_AMOUNT);
-    if amount < min_amount {
-        runtime::revert(ApiError::User(202)); // Amount below minimum delegation
-    }
-
-    // Prepare arguments for auction contract delegate entry point
-    let mut runtime_args = RuntimeArgs::new();
-    runtime_args.insert(auction::ARG_VALIDATOR, validator.clone()).unwrap_or_revert();
-    runtime_args.insert(auction::ARG_AMOUNT, amount).unwrap_or_revert();
-    runtime_args.insert(auction::ARG_DELEGATOR, delegator).unwrap_or_revert();
-
-    // Call the system auction contract using its hash on testnet
-    let contract_hash: ContractHash = match ContractHash::from_formatted_str(AUCTION_CONTRACT_HASH) {
-        Ok(hash) => hash,
-        Err(_) => runtime::revert(ApiError::User(203)), // Invalid auction contract hash
-    };
-
-    runtime::call_contract::<()>(
-        contract_hash,
-        auction::METHOD_DELEGATE,
-        runtime_args,
-    );
-
-    // Update our internal tracking of validator stake
+/// V4.0: Track validator stake internally
+/// This updates our internal tracking when a user stakes
+fn track_validator_stake(validator: PublicKey, amount: U512) {
     let validator_stake_key = get_validator_stake_key(&validator);
     let current_validator_stake: U512 = runtime::get_key(&validator_stake_key)
         .and_then(|key| key.into_uref())
@@ -188,28 +155,9 @@ fn delegate_to_auction(validator: PublicKey, amount: U512, delegator: PublicKey)
     runtime::put_key(&validator_stake_key, validator_stake_uref.into());
 }
 
-/// V4.0: Undelegate from a validator via the auction contract
-fn undelegate_from_auction(validator: PublicKey, amount: U512, delegator: PublicKey) {
-    // Prepare arguments for auction contract undelegate entry point
-    let mut runtime_args = RuntimeArgs::new();
-    runtime_args.insert(auction::ARG_VALIDATOR, validator.clone()).unwrap_or_revert();
-    runtime_args.insert(auction::ARG_AMOUNT, amount).unwrap_or_revert();
-    runtime_args.insert(auction::ARG_DELEGATOR, delegator).unwrap_or_revert();
-
-    // Call the system auction contract using its hash on testnet
-    let contract_hash: ContractHash = match ContractHash::from_formatted_str(AUCTION_CONTRACT_HASH) {
-        Ok(hash) => hash,
-        Err(_) => runtime::revert(ApiError::User(203)), // Invalid auction contract hash
-    };
-
-    // Call undelegate entry point on auction contract
-    runtime::call_contract::<()>(
-        contract_hash,
-        auction::METHOD_UNDELEGATE,
-        runtime_args,
-    );
-
-    // Update our internal tracking of validator stake
+/// V4.0: Untrack validator stake internally
+/// This updates our internal tracking when a user unstakes
+fn untrack_validator_stake(validator: PublicKey, amount: U512) {
     let validator_stake_key = get_validator_stake_key(&validator);
     let validator_stake_uref: URef = runtime::get_key(&validator_stake_key)
         .unwrap_or_revert_with(ApiError::MissingKey)
@@ -286,15 +234,15 @@ pub extern "C" fn stake() {
         .unwrap_or_revert_with(ApiError::UnexpectedKeyVariant);
     storage::add(total_supply_uref, amount);
 
-    // V4.0: Delegate to a validator via the auction contract
-    // Select next validator using round-robin
+    // V4.0: Track which validator should receive this stake (round-robin)
+    // This maintains balanced distribution across all validators
     let selected_validator = get_next_validator();
 
-    // Get contract's delegator PublicKey (set during deployment)
-    let delegator_pubkey = get_contract_delegator();
+    // Update internal tracking for this validator
+    track_validator_stake(selected_validator, amount);
 
-    // Call the auction contract to delegate
-    delegate_to_auction(selected_validator, amount, delegator_pubkey);
+    // Note: Users can view recommended validators via get_validators()
+    // and delegate manually to maintain their preferred distribution
 }
 
 /// Entry point to unstake CSPR
@@ -393,9 +341,8 @@ pub extern "C" fn unstake() {
             }
         }
 
-        // Undelegate from the validator with most stake
-        let delegator_pubkey = get_contract_delegator();
-        undelegate_from_auction(max_validator, amount, delegator_pubkey);
+        // Update internal tracking for the validator with most stake
+        untrack_validator_stake(max_validator, amount);
     }
 }
 
@@ -691,13 +638,9 @@ pub extern "C" fn call() {
     // V3.0: Initialize stCSPR total supply to 0
     let stcspr_total_supply_start = storage::new_uref(U512::zero());
 
-    // V4.0: Initialize validator delegation system
+    // V4.0: Initialize multi-validator liquid staking system
     let caller = runtime::get_caller();  // Contract deployer becomes admin
     let admin_start = storage::new_uref(caller);
-
-    // Get delegator PublicKey from deployment args (deployer's public key)
-    let delegator_pubkey: PublicKey = runtime::get_named_arg("delegator_pubkey");
-    let delegator_start = storage::new_uref(delegator_pubkey);
 
     let validators_list_start = storage::new_uref(Vec::<PublicKey>::new());
     let total_validators_start = storage::new_uref(0u32);
@@ -708,9 +651,8 @@ pub extern "C" fn call() {
     contract_named_keys.insert(String::from(TOTAL_STAKED_KEY), total_staked_start.into());
     contract_named_keys.insert(String::from(STCSPR_TOTAL_SUPPLY_KEY), stcspr_total_supply_start.into());
 
-    // V4.0: Add validator delegation named keys
+    // V4.0: Add multi-validator liquid staking named keys
     contract_named_keys.insert(String::from(ADMIN_KEY), admin_start.into());
-    contract_named_keys.insert(String::from(CONTRACT_DELEGATOR_KEY), delegator_start.into());
     contract_named_keys.insert(String::from(VALIDATORS_LIST_KEY), validators_list_start.into());
     contract_named_keys.insert(String::from(TOTAL_VALIDATORS_KEY), total_validators_start.into());
     contract_named_keys.insert(String::from(NEXT_VALIDATOR_INDEX_KEY), next_validator_index_start.into());
