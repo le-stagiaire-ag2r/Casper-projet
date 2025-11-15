@@ -336,6 +336,30 @@ pub extern "C" fn total_supply_stcspr() {
     runtime::ret(typed_result);
 }
 
+/// V3.0: Get stCSPR token name
+#[no_mangle]
+pub extern "C" fn token_name() {
+    let name = String::from(STCSPR_TOKEN_NAME);
+    let typed_result = CLValue::from_t(name).unwrap_or_revert();
+    runtime::ret(typed_result);
+}
+
+/// V3.0: Get stCSPR token symbol
+#[no_mangle]
+pub extern "C" fn token_symbol() {
+    let symbol = String::from(STCSPR_TOKEN_SYMBOL);
+    let typed_result = CLValue::from_t(symbol).unwrap_or_revert();
+    runtime::ret(typed_result);
+}
+
+/// V3.0: Get stCSPR token decimals (same as CSPR: 9)
+#[no_mangle]
+pub extern "C" fn decimals() {
+    let decimals: u8 = 9;
+    let typed_result = CLValue::from_t(decimals).unwrap_or_revert();
+    runtime::ret(typed_result);
+}
+
 /// Contract installation entry point
 #[no_mangle]
 pub extern "C" fn call() {
@@ -441,6 +465,36 @@ pub extern "C" fn call() {
         "total_supply_stcspr",
         Vec::new(),
         CLType::U512,
+        EntryPointAccess::Public,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
+    ));
+
+    // V3.0: token_name() -> String
+    entry_points.add_entry_point(EntryPoint::new(
+        "token_name",
+        Vec::new(),
+        CLType::String,
+        EntryPointAccess::Public,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
+    ));
+
+    // V3.0: token_symbol() -> String
+    entry_points.add_entry_point(EntryPoint::new(
+        "token_symbol",
+        Vec::new(),
+        CLType::String,
+        EntryPointAccess::Public,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
+    ));
+
+    // V3.0: decimals() -> U8
+    entry_points.add_entry_point(EntryPoint::new(
+        "decimals",
+        Vec::new(),
+        CLType::U8,
         EntryPointAccess::Public,
         EntryPointType::Called,
         EntryPointPayment::Caller,
