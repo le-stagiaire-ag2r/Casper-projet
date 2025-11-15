@@ -566,7 +566,7 @@ During development, we encountered and resolved:
 
 ## Version History
 
-### V3.0.0 (Latest) - Liquid Staking Token
+### V3.0.0 - Liquid Staking Token
 - 🪙 stCSPR liquid token implementation
 - 🔄 Transfer functionality
 - 📊 ERC20-like metadata (name, symbol, decimals)
@@ -602,7 +602,7 @@ MIT License - see LICENSE file for details
 ## Links
 
 - **Casper Testnet Explorer:** https://testnet.cspr.live
-- **Contract (V3.0):** https://testnet.cspr.live/contract/a1ede2bd71d729e4bd3d1c233e85786c4896d5efdac01f2c19dbdce770ba2ef5
+- **Contract (V4.0):** https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 - **DoraHacks:** https://dorahacks.io/hackathon/casper-hackathon-2026
 - **Casper Network:** https://casper.network
 - **GitHub:** https://github.com/le-stagiaire-ag2r/Casper-projet
@@ -620,4 +620,4 @@ MIT License - see LICENSE file for details
 
 **Built with ❤️ for the Casper ecosystem**
 
-**StakeVue V3.0 - Where Liquidity Meets Staking** 🚀
+**StakeVue V4.0 - Where Multi-Validator Liquid Staking Meets Innovation** 🚀
