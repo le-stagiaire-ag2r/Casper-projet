@@ -25,7 +25,7 @@ use casper_types::{
     contracts::{NamedKeys, ContractHash},
     CLType, CLValue, EntryPointAccess, EntryPointPayment, EntryPointType, URef, U512,
     account::AccountHash,
-    PublicKey, RuntimeArgs, Key, AsymmetricType,
+    PublicKey, RuntimeArgs, AsymmetricType,
     system::auction,
 };
 
@@ -45,7 +45,7 @@ const STCSPR_TOKEN_SYMBOL: &str = "stCSPR";
 const APY_PERCENTAGE: u64 = 10;
 
 // V4.0: Validator Delegation & Auction Integration
-const AUCTION_CONTRACT_KEY: &str = "auction";           // System auction contract named key
+const AUCTION_CONTRACT_HASH: &str = "contract-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2"; // System auction contract on testnet
 const ADMIN_KEY: &str = "admin";                        // Admin account
 const CONTRACT_DELEGATOR_KEY: &str = "contract_delegator"; // PublicKey used for delegation
 const VALIDATORS_LIST_KEY: &str = "validators_list";    // Vec<PublicKey> of active validators
@@ -164,16 +164,11 @@ fn delegate_to_auction(validator: PublicKey, amount: U512, delegator: PublicKey)
     runtime_args.insert(auction::ARG_AMOUNT, amount).unwrap_or_revert();
     runtime_args.insert(auction::ARG_DELEGATOR, delegator).unwrap_or_revert();
 
-    // Call the system auction contract
-    // The auction contract is accessible via the named key "auction"
-    let auction_hash: Key = runtime::get_key(AUCTION_CONTRACT_KEY)
-        .unwrap_or_revert_with(ApiError::MissingKey);
-
-    // Call delegate entry point on auction contract
-    let contract_hash: ContractHash = auction_hash
-        .into_hash_addr()
-        .unwrap_or_revert_with(ApiError::UnexpectedKeyVariant)
-        .into();
+    // Call the system auction contract using its hash on testnet
+    let contract_hash: ContractHash = match ContractHash::from_formatted_str(AUCTION_CONTRACT_HASH) {
+        Ok(hash) => hash,
+        Err(_) => runtime::revert(ApiError::User(203)), // Invalid auction contract hash
+    };
 
     runtime::call_contract::<()>(
         contract_hash,
@@ -201,14 +196,11 @@ fn undelegate_from_auction(validator: PublicKey, amount: U512, delegator: Public
     runtime_args.insert(auction::ARG_AMOUNT, amount).unwrap_or_revert();
     runtime_args.insert(auction::ARG_DELEGATOR, delegator).unwrap_or_revert();
 
-    // Call the system auction contract
-    let auction_hash: Key = runtime::get_key(AUCTION_CONTRACT_KEY)
-        .unwrap_or_revert_with(ApiError::MissingKey);
-
-    let contract_hash: ContractHash = auction_hash
-        .into_hash_addr()
-        .unwrap_or_revert_with(ApiError::UnexpectedKeyVariant)
-        .into();
+    // Call the system auction contract using its hash on testnet
+    let contract_hash: ContractHash = match ContractHash::from_formatted_str(AUCTION_CONTRACT_HASH) {
+        Ok(hash) => hash,
+        Err(_) => runtime::revert(ApiError::User(203)), // Invalid auction contract hash
+    };
 
     // Call undelegate entry point on auction contract
     runtime::call_contract::<()>(
