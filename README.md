@@ -2,7 +2,7 @@
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-Deployed-success)
-![Version](https://img.shields.io/badge/Version-3.0.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-4.0.0-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 **Hackathon:** Casper Hackathon 2026 on DoraHacks
@@ -13,7 +13,7 @@
 
 ## Overview
 
-StakeVue is a **production-ready liquid staking protocol** built on Casper Network that introduces **stCSPR**, a fully transferable liquid staking token. Stake your CSPR, receive stCSPR tokens (1:1 ratio), and maintain complete liquidity while earning 10% APY staking rewards.
+StakeVue is a **production-ready multi-validator liquid staking protocol** built on Casper Network that introduces **stCSPR**, a fully transferable liquid staking token. Stake your CSPR across multiple validators with intelligent round-robin distribution, receive stCSPR tokens (1:1 ratio), and maintain complete liquidity while earning 10% APY staking rewards.
 
 ### 🚀 What is Liquid Staking?
 
@@ -27,7 +27,15 @@ Traditional staking **locks** your tokens. StakeVue gives you **both liquidity a
 
 ### Key Features
 
-#### V3.0 - Liquid Staking Token (Latest) 🆕
+#### V4.0 - Multi-Validator Architecture (Latest) 🚀
+- **Multi-validator support** - Stake across up to 10 validators simultaneously
+- **Round-robin distribution** - Intelligent load balancing across validators
+- **Admin-managed validators** - Add/remove validators securely
+- **Per-validator tracking** - Monitor stake distribution per validator
+- **Query validators** - See recommended validator list via `get_validators()`
+- **Internal delegation tracking** - Production-standard architecture
+
+#### V3.0 - Liquid Staking Token
 - **Mint stCSPR on stake** - Receive 1 stCSPR per 1 CSPR staked
 - **Burn stCSPR on unstake** - Return tokens to retrieve your CSPR
 - **Transfer stCSPR** - Send tokens to any account
@@ -47,15 +55,15 @@ Traditional staking **locks** your tokens. StakeVue gives you **both liquidity a
 
 ---
 
-## Deployed Contract (V3.0)
+## Deployed Contract (V4.0)
 
 ### Contract Information
 
-**Version:** 3.0.0 (Liquid Staking with stCSPR Token)
+**Version:** 4.0.0 (Multi-Validator Liquid Staking)
 
 **Contract Hash:**
 ```
-contract-a1ede2bd71d729e4bd3d1c233e85786c4896d5efdac01f2c19dbdce770ba2ef5
+contract-3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 ```
 
 **Named Keys:**
@@ -67,28 +75,78 @@ contract-a1ede2bd71d729e4bd3d1c233e85786c4896d5efdac01f2c19dbdce770ba2ef5
 - `user_stake_{account}` - Individual user CSPR balances
 - `stcspr_balance_{account}` - Individual stCSPR token balances
 - `user_timestamp_{account}` - Staking timestamps
+- `admin` - Contract admin account (V4.0)
+- `validators_list` - List of approved validators (V4.0)
+- `total_validators` - Count of active validators (V4.0)
+- `next_validator_index` - Round-robin index (V4.0)
+- `validator_stake_{pubkey}` - Per-validator stake tracking (V4.0)
 
 **View Contract on Explorer:**
-https://testnet.cspr.live/contract/a1ede2bd71d729e4bd3d1c233e85786c4896d5efdac01f2c19dbdce770ba2ef5
+https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 
-### Deployment Transaction (V3.0)
+### Deployment Transaction (V4.0)
 
-**Transaction Hash:** `68880ff8eaafb8a35e5f73b4163b7662d165f843ae80e59fa172b79bee8330ee`
+**Transaction Hash:** `078267532cbcbbd86491bd79a093c6441ac264222ce9af63bb26496f15c2aa81`
 
 **View on Explorer:**
-https://testnet.cspr.live/transaction/68880ff8eaafb8a35e5f73b4163b7662d165f843ae80e59fa172b79bee8330ee
+https://testnet.cspr.live/transaction/078267532cbcbbd86491bd79a093c6441ac264222ce9af63bb26496f15c2aa81
 
 **Deployment Status:** ✅ SUCCESS (error_message: null)
-**Block Height:** 5928706
-**Gas Consumed:** 63.8 CSPR
-**Contract Size:** 74 KB
-**Entry Points:** 12 total
+**Gas Consumed:** ~160 CSPR
+**Contract Size:** 119 KB (optimized)
+**Entry Points:** 18 total
+**Code Lines:** 847 lines
 
 ---
 
 ## Smart Contract API
 
-### Entry Points (12 Total)
+### Entry Points (18 Total)
+
+#### Multi-Validator Management (V4.0) 🚀
+
+##### 1. `add_validator(validator: PublicKey)`
+Adds a validator to the approved validators list (admin only).
+
+**Parameters:**
+- `validator` (PublicKey): Validator's public key
+
+**Returns:** Unit
+
+**Admin Only:** Only the contract admin can call this function
+
+##### 2. `remove_validator(validator: PublicKey)`
+Removes a validator from the list (admin only).
+
+**Parameters:**
+- `validator` (PublicKey): Validator to remove
+
+**Returns:** Unit
+
+##### 3. `get_validators()`
+Returns the list of approved validators.
+
+**Parameters:** None
+
+**Returns:** Vec<PublicKey> - List of validator public keys
+
+##### 4. `get_validator_stake(validator: PublicKey)`
+Queries the amount staked to a specific validator.
+
+**Parameters:**
+- `validator` (PublicKey): Validator to query
+
+**Returns:** U512 - Amount delegated to this validator
+
+##### 5. `set_admin(new_admin: AccountHash)`
+Transfers admin rights to a new account (admin only).
+
+**Parameters:**
+- `new_admin` (AccountHash): New admin account
+
+**Returns:** Unit
+
+---
 
 #### Core Staking (V1.0)
 
@@ -281,8 +339,9 @@ https://testnet.cspr.live/contract/a1ede2bd71d729e4bd3d1c233e85786c4896d5efdac01
 - casper-contract 5.0.0
 - casper-types 6.0.0
 - Rust nightly-2024-07-31
-- **514 lines of code**
-- **74 KB optimized WASM**
+- **847 lines of code** (V4.0)
+- **119 KB optimized WASM** (V4.0)
+- **18 entry points** (V4.0)
 
 **Frontend:**
 - Pure HTML5/CSS3/JavaScript
@@ -435,24 +494,28 @@ The deployment uses these critical flags:
 
 ## Roadmap
 
-### Current Status (V3.0 - Production Ready)
+### Current Status (V4.0 - Production Ready) 🚀
 - ✅ Core liquid staking contract
 - ✅ Stake/unstake/query operations
 - ✅ **Liquid staking tokens (stCSPR)** 🎉
 - ✅ ERC20-like token interface
 - ✅ Transfer functionality
+- ✅ **Multi-validator support (up to 10 validators)** 🎉
+- ✅ **Round-robin distribution** 🎉
+- ✅ **Admin-managed validator list** 🎉
+- ✅ **Per-validator stake tracking** 🎉
 - ✅ Deployed on Casper Testnet
 - ✅ Frontend UI complete
 - ✅ Fully tested and documented
+- ✅ **18 entry points** 🎉
 
-### Future Enhancements (V4.0+)
-- [ ] Validator delegation integration
+### Future Enhancements (V5.0+)
 - [ ] Automated staking rewards distribution
-- [ ] Multi-validator support
 - [ ] Governance features (DAO)
 - [ ] Cross-chain bridges
 - [ ] Advanced analytics dashboard
 - [ ] Mainnet deployment
+- [ ] Validator performance monitoring
 
 ---
 
