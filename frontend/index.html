@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StakeVue - Casper Liquid Staking Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>🚀 StakeVue</h1>
+                <p class="tagline">Liquid Staking on Casper</p>
+            </div>
+            <button id="connect-wallet" class="btn btn-primary">
+                Connect Wallet
+            </button>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h2>Maximize Your CSPR Returns</h2>
+            <p>Stake your CSPR tokens and earn rewards while maintaining liquidity</p>
+        </section>
+
+        <!-- Wallet Status -->
+        <section id="wallet-status" class="card hidden">
+            <div class="card-header">
+                <h3>Wallet Connected</h3>
+            </div>
+            <div class="card-body">
+                <div class="stat-row">
+                    <span class="label">Address:</span>
+                    <span id="wallet-address" class="value">-</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">Balance:</span>
+                    <span id="wallet-balance" class="value">- CSPR</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Dashboard -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <h4>Total Value Locked</h4>
+                    <p id="total-staked" class="stat-number">0 CSPR</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <h4>Your Stake</h4>
+                    <p id="user-stake" class="stat-number">0 CSPR</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                    <h4>APY</h4>
+                    <p class="stat-number">12.5%</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-content">
+                    <h4>Est. Rewards</h4>
+                    <p id="est-rewards" class="stat-number">0 CSPR</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Staking Panel -->
+        <section class="card">
+            <div class="card-header">
+                <h3>Stake Your CSPR</h3>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <label for="stake-amount">Amount to Stake</label>
+                    <div class="input-with-button">
+                        <input
+                            type="number"
+                            id="stake-amount"
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                        >
+                        <button class="btn-max" onclick="setMaxAmount()">MAX</button>
+                    </div>
+                    <small class="hint">Minimum: 100 CSPR</small>
+                </div>
+
+                <button id="stake-button" class="btn btn-primary btn-large">
+                    Stake Now
+                </button>
+
+                <div class="info-box">
+                    <h4>How it works:</h4>
+                    <ul>
+                        <li>✅ Stake CSPR and receive liquid staking tokens</li>
+                        <li>✅ Earn 12.5% APY on your staked tokens</li>
+                        <li>✅ Maintain liquidity with your staked assets</li>
+                        <li>✅ Unstake anytime (7-day unbonding period)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transaction History -->
+        <section class="card">
+            <div class="card-header">
+                <h3>Recent Transactions</h3>
+            </div>
+            <div class="card-body">
+                <div id="tx-history" class="tx-list">
+                    <p class="empty-state">No transactions yet</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>StakeVue - Built for Casper Hackathon 2026</p>
+            <p><small>Powered by Casper Network | Testnet</small></p>
+        </div>
+    </footer>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
