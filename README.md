@@ -16,45 +16,56 @@ StakeVue is a liquid staking protocol built on the Casper Network that enables u
 
 ### Key Features
 
-- **Stake CSPR tokens** and track your staked amount on-chain
+- **Per-User Tracking** - Each user's stake is tracked individually
+- **Stake CSPR tokens** and manage your personal staking balance
 - **Unstake tokens** with built-in safety checks
-- **Query staked amounts** in real-time
+- **Query YOUR stake** - See your personal staked amount
+- **Calculate rewards** - 10% APY on staked amounts
 - **Modern, responsive UI** for easy interaction
-- **Fully deployed and tested** on Casper Testnet
+- **Fully deployed and tested** on Casper Testnet (V2.0)
 
 ---
 
-## Deployed Contract
+## Deployed Contract (V2.0)
 
 ### Contract Information
 
+**Version:** 2.0 (with per-user tracking and rewards)
+
 **Contract Hash:**
 ```
-contract-82f9352551599a7ae4d1875286e64b2a0ba9124eef8ad22fa8b51b398fbc28f0
+contract-e07656796d3ffa429918f9f4df6594dc39a46e57a8291c95ab71f6016cd89200
 ```
 
 **Contract Package:**
 ```
-contract-package-8faabf5972da280ccb91c2f64aecd2c1a3763b09fcc9c9fe1a120c6ffdfde506
+contract-package-056acb42522ae98e00bfa7f9c1629a4c75c914614fd8ce96da2ded32ccb0e788
 ```
 
 **Named Keys:**
 - `stakevue_contract` - Main contract reference
 - `stakevue_liquid_staking` - Contract package
 - `stakevue_access` - Access control URef
+- `total_staked` - Global staking counter
+- `user_stake_{account}` - Individual user balances
+- `user_timestamp_{account}` - Staking timestamps
 
-### Deployment Transaction
+**View Contract on Explorer:**
+https://testnet.cspr.live/contract/e07656796d3ffa429918f9f4df6594dc39a46e57a8291c95ab71f6016cd89200
 
-**Transaction Hash:** `e8e53299df913eb70a819e54b2dbfb8ab8a9605fe9f07b4b1c7e0f3d0c86d4ad`
+### Deployment Transaction (V2.0)
+
+**Transaction Hash:** `3e714f8447c0b2473b71d9108469bed9b5eea481347a0098bf6972b85f5c660c`
 
 **View on Explorer:**
-https://testnet.cspr.live/transaction/e8e53299df913eb70a819e54b2dbfb8ab8a9605fe9f07b4b1c7e0f3d0c86d4ad
+https://testnet.cspr.live/transaction/3e714f8447c0b2473b71d9108469bed9b5eea481347a0098bf6972b85f5c660c
 
 **Deployment Status:** ✅ SUCCESS (error_message: null)
-**Block Height:** 5926866
-**Gas Consumed:** 59.4 CSPR
-**Refund:** 30.4 CSPR
-**Net Cost:** ~29 CSPR
+**Block Height:** 5928383
+**Gas Consumed:** 71.5 CSPR
+**Refund:** 21.3 CSPR
+**Net Cost:** ~50 CSPR
+**Contract Size:** 64 KB
 
 ---
 
@@ -63,12 +74,17 @@ https://testnet.cspr.live/transaction/e8e53299df913eb70a819e54b2dbfb8ab8a9605fe9
 ### Entry Points
 
 #### 1. `stake(amount: U512)`
-Stakes CSPR tokens by incrementing the total staked amount.
+Stakes CSPR tokens and updates both the total staked amount AND your personal balance.
 
 **Parameters:**
 - `amount` (U512): Amount to stake in motes (1 CSPR = 1,000,000,000 motes)
 
 **Returns:** Unit
+
+**What it does:**
+- Increments global total staked counter
+- Updates YOUR personal stake balance
+- Records timestamp for rewards calculation
 
 **Example:**
 ```bash
@@ -83,18 +99,23 @@ casper-client put-transaction invocable-entity-alias \
 ```
 
 #### 2. `unstake(amount: U512)`
-Unstakes CSPR tokens by decrementing the total staked amount.
+Unstakes CSPR tokens from YOUR personal balance.
 
 **Parameters:**
 - `amount` (U512): Amount to unstake in motes
 
 **Returns:** Unit
 
+**What it does:**
+- Checks YOUR personal staked balance (not the global total)
+- Decrements YOUR personal stake
+- Updates the global total
+
 **Error Handling:**
-- Reverts with `ApiError::User(100)` if insufficient staked amount
+- Reverts with `ApiError::User(100)` if YOU don't have enough staked
 
 #### 3. `get_staked_amount()`
-Queries the total amount of CSPR currently staked.
+Queries the TOTAL amount of CSPR currently staked (all users combined).
 
 **Parameters:** None
 
@@ -105,27 +126,99 @@ Queries the total amount of CSPR currently staked.
 casper-client put-transaction invocable-entity-alias \
   --entity-alias stakevue_contract \
   --session-entry-point get_staked_amount \
-  --payment-amount 2500000000 \
+  --payment-amount 3000000000 \
   --standard-payment true \
   --gas-price-tolerance 5 \
   --ttl 30min
 ```
 
+#### 4. `get_my_stake()` ✨ NEW in V2.0
+Queries YOUR personal staked amount.
+
+**Parameters:** None
+
+**Returns:** U512 - YOUR staked amount in motes (returns 0 if you never staked)
+
+**What it does:**
+- Reads YOUR personal stake balance from storage
+- Independent of other users' stakes
+- Safe to call anytime (no gas if never staked)
+
+**Example:**
+```bash
+casper-client put-transaction invocable-entity-alias \
+  --entity-alias stakevue_contract \
+  --session-entry-point get_my_stake \
+  --payment-amount 3000000000 \
+  --standard-payment true \
+  --gas-price-tolerance 5 \
+  --ttl 30min
+```
+
+**Test Transaction:** `0bb41a3f118cdcffe975d5580125b9fdf62dfd9925f268ac90686e82e12e860f` ✅
+
+#### 5. `calculate_my_rewards()` ✨ NEW in V2.0
+Calculates YOUR potential annual rewards based on 10% APY.
+
+**Parameters:** None
+
+**Returns:** U512 - YOUR potential annual rewards in motes
+
+**What it does:**
+- Reads YOUR personal stake
+- Calculates: `your_stake * 10%`
+- Returns potential yearly rewards
+
+**Example:**
+If you staked 1000 CSPR, this returns 100 CSPR (10% APY)
+
+**Example:**
+```bash
+casper-client put-transaction invocable-entity-alias \
+  --entity-alias stakevue_contract \
+  --session-entry-point calculate_my_rewards \
+  --payment-amount 3000000000 \
+  --standard-payment true \
+  --gas-price-tolerance 5 \
+  --ttl 30min
+```
+
+**Test Transaction:** `f1c39d6dcfb69ae463575c31b38990d91e715897c4d393e88dd0eb78f6b736f8` ✅
+
 ---
 
-## Test Results
+## Test Results (V2.0)
 
-### Deployment Test
-✅ **SUCCESS** - Contract deployed with all entry points
-Transaction: `e8e53299df913eb70a819e54b2dbfb8ab8a9605fe9f07b4b1c7e0f3d0c86d4ad`
+### Deployment Test V2.0
+✅ **SUCCESS** - Contract deployed with 5 entry points
+Transaction: `3e714f8447c0b2473b71d9108469bed9b5eea481347a0098bf6972b85f5c660c`
+**Block:** 5928383
+**Entry Points Confirmed:** stake, unstake, get_staked_amount, get_my_stake, calculate_my_rewards
 
-### Stake Test
-✅ **SUCCESS** - Staked 1000 CSPR (1,000,000,000,000 motes)
-Transaction: `738714efb54a4b7b271268347cec5b67fee9dc9d5ea6eb5636464d0c01432ecd`
-**Verification:** Storage effect shows `"AddUInt512": "1000000000000"`
+### Test 1: get_my_stake() - Before Any Stake
+✅ **SUCCESS** - Returns 0 for new user
+Transaction: `22a50e49a9a8ec8d28cb052def7ac9ac9e68f63e112a53e88b90b8b07ccdd03d`
+**Result:** User has no stake yet ✅
 
-View test transaction:
-https://testnet.cspr.live/transaction/738714efb54a4b7b271268347cec5b67fee9dc9d5ea6eb5636464d0c01432ecd
+### Test 2: stake(500 CSPR)
+✅ **SUCCESS** - Staked 500 CSPR (500,000,000,000 motes)
+Transaction: `3a5c98c226cbc0ee62ea78d028a6b1bffb5831654ab64e8dcaf76ddfc92b5fd8`
+**Verification:** User's personal balance updated ✅
+
+### Test 3: get_my_stake() - After Stake
+✅ **SUCCESS** - Returns 500 CSPR for the user
+Transaction: `0bb41a3f118cdcffe975d5580125b9fdf62dfd9925f268ac90686e82e12e860f`
+**Result:** User's stake correctly tracked ✅
+
+### Test 4: calculate_my_rewards()
+✅ **SUCCESS** - Returns 50 CSPR (10% of 500 CSPR)
+Transaction: `f1c39d6dcfb69ae463575c31b38990d91e715897c4d393e88dd0eb78f6b736f8`
+**Result:** Rewards calculation correct (10% APY) ✅
+
+**All Tests:** error_message: null ✅
+
+View deployment on explorer:
+https://testnet.cspr.live/contract/e07656796d3ffa429918f9f4df6594dc39a46e57a8291c95ab71f6016cd89200
 
 ---
 
@@ -145,24 +238,33 @@ https://testnet.cspr.live/transaction/738714efb54a4b7b271268347cec5b67fee9dc9d5e
 - Casper wallet integration ready
 - Real-time data visualization
 
-### Contract Structure
+### Contract Structure (V2.0)
 
 ```rust
 // Storage
-total_staked: U512  // Total CSPR staked in the protocol
+total_staked: U512                     // Global total CSPR staked
+user_stake_{account}: U512             // Per-user staking balances
+user_timestamp_{account}: u64          // Staking timestamps for rewards
 
-// Entry Points
-stake(amount: U512) -> Unit
-unstake(amount: U512) -> Unit
-get_staked_amount() -> U512
+// Entry Points (5 total)
+stake(amount: U512) -> Unit            // Stake + track per user
+unstake(amount: U512) -> Unit          // Unstake from personal balance
+get_staked_amount() -> U512            // Query global total
+get_my_stake() -> U512                 // Query YOUR balance ✨ NEW
+calculate_my_rewards() -> U512         // Calculate YOUR rewards ✨ NEW
+
+// Configuration
+APY_PERCENTAGE = 10%                   // Annual rewards rate
 ```
 
 ### Security Features
 
 - ✅ Input validation on all entry points
 - ✅ Overflow protection with U512 arithmetic
-- ✅ Insufficient balance checks on unstake
+- ✅ **Per-user balance tracking** - Can't unstake others' funds
+- ✅ Insufficient balance checks on unstake (checks YOUR balance)
 - ✅ Locked contract (non-upgradeable for security)
+- ✅ Safe arithmetic with saturating operations
 - ✅ Public entry points with caller payment model
 
 ---
