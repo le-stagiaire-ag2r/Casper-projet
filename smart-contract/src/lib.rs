@@ -150,7 +150,9 @@ fn track_validator_stake(validator: PublicKey, amount: U512) {
         .and_then(|uref| storage::read(uref).unwrap_or(None))
         .unwrap_or(U512::zero());
 
-    let new_validator_stake = current_validator_stake + amount;
+    // V5.0 Security Fix: Use checked addition to prevent overflow
+    let new_validator_stake = current_validator_stake.checked_add(amount)
+        .unwrap_or_revert_with(ApiError::User(210)); // Arithmetic overflow
     let validator_stake_uref = storage::new_uref(new_validator_stake);
     runtime::put_key(&validator_stake_key, validator_stake_uref.into());
 }
@@ -173,7 +175,9 @@ fn untrack_validator_stake(validator: PublicKey, amount: U512) {
         runtime::revert(ApiError::User(203)); // Insufficient validator stake
     }
 
-    let new_validator_stake = current_validator_stake - amount;
+    // V5.0 Security Fix: Use checked subtraction to prevent underflow
+    let new_validator_stake = current_validator_stake.checked_sub(amount)
+        .unwrap_or_revert_with(ApiError::User(211)); // Arithmetic underflow
     storage::write(validator_stake_uref, new_validator_stake);
 }
 
@@ -205,7 +209,9 @@ pub extern "C" fn stake() {
         .unwrap_or(U512::zero());
 
     // Add new stake to user's balance
-    let new_user_stake = current_user_stake + amount;
+    // V5.0 Security Fix: Use checked addition to prevent overflow
+    let new_user_stake = current_user_stake.checked_add(amount)
+        .unwrap_or_revert_with(ApiError::User(210)); // Arithmetic overflow
 
     // Create or update user stake storage
     let user_stake_uref = storage::new_uref(new_user_stake);
@@ -223,7 +229,9 @@ pub extern "C" fn stake() {
         .and_then(|uref| storage::read(uref).unwrap_or(None))
         .unwrap_or(U512::zero());
 
-    let new_stcspr_balance = current_stcspr_balance + amount;
+    // V5.0 Security Fix: Use checked addition to prevent overflow
+    let new_stcspr_balance = current_stcspr_balance.checked_add(amount)
+        .unwrap_or_revert_with(ApiError::User(210)); // Arithmetic overflow
     let stcspr_balance_uref = storage::new_uref(new_stcspr_balance);
     runtime::put_key(&stcspr_balance_key, stcspr_balance_uref.into());
 
@@ -271,7 +279,9 @@ pub extern "C" fn unstake() {
     }
 
     // Update user's stake
-    let new_user_stake = current_user_stake - amount;
+    // V5.0 Security Fix: Use checked subtraction to prevent underflow
+    let new_user_stake = current_user_stake.checked_sub(amount)
+        .unwrap_or_revert_with(ApiError::User(211)); // Arithmetic underflow
     storage::write(user_stake_uref, new_user_stake);
 
     // Update total staked (global counter)
@@ -284,7 +294,9 @@ pub extern "C" fn unstake() {
         .unwrap_or_revert_with(ApiError::Read)
         .unwrap_or_revert_with(ApiError::ValueNotFound);
 
-    let new_total = current_total - amount;
+    // V5.0 Security Fix: Use checked subtraction to prevent underflow
+    let new_total = current_total.checked_sub(amount)
+        .unwrap_or_revert_with(ApiError::User(211)); // Arithmetic underflow
     storage::write(total_uref, new_total);
 
     // V3.0: Burn stCSPR tokens
@@ -303,7 +315,9 @@ pub extern "C" fn unstake() {
         runtime::revert(ApiError::User(101)); // Custom error: Insufficient stCSPR balance
     }
 
-    let new_stcspr_balance = current_stcspr_balance - amount;
+    // V5.0 Security Fix: Use checked subtraction to prevent underflow
+    let new_stcspr_balance = current_stcspr_balance.checked_sub(amount)
+        .unwrap_or_revert_with(ApiError::User(211)); // Arithmetic underflow
     storage::write(stcspr_balance_uref, new_stcspr_balance);
 
     // Decrease stCSPR total supply
@@ -316,7 +330,9 @@ pub extern "C" fn unstake() {
         .unwrap_or_revert_with(ApiError::Read)
         .unwrap_or_revert_with(ApiError::ValueNotFound);
 
-    let new_supply = current_supply - amount;
+    // V5.0 Security Fix: Use checked subtraction to prevent underflow
+    let new_supply = current_supply.checked_sub(amount)
+        .unwrap_or_revert_with(ApiError::User(211)); // Arithmetic underflow
     storage::write(total_supply_uref, new_supply);
 
     // V4.0: Undelegate from a validator via the auction contract
@@ -429,7 +445,9 @@ pub extern "C" fn transfer_stcspr() {
     }
 
     // Decrease sender's balance
-    let new_sender_balance = sender_balance - amount;
+    // V5.0 Security Fix: Use checked subtraction to prevent underflow
+    let new_sender_balance = sender_balance.checked_sub(amount)
+        .unwrap_or_revert_with(ApiError::User(211)); // Arithmetic underflow
     storage::write(sender_balance_uref, new_sender_balance);
 
     // Get or initialize recipient's balance
@@ -440,7 +458,9 @@ pub extern "C" fn transfer_stcspr() {
         .unwrap_or(U512::zero());
 
     // Increase recipient's balance
-    let new_recipient_balance = current_recipient_balance + amount;
+    // V5.0 Security Fix: Use checked addition to prevent overflow
+    let new_recipient_balance = current_recipient_balance.checked_add(amount)
+        .unwrap_or_revert_with(ApiError::User(210)); // Arithmetic overflow
     let recipient_balance_uref = storage::new_uref(new_recipient_balance);
     runtime::put_key(&recipient_balance_key, recipient_balance_uref.into());
 }
