@@ -2,7 +2,8 @@
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-Deployed-success)
-![Version](https://img.shields.io/badge/Version-4.0.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-5.0.0-brightgreen)
+![Security](https://img.shields.io/badge/Security-A+-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 **Hackathon:** Casper Hackathon 2026 on DoraHacks
@@ -27,7 +28,18 @@ Traditional staking **locks** your tokens. StakeVue gives you **both liquidity a
 
 ### Key Features
 
-#### V4.0 - Multi-Validator Architecture (Latest) 🚀
+#### V5.0 - Security-Hardened (Latest) 🛡️
+- **All arithmetic operations secured** - Checked add/sub prevents overflow/underflow
+- **10 critical bugs fixed** - Integer overflow vulnerabilities eliminated
+- **Audited by CasperSecure** - Automated security analysis passed (A+ grade)
+- **Production-ready** - All MEDIUM severity issues resolved
+- **Clear error handling** - ApiError codes for overflow (210) and underflow (211)
+- **Attack-resistant** - Protected against fund drainage exploits
+
+**Security Report:** [SECURITY_AUDIT_BEFORE_AFTER.md](./SECURITY_AUDIT_BEFORE_AFTER.md)
+**Release Notes:** [RELEASE_NOTES_V5.0.md](./RELEASE_NOTES_V5.0.md)
+
+#### V4.0 - Multi-Validator Architecture
 - **Multi-validator support** - Stake across up to 10 validators simultaneously
 - **Round-robin distribution** - Intelligent load balancing across validators
 - **Admin-managed validators** - Add/remove validators securely
@@ -565,6 +577,30 @@ During development, we encountered and resolved:
 ---
 
 ## Version History
+
+### V5.0.0 - Security-Hardened Release 🛡️
+- 🔒 **10 critical security fixes** - All integer overflow/underflow vulnerabilities eliminated
+- ✅ **Checked arithmetic** - All U512 operations use checked_add/checked_sub
+- 🛡️ **Audited by CasperSecure** - Automated security analysis passed (A+ grade)
+- 🚨 **New error codes** - ApiError::User(210) overflow, (211) underflow
+- 📊 **Security score** - Improved from F (0/100) to A+ (100/100)
+- 💰 **Attack-resistant** - Protected against fund drainage exploits
+- 📝 **Comprehensive docs** - Full audit report and release notes
+- 🔢 18 entry points (unchanged)
+- 📄 857 lines of code (+10 security fixes)
+
+**Documentation:**
+- [Security Audit Report](./SECURITY_AUDIT_BEFORE_AFTER.md)
+- [Release Notes V5.0](./RELEASE_NOTES_V5.0.md)
+
+### V4.0.0 - Multi-Validator Architecture
+- 🔗 Multi-validator support (up to 10 validators)
+- 🔄 Round-robin distribution algorithm
+- 👮 Admin-managed validator list
+- 📊 Per-validator stake tracking
+- 🔍 Query validators endpoint
+- 🔢 18 entry points
+- 📝 847 lines of code
 
 ### V3.0.0 - Liquid Staking Token
 - 🪙 stCSPR liquid token implementation
