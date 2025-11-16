@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# StakeVue V4.0 Deployment Script
-# Multi-Validator Liquid Staking with Round-Robin Distribution
+# StakeVue V5.0 Deployment Script
+# Security-Hardened Multi-Validator Liquid Staking
 
-echo "🚀 Deploying StakeVue V4.0 - Multi-Validator Liquid Staking"
+echo "🚀 Deploying StakeVue V5.0 - Security-Hardened Liquid Staking"
 echo "==========================================================="
 
 # Configuration
@@ -11,7 +11,7 @@ NODE_ADDRESS="https://node.testnet.casper.network/rpc"
 CHAIN_NAME="casper-test"
 CONTRACT_WASM="smart-contract/target/wasm32-unknown-unknown/release/stakevue_contract.wasm"
 SECRET_KEY="keys/secret_key.pem"
-PAYMENT_AMOUNT="200000000000"  # 200 CSPR for V4.0 (119KB WASM)
+PAYMENT_AMOUNT="200000000000"  # 200 CSPR for V5.0 (Security-Hardened)
 GAS_PRICE_TOLERANCE=5
 TTL="30min"
 
