@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useClickRef } from '@make-software/csprclick-ui';
 
 export interface ActiveAccount {
   publicKey: string;
@@ -7,43 +8,102 @@ export interface ActiveAccount {
 }
 
 export const useCsprClick = () => {
+  const clickRef = useClickRef();
   const [activeAccount, setActiveAccount] = useState<ActiveAccount | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Poll for account changes
+  useEffect(() => {
+    if (!clickRef) return;
+
+    const checkConnection = async () => {
+      try {
+        const publicKey = await clickRef.getActivePublicKey();
+        if (publicKey) {
+          const accountHash = `account-hash-${publicKey.substring(2, 66)}`;
+          setActiveAccount({ publicKey, accountHash });
+        } else {
+          setActiveAccount(null);
+        }
+      } catch (err) {
+        // Silent fail for polling
+      }
+    };
+
+    checkConnection();
+    const interval = setInterval(checkConnection, 500); // Poll every 500ms
+    return () => clearInterval(interval);
+  }, [clickRef]);
+
   const connect = async () => {
+    if (!clickRef) {
+      setError('CSPR.click not initialized');
+      return;
+    }
+
     setIsConnecting(true);
     setError(null);
 
-    // Simulation mode for now
-    // TODO: Integrate CSPR.click when ready
-    setTimeout(() => {
-      setActiveAccount({
-        publicKey: '0203a1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
-        accountHash: 'account-hash-123456789',
-      });
+    try {
+      // Sign in with CSPR.click
+      await clickRef.signIn();
+
+      // Get active public key
+      const publicKey = await clickRef.getActivePublicKey();
+      if (publicKey) {
+        const accountHash = `account-hash-${publicKey.substring(2, 66)}`;
+        setActiveAccount({ publicKey, accountHash });
+      } else {
+        throw new Error('No active account found');
+      }
+    } catch (err) {
+      console.error('Failed to connect wallet:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect wallet');
+    } finally {
       setIsConnecting(false);
-    }, 1000);
+    }
   };
 
   const disconnect = async () => {
-    setActiveAccount(null);
+    if (!clickRef) return;
+
+    try {
+      await clickRef.disconnect();
+      setActiveAccount(null);
+    } catch (err) {
+      console.error('Failed to disconnect:', err);
+      setError(err instanceof Error ? err.message : 'Failed to disconnect');
+    }
   };
 
   const signDeploy = async (deploy: any): Promise<any> => {
-    // TODO: Implement CSPR.click signing
-    console.warn('Sign deploy not yet implemented');
-    throw new Error('Wallet signing not yet implemented');
+    if (!clickRef) {
+      throw new Error('CSPR.click not initialized');
+    }
+
+    if (!activeAccount) {
+      throw new Error('No wallet connected');
+    }
+
+    try {
+      // Sign the deploy with CSPR.click
+      const signedDeploy = await clickRef.sign(deploy, activeAccount.publicKey);
+      return signedDeploy;
+    } catch (err) {
+      console.error('Failed to sign deploy:', err);
+      throw err;
+    }
   };
 
   return {
-    isInitialized: true,
+    isInitialized: !!clickRef,
     activeAccount,
     isConnecting,
     error,
     connect,
     disconnect,
     signDeploy,
-    clickClient: null,
+    clickClient: clickRef,
   };
 };

@@ -4,10 +4,12 @@
   "description": "StakeVue - Liquid Staking dApp Frontend",
   "private": true,
   "dependencies": {
+    "@make-software/csprclick-ui": "^1.7.0",
     "@types/node": "^16.18.97",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
     "axios": "^1.6.8",
+    "casper-js-sdk": "^5.0.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.23.1",
