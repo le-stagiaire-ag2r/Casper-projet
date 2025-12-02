@@ -10,6 +10,15 @@ module.exports = function override(config) {
     process: require.resolve('process/browser'),
   });
   config.resolve.fallback = fallback;
+
+  // Allow imports without file extensions (fix for @make-software packages)
+  config.module.rules.push({
+    test: /\.m?js$/,
+    resolve: {
+      fullySpecified: false,
+    },
+  });
+
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
       process: 'process/browser',
