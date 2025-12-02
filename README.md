@@ -730,4 +730,4 @@ MIT License - see LICENSE file for details
 
 **Built with ❤️ for the Casper ecosystem**
 
-**StakeVue V4.0 - Where Multi-Validator Liquid Staking Meets Innovation** 🚀
+**StakeVue V5.0 - Where Multi-Validator Liquid Staking Meets Innovation** 🚀
