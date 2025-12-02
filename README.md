@@ -587,7 +587,7 @@ The deployment uses these critical flags:
 
 ## Roadmap
 
-### Current Status (V4.0 - Production Ready) 🚀
+### Current Status (V5.0 - Production Ready) 🚀
 - ✅ Core liquid staking contract
 - ✅ Stake/unstake/query operations
 - ✅ **Liquid staking tokens (stCSPR)** 🎉
@@ -602,14 +602,7 @@ The deployment uses these critical flags:
 - ✅ Fully tested and documented
 - ✅ **18 entry points** 🎉
 
-### Future Enhancements (V5.0+)
-- [ ] Automated staking rewards distribution
-- [ ] Governance features (DAO)
-- [ ] Cross-chain bridges
-- [ ] Advanced analytics dashboard
-- [ ] Mainnet deployment
-- [ ] Validator performance monitoring
-
+Vercel futur
 ---
 
 ## Why StakeVue?
