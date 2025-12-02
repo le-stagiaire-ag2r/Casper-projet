@@ -66,9 +66,13 @@ export const Dashboard: React.FC = () => {
 
         // Fetch active validators
         const validatorsData = await api.getActiveValidators();
-        setActiveValidators(validatorsData.data.length);
+        setActiveValidators(validatorsData.data?.length || 0);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
+        // Set default values on error
+        setTotalStaked('0');
+        setUserStaked('0');
+        setActiveValidators(0);
       } finally {
         setLoading(false);
       }
