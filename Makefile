@@ -17,6 +17,7 @@ setup:
 	@echo "Setting up environment files..."
 	@cp -n client/.env.example client/.env 2>/dev/null || echo "client/.env already exists"
 	@cp -n server/.env.example server/.env 2>/dev/null || echo "server/.env already exists"
+	@cp -n infra/local/.env.example infra/local/.env 2>/dev/null || echo "infra/local/.env already exists"
 	@echo "✅ Setup complete! Edit .env files with your API keys."
 
 build-client-docker:

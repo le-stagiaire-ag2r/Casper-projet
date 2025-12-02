@@ -1,0 +1,53 @@
+# Dependencies
+node_modules
+*/node_modules
+client/node_modules
+server/node_modules
+
+# Build outputs
+dist
+build
+*/dist
+*/build
+client/build
+server/dist
+
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+.env.local
+.env.*.local
+client/.env
+server/.env
+infra/local/.env
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+logs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+
+# Rust
+smart-contract/target
+*.wasm
+
+# Documentation
+*.md
+!README.md
+
+# Archive
+archive/

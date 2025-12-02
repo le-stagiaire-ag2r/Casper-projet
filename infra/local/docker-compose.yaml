@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0.33
+    container_name: stakevue-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: stakevue
+      TZ: UTC
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../../infra/local/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    networks:
+      - stakevue-local
+
+  # Wait for MySQL to be healthy
+  healthcheck-wait:
+    image: busybox:latest
+    container_name: stakevue-healthcheck-wait
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: echo "MySQL is ready!"
+    networks:
+      - stakevue-local
+
+  # Database Migration (TypeORM)
+  db-migrator:
+    build:
+      context: ../../
+      dockerfile: infra/docker/event-handler.dockerfile
+    container_name: stakevue-db-migrator
+    environment:
+      DB_URI: mysql://root:password@mysql:3306/stakevue
+      NODE_ENV: development
+    depends_on:
+      - healthcheck-wait
+    command: npm run migration:run
+    networks:
+      - stakevue-local
+
+  # API Server
+  api:
+    build:
+      context: ../../
+      dockerfile: infra/docker/api.dockerfile
+    container_name: stakevue-api
+    environment:
+      HTTP_PORT: 3001
+      DB_URI: mysql://root:password@mysql:3306/stakevue
+      CSPR_CLOUD_URL: ${CSPR_CLOUD_URL:-https://api.testnet.cspr.cloud}
+      CSPR_CLOUD_STREAMING_URL: ${CSPR_CLOUD_STREAMING_URL:-wss://streaming.testnet.cspr.cloud}
+      CSPR_CLOUD_ACCESS_KEY: ${CSPR_CLOUD_ACCESS_KEY}
+      CONTRACT_HASH: ${CONTRACT_HASH}
+      CONTRACT_PACKAGE_HASH: ${CONTRACT_PACKAGE_HASH}
+      TZ: UTC
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db-migrator
+    restart: unless-stopped
+    networks:
+      - stakevue-local
+
+  # Event Listener
+  handler:
+    build:
+      context: ../../
+      dockerfile: infra/docker/event-handler.dockerfile
+    container_name: stakevue-handler
+    environment:
+      DB_URI: mysql://root:password@mysql:3306/stakevue
+      CSPR_CLOUD_URL: ${CSPR_CLOUD_URL:-https://api.testnet.cspr.cloud}
+      CSPR_CLOUD_STREAMING_URL: ${CSPR_CLOUD_STREAMING_URL:-wss://streaming.testnet.cspr.cloud}
+      CSPR_CLOUD_ACCESS_KEY: ${CSPR_CLOUD_ACCESS_KEY}
+      CONTRACT_HASH: ${CONTRACT_HASH}
+      CONTRACT_PACKAGE_HASH: ${CONTRACT_PACKAGE_HASH}
+      TZ: UTC
+      NODE_ENV: production
+    depends_on:
+      - db-migrator
+    restart: unless-stopped
+    networks:
+      - stakevue-local
+
+  # Client (Frontend)
+  client:
+    build:
+      context: ../../
+      dockerfile: infra/docker/client.dockerfile
+      args:
+        REACT_APP_API_URL: http://localhost:3001
+        REACT_APP_CASPER_NETWORK: casper-test
+        REACT_APP_CASPER_CHAIN_NAME: casper-test
+        REACT_APP_CONTRACT_HASH: ${CONTRACT_HASH}
+        REACT_APP_CONTRACT_PACKAGE_HASH: ${CONTRACT_PACKAGE_HASH}
+        REACT_APP_CSPR_CLOUD_URL: https://api.testnet.cspr.cloud
+        REACT_APP_CSPRCLICK_APP_ID: ${CSPRCLICK_APP_ID}
+        REACT_APP_CSPRCLICK_APP_KEY: ${CSPRCLICK_APP_KEY}
+    container_name: stakevue-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - handler
+    restart: unless-stopped
+    networks:
+      - stakevue-local
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  stakevue-local:
+    driver: bridge
