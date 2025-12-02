@@ -4,6 +4,8 @@ import { WalletConnect } from './components/WalletConnect';
 import { Dashboard } from './components/Dashboard';
 import { StakingForm } from './components/StakingForm';
 import { StakeHistory } from './components/StakeHistory';
+import { DemoBanner } from './components/DemoBanner';
+import { WelcomeModal } from './components/WelcomeModal';
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -31,7 +33,8 @@ const GlobalStyle = createGlobalStyle`
 
 const AppContainer = styled.div`
   min-height: 100vh;
-  padding: 40px 20px;
+  padding: 60px 20px 40px;
+  margin-top: 48px; /* Space for DemoBanner */
 `;
 
 const Header = styled.header`
@@ -90,6 +93,8 @@ const App: React.FC = () => {
   return (
     <>
       <GlobalStyle />
+      <DemoBanner />
+      <WelcomeModal />
       <AppContainer>
         <Header>
           <Logo>
