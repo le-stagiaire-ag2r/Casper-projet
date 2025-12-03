@@ -96,13 +96,14 @@ export const useCsprClick = () => {
   };
 
   /**
-   * Switch to another account
+   * Switch to another account - opens signIn modal to select different account
    */
   const switchAccount = async () => {
     if (!window.csprclick) return;
 
     try {
-      window.csprclick.switchAccount();
+      // Use signIn to open wallet selection modal for switching accounts
+      window.csprclick.signIn();
     } catch (err: any) {
       console.error('Error switching account:', err);
     }
