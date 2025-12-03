@@ -25,32 +25,28 @@ const config = window.config;
 /**
  * Fetch user's main purse URef from the network
  * Required for V6.1 stake/unstake operations
+ * Uses CSPR.cloud API which supports CORS for frontend requests
  */
 export const fetchMainPurse = async (publicKeyHex: string): Promise<string> => {
   try {
-    // Query Casper testnet RPC for account info
-    const rpcUrl = 'https://rpc.testnet.casperlabs.io/rpc';
+    // Use CSPR.cloud testnet API (supports CORS)
+    const apiUrl = `https://api.testnet.cspr.cloud/accounts/${publicKeyHex}`;
 
-    const response = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'state_get_account_info',
-        params: {
-          public_key: publicKeyHex,
-        },
-      }),
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
 
     const data = await response.json();
 
-    if (data.error) {
-      throw new Error(data.error.message || 'Failed to fetch account info');
-    }
-
-    const mainPurse = data.result?.account?.main_purse;
+    // CSPR.cloud returns main_purse in the account data
+    const mainPurse = data?.main_purse;
     if (!mainPurse) {
       throw new Error('Could not find main purse in account info');
     }
