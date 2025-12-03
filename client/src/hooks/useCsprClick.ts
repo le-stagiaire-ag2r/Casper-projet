@@ -92,19 +92,18 @@ export const useCsprClick = () => {
    * Initiate wallet connection via CSPR.click signIn
    */
   const connect = async () => {
-    if (!window.csprclick) {
+    if (!clickRef) {
       setError('CSPR.click is not initialized');
       return;
     }
 
-    setIsConnecting(true);
     setError(null);
 
     try {
-      window.csprclick.signIn();
+      // Use clickRef.signIn() as per documentation
+      clickRef.signIn();
     } catch (err: any) {
       setError(err?.message || 'Failed to connect wallet');
-      setIsConnecting(false);
     }
   };
 
@@ -112,10 +111,10 @@ export const useCsprClick = () => {
    * Disconnect wallet (using signOut which doesn't require args)
    */
   const disconnect = async () => {
-    if (!window.csprclick) return;
+    if (!clickRef) return;
 
     try {
-      window.csprclick.signOut();
+      clickRef.signOut();
       setActiveAccount(null);
     } catch (err: any) {
       console.error('Error disconnecting:', err);
@@ -126,11 +125,11 @@ export const useCsprClick = () => {
    * Switch to another account - opens signIn modal to select different account
    */
   const switchAccount = async () => {
-    if (!window.csprclick) return;
+    if (!clickRef) return;
 
     try {
       // Use signIn to open wallet selection modal for switching accounts
-      window.csprclick.signIn();
+      clickRef.signIn();
     } catch (err: any) {
       console.error('Error switching account:', err);
     }
