@@ -108,7 +108,7 @@ const InfoText = styled.p`
 
 export const StakingForm: React.FC = () => {
   const { activeAccount } = useCsprClick();
-  const { stake, unstake, isProcessing, deployHash, status, error, resetState } = useStaking();
+  const { stake, unstake, isProcessing, deployHash, status, error } = useStaking();
   const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
   const [amount, setAmount] = useState('');
 

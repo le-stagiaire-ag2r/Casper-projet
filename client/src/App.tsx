@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
-import { ClickProvider, useClickRef } from '@make-software/csprclick-ui';
+import { ClickProvider } from '@make-software/csprclick-ui';
 import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-core-types';
 import { WalletConnect } from './components/WalletConnect';
 import { Dashboard } from './components/Dashboard';
@@ -17,24 +17,6 @@ const clickOptions: CsprClickInitOptions = {
   contentMode: CONTENT_MODE.IFRAME,
   providers: config.cspr_click_providers,
 };
-
-// Active Account Context
-export interface ActiveAccountType {
-  public_key: string;
-  account_hash: string;
-}
-
-interface ActiveAccountContextValue {
-  activeAccount: ActiveAccountType | null;
-  setActiveAccount: (account: ActiveAccountType | null) => void;
-}
-
-export const ActiveAccountContext = createContext<ActiveAccountContextValue>({
-  activeAccount: null,
-  setActiveAccount: () => {},
-});
-
-export const useActiveAccount = () => useContext(ActiveAccountContext);
 
 // Theme for styled-components
 const theme = {
@@ -132,59 +114,10 @@ const Footer = styled.footer`
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
-// Inner App component that uses CSPR.click hooks
+// Inner App component - state is now managed by useCsprClick hook in each component
 const AppContent: React.FC = () => {
-  const clickRef = useClickRef();
-  const [activeAccount, setActiveAccount] = useState<ActiveAccountType | null>(null);
-
-  // Listen to CSPR.click events
-  useEffect(() => {
-    if (!clickRef) return;
-
-    const handleSignedIn = (event: any) => {
-      console.log('Signed in:', event);
-      if (event?.activeKey) {
-        setActiveAccount({
-          public_key: event.activeKey,
-          account_hash: event.activeKey, // Will be computed properly
-        });
-      }
-    };
-
-    const handleSwitchedAccount = (event: any) => {
-      console.log('Switched account:', event);
-      if (event?.activeKey) {
-        setActiveAccount({
-          public_key: event.activeKey,
-          account_hash: event.activeKey,
-        });
-      }
-    };
-
-    const handleSignedOut = () => {
-      console.log('Signed out');
-      setActiveAccount(null);
-    };
-
-    const handleDisconnected = () => {
-      console.log('Disconnected');
-      setActiveAccount(null);
-    };
-
-    // Register event listeners
-    clickRef.on('csprclick:signed_in', handleSignedIn);
-    clickRef.on('csprclick:switched_account', handleSwitchedAccount);
-    clickRef.on('csprclick:signed_out', handleSignedOut);
-    clickRef.on('csprclick:disconnected', handleDisconnected);
-
-    // Cleanup
-    return () => {
-      // Note: CSPR.click doesn't have an off method, listeners are cleaned up automatically
-    };
-  }, [clickRef]);
-
   return (
-    <ActiveAccountContext.Provider value={{ activeAccount, setActiveAccount }}>
+    <>
       <GlobalStyle />
       <AppContainer>
         <Header>
@@ -213,7 +146,7 @@ const AppContent: React.FC = () => {
           </p>
         </Footer>
       </AppContainer>
-    </ActiveAccountContext.Provider>
+    </>
   );
 };
 

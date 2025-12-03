@@ -3,8 +3,6 @@ import { useCsprClick } from './useCsprClick';
 import {
   buildStakeTransaction,
   buildUnstakeTransaction,
-  sendTransaction,
-  TransactionStatus,
   csprToMotes,
   motesToCspr,
 } from '../services/transaction';
@@ -29,7 +27,7 @@ export interface TransactionState {
  * for transaction signing and submission.
  */
 export const useStaking = () => {
-  const { activeAccount, isConnected } = useCsprClick();
+  const { activeAccount, isConnected, send } = useCsprClick();
 
   const [transactionState, setTransactionState] = useState<TransactionState>({
     isProcessing: false,
@@ -49,14 +47,14 @@ export const useStaking = () => {
       status,
     }));
 
-    if (status === TransactionStatus.SENT) {
+    if (status === 'sent') {
       setTransactionState((prev) => ({
         ...prev,
         status: 'Transaction sent, waiting for confirmation...',
       }));
     }
 
-    if (status === TransactionStatus.PENDING) {
+    if (status === 'pending') {
       setTransactionState((prev) => ({
         ...prev,
         status: 'Transaction pending...',
@@ -129,8 +127,8 @@ export const useStaking = () => {
         status: 'Waiting for wallet signature...',
       }));
 
-      // Send transaction via CSPR.click
-      const result = await sendTransaction(
+      // Send transaction via CSPR.click using clickRef.send()
+      const result = await send(
         transaction,
         activeAccount.publicKey,
         handleStatusUpdate
@@ -223,8 +221,8 @@ export const useStaking = () => {
         status: 'Waiting for wallet signature...',
       }));
 
-      // Send transaction via CSPR.click
-      const result = await sendTransaction(
+      // Send transaction via CSPR.click using clickRef.send()
+      const result = await send(
         transaction,
         activeAccount.publicKey,
         handleStatusUpdate
