@@ -92,8 +92,8 @@ export const buildStakeTransaction = (
   deployHeader.chainName = config.chain_name || 'casper-test';
   deployHeader.gasPrice = 1;
 
-  // Build payment
-  const payment = ExecutableDeployItem.standardPayment(parseInt(paymentMotes, 10));
+  // Build payment (standardPayment expects string or BigNumber)
+  const payment = ExecutableDeployItem.standardPayment(paymentMotes);
 
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
@@ -141,8 +141,8 @@ export const buildUnstakeTransaction = (
   deployHeader.chainName = config.chain_name || 'casper-test';
   deployHeader.gasPrice = 1;
 
-  // Build payment
-  const payment = ExecutableDeployItem.standardPayment(parseInt(paymentMotes, 10));
+  // Build payment (standardPayment expects string or BigNumber)
+  const payment = ExecutableDeployItem.standardPayment(paymentMotes);
 
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
@@ -197,8 +197,8 @@ export const buildTransferStCsprTransaction = (
   deployHeader.chainName = config.chain_name || 'casper-test';
   deployHeader.gasPrice = 1;
 
-  // Build payment
-  const payment = ExecutableDeployItem.standardPayment(parseInt(paymentMotes, 10));
+  // Build payment (standardPayment expects string or BigNumber)
+  const payment = ExecutableDeployItem.standardPayment(paymentMotes);
 
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
