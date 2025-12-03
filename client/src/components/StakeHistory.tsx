@@ -98,7 +98,9 @@ export const StakeHistory: React.FC = () => {
         const response = await api.getUserStakes(activeAccount.accountHash, 10, 0);
         setStakes(response.data);
       } catch (error) {
-        console.error('Failed to fetch stake history:', error);
+        // API unavailable - show empty state
+        console.log('API unavailable for transaction history');
+        setStakes([]);
       } finally {
         setLoading(false);
       }
