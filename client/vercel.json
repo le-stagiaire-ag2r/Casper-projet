@@ -2,12 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "create-react-app",
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
+    {
+      "source": "/api/account",
+      "destination": "/api/account.js"
+    },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
