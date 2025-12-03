@@ -25,12 +25,12 @@ const config = window.config;
 /**
  * Fetch user's main purse URef from the network
  * Required for V6.1 stake/unstake operations
- * Uses CSPR.cloud API which supports CORS for frontend requests
+ * Uses our Vercel API route to proxy the request (avoids CORS)
  */
 export const fetchMainPurse = async (publicKeyHex: string): Promise<string> => {
   try {
-    // Use CSPR.cloud testnet API (supports CORS)
-    const apiUrl = `https://api.testnet.cspr.cloud/accounts/${publicKeyHex}`;
+    // Use our API route to proxy the RPC request (avoids CORS)
+    const apiUrl = `/api/account?publicKey=${encodeURIComponent(publicKeyHex)}`;
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -40,12 +40,12 @@ export const fetchMainPurse = async (publicKeyHex: string): Promise<string> => {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error: ${response.status}`);
     }
 
     const data = await response.json();
 
-    // CSPR.cloud returns main_purse in the account data
     const mainPurse = data?.main_purse;
     if (!mainPurse) {
       throw new Error('Could not find main purse in account info');
