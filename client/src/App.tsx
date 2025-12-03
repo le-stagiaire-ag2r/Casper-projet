@@ -221,7 +221,10 @@ const AppContent: React.FC<{
 const App: React.FC = () => {
   const [themeMode, setThemeMode] = useState<ThemeModeType>(ThemeModeType.dark);
 
-  const csprClickTheme = themeMode === ThemeModeType.dark ? CsprClickThemes.dark : CsprClickThemes.light;
+  const csprClickTheme = {
+    ...(themeMode === ThemeModeType.dark ? CsprClickThemes.dark : CsprClickThemes.light),
+    mode: themeMode === ThemeModeType.dark ? 'dark' : 'light',
+  };
 
   const handleThemeSwitch = useCallback(() => {
     setThemeMode(prev => prev === ThemeModeType.dark ? ThemeModeType.light : ThemeModeType.dark);
