@@ -6,9 +6,9 @@ window.config = {
   contract_hash: "hash-3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80",
   contract_package_hash: "cddd48ce2ca6673fe9f7d00328b4dcc825d60de0316422b4217f9e88d0690157",
 
-  // CSPR.click Configuration
-  cspr_click_app_name: "StakeVue",
-  cspr_click_app_id: "stakevue-testnet",
+  // CSPR.click Configuration (from console.cspr.build)
+  cspr_click_app_name: "Casper stake",
+  cspr_click_app_id: "4f5baf79-a4d3-4efc-b778-eea95fae",
   cspr_click_providers: ["casper-wallet", "ledger", "metamask-snap"],
 
   // Network Configuration
