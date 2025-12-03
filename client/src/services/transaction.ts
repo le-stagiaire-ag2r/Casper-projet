@@ -16,7 +16,7 @@ import {
   ExecutableDeployItem,
   StoredContractByHash,
   ContractHash,
-  DEFAULT_DEPLOY_TTL,
+  Duration,
 } from 'casper-js-sdk';
 
 // Get runtime config
@@ -91,7 +91,7 @@ export const buildStakeTransaction = (
   const deployHeader = DeployHeader.default();
   deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
   deployHeader.chainName = config.chain_name || 'casper-test';
-  deployHeader.ttl = DEFAULT_DEPLOY_TTL;
+  deployHeader.ttl = Duration.fromMinutes(30);
   deployHeader.gasPrice = 1;
 
   // Build payment
@@ -141,7 +141,7 @@ export const buildUnstakeTransaction = (
   const deployHeader = DeployHeader.default();
   deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
   deployHeader.chainName = config.chain_name || 'casper-test';
-  deployHeader.ttl = DEFAULT_DEPLOY_TTL;
+  deployHeader.ttl = Duration.fromMinutes(30);
   deployHeader.gasPrice = 1;
 
   // Build payment
@@ -198,7 +198,7 @@ export const buildTransferStCsprTransaction = (
   const deployHeader = DeployHeader.default();
   deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
   deployHeader.chainName = config.chain_name || 'casper-test';
-  deployHeader.ttl = DEFAULT_DEPLOY_TTL;
+  deployHeader.ttl = Duration.fromMinutes(30);
   deployHeader.gasPrice = 1;
 
   // Build payment
