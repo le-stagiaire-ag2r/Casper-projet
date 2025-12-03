@@ -58,7 +58,7 @@ const ErrorMessage = styled.div`
 `;
 
 export const WalletConnect: React.FC = () => {
-  const { activeAccount, isConnecting, error, connect, disconnect } = useCsprClick();
+  const { activeAccount, isReady, error, connect, disconnect } = useCsprClick();
 
   if (activeAccount) {
     return (
@@ -77,8 +77,8 @@ export const WalletConnect: React.FC = () => {
 
   return (
     <Container>
-      <Button onClick={connect} disabled={isConnecting}>
-        {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+      <Button onClick={connect} disabled={!isReady}>
+        {!isReady ? 'Loading...' : 'Connect Wallet'}
       </Button>
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </Container>

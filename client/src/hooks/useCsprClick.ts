@@ -201,6 +201,7 @@ export const useCsprClick = () => {
     activeAccount,
     isConnecting,
     isConnected: !!activeAccount,
+    isReady: !!clickRef, // CSPR.click is ready when clickRef is available
     error,
     connect,
     disconnect,
