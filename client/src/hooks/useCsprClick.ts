@@ -82,13 +82,13 @@ export const useCsprClick = () => {
   };
 
   /**
-   * Disconnect wallet
+   * Disconnect wallet (using signOut which doesn't require args)
    */
   const disconnect = async () => {
     if (!window.csprclick) return;
 
     try {
-      window.csprclick.disconnect();
+      window.csprclick.signOut();
       setActiveAccount(null);
     } catch (err: any) {
       console.error('Error disconnecting:', err);
