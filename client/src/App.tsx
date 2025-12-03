@@ -1,6 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
-import { ClickProvider, ClickUI, CsprClickThemes } from '@make-software/csprclick-ui';
+import {
+  ClickProvider,
+  ClickUI,
+  CsprClickThemes,
+  AccountCardMenuItem,
+  CopyHashMenuItem,
+  ViewAccountOnExplorerMenuItem,
+  BuyCSPRMenuItem,
+  ThemeModeType
+} from '@make-software/csprclick-ui';
 import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-core-types';
 import { Dashboard } from './components/Dashboard';
 import { StakingForm } from './components/StakingForm';
@@ -8,12 +17,6 @@ import { StakeHistory } from './components/StakeHistory';
 
 // Get runtime config
 const config = window.config;
-
-// Available networks
-const NETWORKS = [
-  { title: 'Testnet', key: 'casper-test' },
-  { title: 'Mainnet', key: 'casper' },
-];
 
 // CSPR.click initialization options
 const clickOptions: CsprClickInitOptions = {
@@ -143,51 +146,30 @@ const FooterLink = styled.a`
   }
 `;
 
-// Inner App component with theme and network state
+// Inner App component with theme state
 const AppContent: React.FC<{
   isDark: boolean;
-  onThemeChange: (theme: 'light' | 'dark') => void;
-  currentNetwork: string;
-  onNetworkChange: (network: string) => void;
-}> = ({ isDark, onThemeChange, currentNetwork, onNetworkChange }) => {
-  // Top bar settings with account menu items
+  themeMode: ThemeModeType;
+  onThemeSwitch: () => void;
+}> = ({ isDark, themeMode, onThemeSwitch }) => {
+  // Top bar settings with account menu items as React elements
   const topBarSettings = {
+    onThemeSwitch,
     accountMenuItems: [
-      'AccountCardMenuItem',
-      'CopyHashMenuItem',
-      'ViewAccountOnExplorerMenuItem',
-      'BuyCSPRMenuItem',
+      <AccountCardMenuItem key="account" />,
+      <CopyHashMenuItem key="copy" />,
+      <ViewAccountOnExplorerMenuItem key="explorer" />,
+      <BuyCSPRMenuItem key="buy" />,
     ],
-  };
-
-  // Network settings
-  const networkSettings = {
-    networks: NETWORKS.map(n => n.title),
-    currentNetwork: NETWORKS.find(n => n.key === currentNetwork)?.title || 'Testnet',
-    onNetworkSwitch: (networkTitle: string) => {
-      const network = NETWORKS.find(n => n.title === networkTitle);
-      if (network) {
-        onNetworkChange(network.key);
-        console.log('Network switched to:', network.key);
-      }
-    },
-  };
-
-  // Theme change handler for CSPR.click top bar
-  const handleThemeChanged = (theme: string) => {
-    onThemeChange(theme as 'light' | 'dark');
-    console.log('Theme switched to:', theme);
   };
 
   return (
     <>
       <GlobalStyle $isDark={isDark} />
-      {/* ClickUI with full configuration */}
+      {/* ClickUI with top bar */}
       <ClickUI
+        themeMode={themeMode}
         topBarSettings={topBarSettings}
-        // @ts-ignore - networkSettings type mismatch
-        networkSettings={networkSettings}
-        onThemeChanged={handleThemeChanged}
       />
       <AppContainer>
         <Header>
@@ -231,27 +213,21 @@ const AppContent: React.FC<{
 
 // Main App component with ClickProvider wrapper
 const App: React.FC = () => {
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
-  const [currentNetwork, setCurrentNetwork] = useState(config.chain_name || 'casper-test');
+  const [themeMode, setThemeMode] = useState<ThemeModeType>(ThemeModeType.dark);
 
-  const csprClickTheme = themeMode === 'dark' ? CsprClickThemes.dark : CsprClickThemes.light;
+  const csprClickTheme = themeMode === ThemeModeType.dark ? CsprClickThemes.dark : CsprClickThemes.light;
 
-  const handleThemeChange = useCallback((theme: 'light' | 'dark') => {
-    setThemeMode(theme);
-  }, []);
-
-  const handleNetworkChange = useCallback((network: string) => {
-    setCurrentNetwork(network);
+  const handleThemeSwitch = useCallback(() => {
+    setThemeMode(prev => prev === ThemeModeType.dark ? ThemeModeType.light : ThemeModeType.dark);
   }, []);
 
   return (
     <ThemeProvider theme={csprClickTheme}>
       <ClickProvider options={clickOptions}>
         <AppContent
-          isDark={themeMode === 'dark'}
-          onThemeChange={handleThemeChange}
-          currentNetwork={currentNetwork}
-          onNetworkChange={handleNetworkChange}
+          isDark={themeMode === ThemeModeType.dark}
+          themeMode={themeMode}
+          onThemeSwitch={handleThemeSwitch}
         />
       </ClickProvider>
     </ThemeProvider>
