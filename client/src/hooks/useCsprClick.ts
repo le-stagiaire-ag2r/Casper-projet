@@ -16,66 +16,63 @@ export const useCsprClick = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Helper to get active account from clickRef
+   */
+  const updateActiveAccount = useCallback(() => {
+    if (!clickRef) return;
+
+    try {
+      const account = clickRef.getActiveAccount?.();
+      if (account?.public_key) {
+        console.log('CSPR.click: Active account updated', account.public_key);
+        setActiveAccount({
+          publicKey: account.public_key,
+          accountHash: account.public_key,
+        });
+      } else {
+        setActiveAccount(null);
+      }
+    } catch (e) {
+      console.log('CSPR.click: Could not get active account');
+      setActiveAccount(null);
+    }
+  }, [clickRef]);
+
   // Check for existing active account on mount
   useEffect(() => {
     if (!clickRef) return;
 
-    // Check if user is already connected (from previous session)
-    const checkExistingConnection = () => {
-      try {
-        const activeKey = clickRef.getActiveAccount?.()?.public_key;
-        if (activeKey) {
-          console.log('CSPR.click: Found existing connection', activeKey);
-          setActiveAccount({
-            publicKey: activeKey,
-            accountHash: activeKey,
-          });
-        }
-      } catch (e) {
-        // getActiveAccount may not be available immediately
-        console.log('CSPR.click: No existing connection found');
-      }
-    };
-
     // Small delay to ensure CSPR.click is fully initialized
-    const timer = setTimeout(checkExistingConnection, 100);
+    const timer = setTimeout(updateActiveAccount, 100);
     return () => clearTimeout(timer);
-  }, [clickRef]);
+  }, [clickRef, updateActiveAccount]);
 
   // Listen to CSPR.click events
   useEffect(() => {
     if (!clickRef?.on) return;
 
-    const handleSignedIn = (event: any) => {
-      console.log('CSPR.click: Signed in', event);
+    const handleSignedIn = () => {
+      console.log('CSPR.click: Signed in event received');
       setIsConnecting(false);
       setError(null);
-
-      if (event?.activeKey) {
-        setActiveAccount({
-          publicKey: event.activeKey,
-          accountHash: event.activeKey,
-        });
-      }
+      // Get account from clickRef after sign in
+      updateActiveAccount();
     };
 
-    const handleSwitchedAccount = (event: any) => {
-      console.log('CSPR.click: Switched account', event);
-      if (event?.activeKey) {
-        setActiveAccount({
-          publicKey: event.activeKey,
-          accountHash: event.activeKey,
-        });
-      }
+    const handleSwitchedAccount = () => {
+      console.log('CSPR.click: Switched account event received');
+      // Get updated account from clickRef
+      updateActiveAccount();
     };
 
     const handleSignedOut = () => {
-      console.log('CSPR.click: Signed out');
+      console.log('CSPR.click: Signed out event received');
       setActiveAccount(null);
     };
 
     const handleDisconnected = () => {
-      console.log('CSPR.click: Disconnected');
+      console.log('CSPR.click: Disconnected event received');
       setActiveAccount(null);
     };
 
@@ -85,8 +82,16 @@ export const useCsprClick = () => {
     clickRef.on('csprclick:signed_out', handleSignedOut);
     clickRef.on('csprclick:disconnected', handleDisconnected);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clickRef?.on]);
+    // Cleanup event listeners on unmount
+    return () => {
+      if (clickRef?.off) {
+        clickRef.off('csprclick:signed_in', handleSignedIn);
+        clickRef.off('csprclick:switched_account', handleSwitchedAccount);
+        clickRef.off('csprclick:signed_out', handleSignedOut);
+        clickRef.off('csprclick:disconnected', handleDisconnected);
+      }
+    };
+  }, [clickRef, updateActiveAccount]);
 
   /**
    * Initiate wallet connection via CSPR.click signIn
