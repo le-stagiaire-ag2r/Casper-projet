@@ -28,46 +28,64 @@ const config = window.config;
  * Uses CORS proxy to call Casper RPC directly
  */
 export const fetchMainPurse = async (publicKeyHex: string): Promise<string> => {
-  try {
-    // Use a CORS proxy to call Casper RPC directly
-    const rpcUrl = 'https://rpc.testnet.casperlabs.io/rpc';
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rpcUrl)}`;
+  // Try multiple CORS proxies in order
+  const rpcUrl = 'https://rpc.testnet.casperlabs.io/rpc';
+  const proxies = [
+    (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    (url: string) => `https://cors-anywhere.herokuapp.com/${url}`,
+    (url: string) => `https://thingproxy.freeboard.io/fetch/${url}`,
+  ];
 
-    const response = await fetch(proxyUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'state_get_account_info',
-        params: {
-          public_key: publicKeyHex,
+  const requestBody = JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'state_get_account_info',
+    params: {
+      public_key: publicKeyHex,
+    },
+  });
+
+  let lastError: Error | null = null;
+
+  for (const makeProxyUrl of proxies) {
+    try {
+      const proxyUrl = makeProxyUrl(rpcUrl);
+
+      const response = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }),
-    });
+        body: requestBody,
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
+      if (!response.ok) {
+        lastError = new Error(`HTTP error: ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        lastError = new Error(data.error.message || 'RPC error');
+        continue;
+      }
+
+      const mainPurse = data.result?.account?.main_purse;
+      if (!mainPurse) {
+        throw new Error('Could not find main purse in account info');
+      }
+
+      return mainPurse; // Returns format: "uref-<hex>-007"
+    } catch (err: any) {
+      lastError = err;
+      console.warn('Proxy failed, trying next...', err.message);
+      continue;
     }
-
-    const data = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message || 'RPC error');
-    }
-
-    const mainPurse = data.result?.account?.main_purse;
-    if (!mainPurse) {
-      throw new Error('Could not find main purse in account info');
-    }
-
-    return mainPurse; // Returns format: "uref-<hex>-007"
-  } catch (err: any) {
-    console.error('Error fetching main purse:', err);
-    throw new Error(`Failed to fetch main purse: ${err.message}`);
   }
+
+  console.error('All CORS proxies failed:', lastError);
+  throw new Error(`Failed to fetch main purse: ${lastError?.message || 'All proxies failed'}`);
 };
 
 /**
