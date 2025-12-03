@@ -1,49 +1,123 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useClickRef } from '@make-software/csprclick-ui';
 
-export interface ActiveAccount {
+export interface ActiveAccountType {
   publicKey: string;
   accountHash: string;
-  balance?: string;
 }
 
+/**
+ * Hook to manage CSPR.click wallet connection state
+ * Based on official CSPR.click documentation pattern
+ */
 export const useCsprClick = () => {
-  const [activeAccount, setActiveAccount] = useState<ActiveAccount | null>(null);
+  const clickRef = useClickRef();
+  const [activeAccount, setActiveAccount] = useState<ActiveAccountType | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Listen to CSPR.click events
+  useEffect(() => {
+    if (!clickRef?.on) return;
+
+    const handleSignedIn = (event: any) => {
+      console.log('CSPR.click: Signed in', event);
+      setIsConnecting(false);
+      setError(null);
+
+      if (event?.activeKey) {
+        setActiveAccount({
+          publicKey: event.activeKey,
+          accountHash: event.activeKey, // Account hash is derived from public key
+        });
+      }
+    };
+
+    const handleSwitchedAccount = (event: any) => {
+      console.log('CSPR.click: Switched account', event);
+      if (event?.activeKey) {
+        setActiveAccount({
+          publicKey: event.activeKey,
+          accountHash: event.activeKey,
+        });
+      }
+    };
+
+    const handleSignedOut = () => {
+      console.log('CSPR.click: Signed out');
+      setActiveAccount(null);
+    };
+
+    const handleDisconnected = () => {
+      console.log('CSPR.click: Disconnected');
+      setActiveAccount(null);
+    };
+
+    // Register event listeners
+    clickRef.on('csprclick:signed_in', handleSignedIn);
+    clickRef.on('csprclick:switched_account', handleSwitchedAccount);
+    clickRef.on('csprclick:signed_out', handleSignedOut);
+    clickRef.on('csprclick:disconnected', handleDisconnected);
+
+  }, [clickRef?.on]);
+
+  /**
+   * Initiate wallet connection via CSPR.click signIn
+   */
   const connect = async () => {
+    if (!window.csprclick) {
+      setError('CSPR.click is not initialized');
+      return;
+    }
+
     setIsConnecting(true);
     setError(null);
 
-    // Simulation mode for now
-    // TODO: Integrate CSPR.click when ready
-    setTimeout(() => {
-      setActiveAccount({
-        publicKey: '0203a1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
-        accountHash: 'account-hash-123456789',
-      });
+    try {
+      window.csprclick.signIn();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to connect wallet');
       setIsConnecting(false);
-    }, 1000);
+    }
   };
 
+  /**
+   * Disconnect wallet
+   */
   const disconnect = async () => {
-    setActiveAccount(null);
+    if (!window.csprclick) return;
+
+    try {
+      window.csprclick.disconnect();
+      setActiveAccount(null);
+    } catch (err: any) {
+      console.error('Error disconnecting:', err);
+    }
   };
 
-  const signDeploy = async (deploy: any): Promise<any> => {
-    // TODO: Implement CSPR.click signing
-    console.warn('Sign deploy not yet implemented');
-    throw new Error('Wallet signing not yet implemented');
+  /**
+   * Switch to another account
+   */
+  const switchAccount = async () => {
+    if (!window.csprclick) return;
+
+    try {
+      window.csprclick.switchAccount();
+    } catch (err: any) {
+      console.error('Error switching account:', err);
+    }
   };
 
   return {
-    isInitialized: true,
+    clickRef,
     activeAccount,
     isConnecting,
+    isConnected: !!activeAccount,
     error,
     connect,
     disconnect,
-    signDeploy,
-    clickClient: null,
+    switchAccount,
   };
 };
+
+export default useCsprClick;

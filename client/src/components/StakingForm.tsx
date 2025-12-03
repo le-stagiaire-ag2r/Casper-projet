@@ -108,7 +108,7 @@ const InfoText = styled.p`
 
 export const StakingForm: React.FC = () => {
   const { activeAccount } = useCsprClick();
-  const { stake, unstake, isProcessing, txHash, error } = useStaking();
+  const { stake, unstake, isProcessing, deployHash, status, error, resetState } = useStaking();
   const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
   const [amount, setAmount] = useState('');
 
@@ -171,9 +171,24 @@ export const StakingForm: React.FC = () => {
           {isProcessing ? 'Processing...' : activeTab === 'stake' ? 'Stake CSPR' : 'Unstake stCSPR'}
         </SubmitButton>
 
-        {txHash && (
+        {status && !error && (
           <Message type="success">
-            Transaction submitted! Hash: {txHash.substring(0, 16)}...
+            {status}
+          </Message>
+        )}
+
+        {deployHash && (
+          <Message type="success">
+            Transaction submitted! Hash: {deployHash.substring(0, 16)}...
+            <br />
+            <a
+              href={`${window.config.cspr_live_url}/deploy/${deployHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#4caf50', textDecoration: 'underline' }}
+            >
+              View on Explorer
+            </a>
           </Message>
         )}
 

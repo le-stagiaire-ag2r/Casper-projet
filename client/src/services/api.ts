@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { StakeRecord, Validator, PaginatedResponse } from '../types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+// Use runtime config from public/config.js
+const getApiUrl = () => window.config?.api_url || 'http://localhost:3001';
 
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: getApiUrl(),
   timeout: 10000,
 });
 

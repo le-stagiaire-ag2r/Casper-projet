@@ -1,9 +1,55 @@
-import React from 'react';
-import styled, { createGlobalStyle } from 'styled-components';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
+import { ClickProvider, useClickRef } from '@make-software/csprclick-ui';
+import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-core-types';
 import { WalletConnect } from './components/WalletConnect';
 import { Dashboard } from './components/Dashboard';
 import { StakingForm } from './components/StakingForm';
 import { StakeHistory } from './components/StakeHistory';
+
+// Get runtime config
+const config = window.config;
+
+// CSPR.click initialization options
+const clickOptions: CsprClickInitOptions = {
+  appName: config.cspr_click_app_name,
+  appId: config.cspr_click_app_id,
+  contentMode: CONTENT_MODE.IFRAME,
+  providers: config.cspr_click_providers,
+};
+
+// Active Account Context
+export interface ActiveAccountType {
+  public_key: string;
+  account_hash: string;
+}
+
+interface ActiveAccountContextValue {
+  activeAccount: ActiveAccountType | null;
+  setActiveAccount: (account: ActiveAccountType | null) => void;
+}
+
+export const ActiveAccountContext = createContext<ActiveAccountContextValue>({
+  activeAccount: null,
+  setActiveAccount: () => {},
+});
+
+export const useActiveAccount = () => useContext(ActiveAccountContext);
+
+// Theme for styled-components
+const theme = {
+  colors: {
+    primary: '#667eea',
+    secondary: '#764ba2',
+    background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%)',
+    card: 'rgba(255, 255, 255, 0.1)',
+    text: '#ffffff',
+    textSecondary: '#999999',
+    success: '#10b981',
+    error: '#ef4444',
+    warning: '#f59e0b',
+  },
+};
 
 const GlobalStyle = createGlobalStyle`
   * {
@@ -18,7 +64,7 @@ const GlobalStyle = createGlobalStyle`
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+    background: ${theme.colors.background};
     min-height: 100vh;
     color: white;
   }
@@ -86,9 +132,59 @@ const Footer = styled.footer`
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
-const App: React.FC = () => {
+// Inner App component that uses CSPR.click hooks
+const AppContent: React.FC = () => {
+  const clickRef = useClickRef();
+  const [activeAccount, setActiveAccount] = useState<ActiveAccountType | null>(null);
+
+  // Listen to CSPR.click events
+  useEffect(() => {
+    if (!clickRef) return;
+
+    const handleSignedIn = (event: any) => {
+      console.log('Signed in:', event);
+      if (event?.activeKey) {
+        setActiveAccount({
+          public_key: event.activeKey,
+          account_hash: event.activeKey, // Will be computed properly
+        });
+      }
+    };
+
+    const handleSwitchedAccount = (event: any) => {
+      console.log('Switched account:', event);
+      if (event?.activeKey) {
+        setActiveAccount({
+          public_key: event.activeKey,
+          account_hash: event.activeKey,
+        });
+      }
+    };
+
+    const handleSignedOut = () => {
+      console.log('Signed out');
+      setActiveAccount(null);
+    };
+
+    const handleDisconnected = () => {
+      console.log('Disconnected');
+      setActiveAccount(null);
+    };
+
+    // Register event listeners
+    clickRef.on('csprclick:signed_in', handleSignedIn);
+    clickRef.on('csprclick:switched_account', handleSwitchedAccount);
+    clickRef.on('csprclick:signed_out', handleSignedOut);
+    clickRef.on('csprclick:disconnected', handleDisconnected);
+
+    // Cleanup
+    return () => {
+      // Note: CSPR.click doesn't have an off method, listeners are cleaned up automatically
+    };
+  }, [clickRef]);
+
   return (
-    <>
+    <ActiveAccountContext.Provider value={{ activeAccount, setActiveAccount }}>
       <GlobalStyle />
       <AppContainer>
         <Header>
@@ -105,7 +201,6 @@ const App: React.FC = () => {
           <Grid>
             <StakingForm />
             <div>
-              {/* Placeholder for additional info or charts */}
               <StakeHistory />
             </div>
           </Grid>
@@ -114,11 +209,22 @@ const App: React.FC = () => {
         <Footer>
           <p>StakeVue - Liquid Staking on Casper Network</p>
           <p style={{ marginTop: '8px', fontSize: '12px' }}>
-            Powered by CSPR.click | Built for Casper Hackathon 2026
+            Powered by CSPR.click | Built for Casper Hackathon
           </p>
         </Footer>
       </AppContainer>
-    </>
+    </ActiveAccountContext.Provider>
+  );
+};
+
+// Main App component with ClickProvider wrapper
+const App: React.FC = () => {
+  return (
+    <ThemeProvider theme={theme}>
+      <ClickProvider options={clickOptions}>
+        <AppContent />
+      </ClickProvider>
+    </ThemeProvider>
   );
 };
 

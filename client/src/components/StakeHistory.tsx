@@ -167,7 +167,7 @@ export const StakeHistory: React.FC = () => {
               <Td>{formatDate(stake.timestamp)}</Td>
               <Td>
                 <TxHash
-                  href={`https://testnet.cspr.live/deploy/${stake.txHash}`}
+                  href={`${window.config?.cspr_live_url || 'https://testnet.cspr.live'}/deploy/${stake.txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
