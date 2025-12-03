@@ -3,11 +3,6 @@
  * Proxies requests to avoid CORS issues
  */
 
-// Force Node.js 18 runtime for native fetch support
-export const config = {
-  runtime: 'nodejs18.x',
-};
-
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
