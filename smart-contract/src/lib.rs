@@ -15,7 +15,7 @@ use alloc::{
 };
 
 use casper_contract::{
-    contract_api::{runtime, storage},
+    contract_api::{runtime, storage, system, account},
     unwrap_or_revert::UnwrapOrRevert,
 };
 
@@ -42,6 +42,9 @@ const STCSPR_TOKEN_SYMBOL: &str = "stCSPR";
 
 // APY Configuration - 10% annual return
 const APY_PERCENTAGE: u64 = 10;
+
+// V6.0: Real CSPR transfers - Contract purse for holding staked CSPR
+const CONTRACT_PURSE_KEY: &str = "contract_purse";
 
 // V4.0: Multi-Validator Liquid Staking Architecture
 // This contract implements a sophisticated liquid staking system with:
@@ -76,6 +79,14 @@ fn get_stcspr_balance_key(account: &AccountHash) -> String {
 /// V4.0: Helper function to get validator stake key
 fn get_validator_stake_key(validator: &PublicKey) -> String {
     format!("validator_stake_{}", validator.to_hex())
+}
+
+/// V6.0: Helper function to get the contract's purse
+fn get_contract_purse() -> URef {
+    runtime::get_key(CONTRACT_PURSE_KEY)
+        .unwrap_or_revert_with(ApiError::MissingKey)
+        .into_uref()
+        .unwrap_or_revert_with(ApiError::UnexpectedKeyVariant)
 }
 
 
@@ -182,6 +193,7 @@ fn untrack_validator_stake(validator: PublicKey, amount: U512) {
 }
 
 /// Entry point to stake CSPR
+/// V6.0: Now actually transfers CSPR from user to contract
 #[no_mangle]
 pub extern "C" fn stake() {
     // Get the amount parameter
@@ -189,6 +201,13 @@ pub extern "C" fn stake() {
 
     // Get caller address
     let caller = runtime::get_caller();
+
+    // V6.0: Transfer CSPR from caller's main purse to contract purse
+    let source_purse = account::get_main_purse();
+    let contract_purse = get_contract_purse();
+
+    system::transfer_from_purse_to_purse(source_purse, contract_purse, amount, None)
+        .unwrap_or_revert_with(ApiError::User(220)); // Transfer failed
 
     // For v2, we track when users staked (block number for simplicity)
     // In production, this would be more sophisticated
@@ -254,6 +273,7 @@ pub extern "C" fn stake() {
 }
 
 /// Entry point to unstake CSPR
+/// V6.0: Now actually transfers CSPR from contract back to user
 #[no_mangle]
 pub extern "C" fn unstake() {
     // Get the amount parameter
@@ -277,6 +297,13 @@ pub extern "C" fn unstake() {
     if current_user_stake < amount {
         runtime::revert(ApiError::User(100)); // Custom error: Insufficient staked amount
     }
+
+    // V6.0: Transfer CSPR from contract purse back to user's main purse
+    let contract_purse = get_contract_purse();
+    let user_purse = account::get_main_purse();
+
+    system::transfer_from_purse_to_purse(contract_purse, user_purse, amount, None)
+        .unwrap_or_revert_with(ApiError::User(221)); // Transfer back failed
 
     // Update user's stake
     // V5.0 Security Fix: Use checked subtraction to prevent underflow
@@ -666,6 +693,9 @@ pub extern "C" fn call() {
     let total_validators_start = storage::new_uref(0u32);
     let next_validator_index_start = storage::new_uref(0u32);
 
+    // V6.0: Create contract purse to hold staked CSPR
+    let contract_purse = system::create_purse();
+
     // Setup named keys
     let mut contract_named_keys = NamedKeys::new();
     contract_named_keys.insert(String::from(TOTAL_STAKED_KEY), total_staked_start.into());
@@ -676,6 +706,9 @@ pub extern "C" fn call() {
     contract_named_keys.insert(String::from(VALIDATORS_LIST_KEY), validators_list_start.into());
     contract_named_keys.insert(String::from(TOTAL_VALIDATORS_KEY), total_validators_start.into());
     contract_named_keys.insert(String::from(NEXT_VALIDATOR_INDEX_KEY), next_validator_index_start.into());
+
+    // V6.0: Add contract purse to named keys
+    contract_named_keys.insert(String::from(CONTRACT_PURSE_KEY), contract_purse.into());
 
     // Create entry points
     let mut entry_points = EntryPoints::new();
