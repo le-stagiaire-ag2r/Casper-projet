@@ -114,17 +114,21 @@ export const useCsprClick = () => {
 
   /**
    * Disconnect wallet completely
+   * Uses window.csprclick.disconnect() to force full re-authentication on next login
    */
   const disconnect = async () => {
-    if (!clickRef) return;
-
     try {
-      // Sign out from the dApp session
-      clickRef.signOut();
+      // Use window.csprclick.disconnect() to fully disconnect
+      // This forces the user to re-authenticate on next login
+      if (window.csprclick?.disconnect) {
+        window.csprclick.disconnect();
+      } else if (clickRef?.signOut) {
+        // Fallback to signOut if disconnect not available
+        clickRef.signOut();
+      }
       setActiveAccount(null);
     } catch (err: any) {
       console.error('Error disconnecting:', err);
-      // Still clear local state even if disconnect fails
       setActiveAccount(null);
     }
   };
