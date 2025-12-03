@@ -211,7 +211,7 @@ All services run on the `stakevue-local` bridge network, allowing inter-containe
 
 For production, see deployment guides:
 - Frontend: Deploy to Vercel/Netlify
-- Backend: Deploy to Railway/Render
+- Backend: Deploy to Render or similar
 - Database: Use managed MySQL (PlanetScale, AWS RDS)
 
 See main README for deployment instructions.
