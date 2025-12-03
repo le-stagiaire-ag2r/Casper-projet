@@ -1,6 +1,6 @@
 import React from 'react';
-import styled, { createGlobalStyle } from 'styled-components';
-import { ClickProvider, ClickUI } from '@make-software/csprclick-ui';
+import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
+import { ClickProvider, ClickUI, CsprClickThemes } from '@make-software/csprclick-ui';
 import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-core-types';
 import { WalletConnect } from './components/WalletConnect';
 import { Dashboard } from './components/Dashboard';
@@ -152,12 +152,14 @@ const AppContent: React.FC = () => {
   );
 };
 
-// Main App component with ClickProvider wrapper
+// Main App component with ClickProvider wrapper and CSPR.click theme
 const App: React.FC = () => {
   return (
-    <ClickProvider options={clickOptions}>
-      <AppContent />
-    </ClickProvider>
+    <ThemeProvider theme={CsprClickThemes.light}>
+      <ClickProvider options={clickOptions}>
+        <AppContent />
+      </ClickProvider>
+    </ThemeProvider>
   );
 };
 
