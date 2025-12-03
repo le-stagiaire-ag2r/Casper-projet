@@ -95,9 +95,11 @@ const LogoText = styled.h1`
   letter-spacing: -1px;
 `;
 
-const Tagline = styled.p`
+const Tagline = styled.p<{ $isDark: boolean }>`
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.6);
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.5)'};
   font-weight: 500;
 `;
 
@@ -117,14 +119,18 @@ const Grid = styled.div`
   }
 `;
 
-const Footer = styled.footer`
+const Footer = styled.footer<{ $isDark: boolean }>`
   max-width: 1200px;
   margin: 48px auto 0;
   padding: 32px 0;
   text-align: center;
-  color: rgba(255, 255, 255, 0.5);
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.5)'
+    : 'rgba(0, 0, 0, 0.5)'};
   font-size: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.1)'
+    : 'rgba(0, 0, 0, 0.1)'};
 `;
 
 const FooterLinks = styled.div`
@@ -177,7 +183,7 @@ const AppContent: React.FC<{
             <LogoIcon>💎</LogoIcon>
             <LogoText>StakeVue</LogoText>
           </Logo>
-          <Tagline>Liquid Staking on Casper Network</Tagline>
+          <Tagline $isDark={isDark}>Liquid Staking on Casper Network</Tagline>
         </Header>
 
         <MainContent>
@@ -189,7 +195,7 @@ const AppContent: React.FC<{
           </Grid>
         </MainContent>
 
-        <Footer>
+        <Footer $isDark={isDark}>
           <p>StakeVue - Secure Liquid Staking Protocol</p>
           <FooterLinks>
             <FooterLink href="https://cspr.live" target="_blank" rel="noopener noreferrer">

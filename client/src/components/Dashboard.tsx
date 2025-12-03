@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { api } from '../services/api';
+import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 
 const shimmer = keyframes`
@@ -20,15 +19,22 @@ const Container = styled.div`
   margin-bottom: 32px;
 `;
 
-const Card = styled.div`
-  background: rgba(255, 255, 255, 0.03);
+const Card = styled.div<{ $isDark: boolean }>`
+  background: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.03)'
+    : 'rgba(255, 255, 255, 0.8)'};
   border-radius: 20px;
   padding: 28px;
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.08)'};
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  box-shadow: ${props => props.$isDark
+    ? 'none'
+    : '0 4px 20px rgba(0, 0, 0, 0.08)'};
 
   &::before {
     content: '';
@@ -44,8 +50,12 @@ const Card = styled.div`
 
   &:hover {
     transform: translateY(-4px);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: ${props => props.$isDark
+      ? 'rgba(255, 255, 255, 0.15)'
+      : 'rgba(88, 86, 214, 0.3)'};
+    box-shadow: ${props => props.$isDark
+      ? '0 20px 40px rgba(0, 0, 0, 0.3)'
+      : '0 20px 40px rgba(88, 86, 214, 0.15)'};
 
     &::before {
       opacity: 1;
@@ -58,19 +68,23 @@ const CardIcon = styled.div`
   margin-bottom: 16px;
 `;
 
-const CardTitle = styled.h3`
+const CardTitle = styled.h3<{ $isDark: boolean }>`
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.5)'
+    : 'rgba(0, 0, 0, 0.5)'};
   margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   font-weight: 600;
 `;
 
-const CardValue = styled.div`
+const CardValue = styled.div<{ $isDark: boolean }>`
   font-size: 36px;
   font-weight: 800;
-  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+  background: ${props => props.$isDark
+    ? 'linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%)'
+    : 'linear-gradient(135deg, #1a1a2e 0%, #5856d6 100%)'};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -78,32 +92,33 @@ const CardValue = styled.div`
   letter-spacing: -1px;
 `;
 
-const CardSubtext = styled.div`
+const CardSubtext = styled.div<{ $isDark: boolean }>`
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.4);
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.4)'
+    : 'rgba(0, 0, 0, 0.4)'};
   font-weight: 500;
 `;
 
-const LoadingSkeleton = styled.div`
+const LoadingSkeleton = styled.div<{ $isDark: boolean }>`
   height: 36px;
   width: 120px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
+  background: ${props => props.$isDark
+    ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 100%)'
+    : 'linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.05) 100%)'};
   background-size: 200% 100%;
   animation: ${shimmer} 1.5s infinite;
   border-radius: 8px;
   margin-bottom: 8px;
 `;
 
-const ConnectPrompt = styled.div`
+const ConnectPrompt = styled.div<{ $isDark: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.4);
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.4)'
+    : 'rgba(0, 0, 0, 0.4)'};
   font-size: 14px;
   animation: ${pulse} 2s infinite;
 `;
@@ -120,12 +135,14 @@ const APYBadge = styled.span`
   vertical-align: middle;
 `;
 
-const LiveIndicator = styled.div`
+const LiveIndicator = styled.div<{ $isDark: boolean }>`
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.4)'
+    : 'rgba(0, 0, 0, 0.4)'};
   margin-top: 12px;
 
   &::before {
@@ -138,111 +155,91 @@ const LiveIndicator = styled.div`
   }
 `;
 
+const DemoTag = styled.span<{ $isDark: boolean }>`
+  display: inline-block;
+  background: ${props => props.$isDark
+    ? 'rgba(255, 159, 10, 0.2)'
+    : 'rgba(255, 159, 10, 0.15)'};
+  color: #ff9f0a;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
 export const Dashboard: React.FC = () => {
   const { activeAccount } = useCsprClick();
-  const [totalStaked, setTotalStaked] = useState<string>('0');
-  const [userStaked, setUserStaked] = useState<string>('0');
-  const [activeValidators, setActiveValidators] = useState<number>(0);
+  const theme = useTheme() as any;
+  const isDark = theme?.mode === 'dark';
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const tvlData = await api.getTotalStaked();
-        setTotalStaked(tvlData.totalStaked);
-
-        if (activeAccount) {
-          const userStakedData = await api.getUserTotalStaked(activeAccount.accountHash);
-          setUserStaked(userStakedData.totalStaked);
-        }
-
-        const validatorsData = await api.getActiveValidators();
-        setActiveValidators(validatorsData.data.length);
-      } catch (error) {
-        console.log('API unavailable, using placeholder values');
-        setTotalStaked('0');
-        setUserStaked('0');
-        setActiveValidators(5);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    const isLocalhost = window.location.hostname === 'localhost';
-    if (isLocalhost) {
-      const interval = setInterval(fetchData, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [activeAccount]);
-
-  const formatAmount = (motes: string): string => {
-    const cspr = parseFloat(motes) / 1_000_000_000;
-    if (cspr >= 1000000) {
-      return (cspr / 1000000).toFixed(2) + 'M';
-    } else if (cspr >= 1000) {
-      return (cspr / 1000).toFixed(2) + 'K';
-    }
-    return cspr.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  };
-
-  const calculateAPY = (): string => {
-    return '10.00';
-  };
+    // Simulate loading
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <Container>
-      <Card>
-        <CardIcon>🏦</CardIcon>
-        <CardTitle>Total Value Locked</CardTitle>
+      <Card $isDark={isDark}>
+        <CardIcon>🌐</CardIcon>
+        <CardTitle $isDark={isDark}>Network</CardTitle>
         {loading ? (
-          <LoadingSkeleton />
+          <LoadingSkeleton $isDark={isDark} />
         ) : (
           <>
-            <CardValue>{formatAmount(totalStaked)} CSPR</CardValue>
-            <CardSubtext>Protocol TVL</CardSubtext>
-            <LiveIndicator>Live data</LiveIndicator>
+            <CardValue $isDark={isDark}>Testnet</CardValue>
+            <CardSubtext $isDark={isDark}>Casper Network</CardSubtext>
+            <LiveIndicator $isDark={isDark}>Connected</LiveIndicator>
           </>
         )}
       </Card>
 
-      <Card>
-        <CardIcon>💰</CardIcon>
-        <CardTitle>Your Stake</CardTitle>
+      <Card $isDark={isDark}>
+        <CardIcon>💳</CardIcon>
+        <CardTitle $isDark={isDark}>Wallet Status</CardTitle>
         {loading ? (
-          <LoadingSkeleton />
+          <LoadingSkeleton $isDark={isDark} />
         ) : activeAccount ? (
           <>
-            <CardValue>{formatAmount(userStaked)} stCSPR</CardValue>
-            <CardSubtext>Liquid staking tokens</CardSubtext>
+            <CardValue $isDark={isDark}>Connected</CardValue>
+            <CardSubtext $isDark={isDark}>
+              {activeAccount.publicKey?.substring(0, 8)}...{activeAccount.publicKey?.substring(activeAccount.publicKey.length - 6)}
+            </CardSubtext>
           </>
         ) : (
-          <ConnectPrompt>
-            <span>🔗</span> Connect wallet to view
+          <ConnectPrompt $isDark={isDark}>
+            <span>🔗</span> Connect via top bar
           </ConnectPrompt>
         )}
       </Card>
 
-      <Card>
+      <Card $isDark={isDark}>
         <CardIcon>📈</CardIcon>
-        <CardTitle>Current APY</CardTitle>
-        <CardValue>
-          {calculateAPY()}%
-          <APYBadge>LIVE</APYBadge>
+        <CardTitle $isDark={isDark}>
+          Staking APY
+          <DemoTag $isDark={isDark}>Demo</DemoTag>
+        </CardTitle>
+        <CardValue $isDark={isDark}>
+          ~8-12%
+          <APYBadge>EST.</APYBadge>
         </CardValue>
-        <CardSubtext>Annual Percentage Yield</CardSubtext>
+        <CardSubtext $isDark={isDark}>Casper Network Average</CardSubtext>
       </Card>
 
-      <Card>
-        <CardIcon>🛡️</CardIcon>
-        <CardTitle>Validators</CardTitle>
+      <Card $isDark={isDark}>
+        <CardIcon>⚡</CardIcon>
+        <CardTitle $isDark={isDark}>Protocol</CardTitle>
         {loading ? (
-          <LoadingSkeleton />
+          <LoadingSkeleton $isDark={isDark} />
         ) : (
           <>
-            <CardValue>{activeValidators}</CardValue>
-            <CardSubtext>Active in pool</CardSubtext>
+            <CardValue $isDark={isDark}>StakeVue</CardValue>
+            <CardSubtext $isDark={isDark}>Liquid Staking</CardSubtext>
+            <LiveIndicator $isDark={isDark}>Active</LiveIndicator>
           </>
         )}
       </Card>

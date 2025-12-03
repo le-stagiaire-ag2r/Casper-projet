@@ -135,6 +135,21 @@ export const useStaking = () => {
       );
 
       if (result.success) {
+        // Store transaction in localStorage for history
+        const txRecord = {
+          id: Date.now().toString(),
+          txHash: result.deployHash || '',
+          actionType: 'stake',
+          amount: csprToMotes(amountCspr),
+          timestamp: new Date().toISOString(),
+          userAddress: activeAccount.publicKey,
+        };
+        const existingTxs = JSON.parse(localStorage.getItem('stakevue_transactions') || '[]');
+        localStorage.setItem('stakevue_transactions', JSON.stringify([txRecord, ...existingTxs]));
+
+        // Dispatch event to notify history component
+        window.dispatchEvent(new CustomEvent('stakevue_transaction_added'));
+
         setTransactionState({
           isProcessing: false,
           status: 'Stake successful!',
@@ -229,6 +244,21 @@ export const useStaking = () => {
       );
 
       if (result.success) {
+        // Store transaction in localStorage for history
+        const txRecord = {
+          id: Date.now().toString(),
+          txHash: result.deployHash || '',
+          actionType: 'unstake',
+          amount: csprToMotes(amountCspr),
+          timestamp: new Date().toISOString(),
+          userAddress: activeAccount.publicKey,
+        };
+        const existingTxs = JSON.parse(localStorage.getItem('stakevue_transactions') || '[]');
+        localStorage.setItem('stakevue_transactions', JSON.stringify([txRecord, ...existingTxs]));
+
+        // Dispatch event to notify history component
+        window.dispatchEvent(new CustomEvent('stakevue_transaction_added'));
+
         setTransactionState({
           isProcessing: false,
           status: 'Unstake successful!',

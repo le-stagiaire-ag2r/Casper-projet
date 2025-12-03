@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, useTheme } from 'styled-components';
 import { useStaking } from '../hooks/useStaking';
 import { useCsprClick } from '../hooks/useCsprClick';
 
@@ -13,14 +13,21 @@ const slideIn = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const Container = styled.div`
-  background: rgba(255, 255, 255, 0.03);
+const Container = styled.div<{ $isDark: boolean }>`
+  background: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.03)'
+    : 'rgba(255, 255, 255, 0.8)'};
   border-radius: 24px;
   padding: 32px;
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.08)'};
   position: relative;
   overflow: hidden;
+  box-shadow: ${props => props.$isDark
+    ? 'none'
+    : '0 4px 20px rgba(0, 0, 0, 0.08)'};
 
   &::before {
     content: '';
@@ -48,10 +55,10 @@ const Header = styled.div`
   margin-bottom: 28px;
 `;
 
-const Title = styled.h2`
+const Title = styled.h2<{ $isDark: boolean }>`
   font-size: 24px;
   font-weight: 700;
-  color: #fff;
+  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
   display: flex;
   align-items: center;
   gap: 12px;
@@ -61,28 +68,35 @@ const TitleIcon = styled.span`
   font-size: 28px;
 `;
 
-const TabContainer = styled.div`
+const TabContainer = styled.div<{ $isDark: boolean }>`
   display: flex;
-  background: rgba(255, 255, 255, 0.05);
+  background: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.05)'};
   border-radius: 12px;
   padding: 4px;
   gap: 4px;
 `;
 
-const Tab = styled.button<{ active: boolean }>`
+const Tab = styled.button<{ active: boolean; $isDark: boolean }>`
   padding: 10px 24px;
   background: ${(props) => (props.active ? 'linear-gradient(135deg, #ff2d55 0%, #5856d6 100%)' : 'transparent')};
   border: none;
   border-radius: 8px;
-  color: ${(props) => (props.active ? '#fff' : 'rgba(255, 255, 255, 0.6)')};
+  color: ${(props) => {
+    if (props.active) return '#fff';
+    return props.$isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  }};
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    color: #fff;
-    background: ${(props) => (props.active ? 'linear-gradient(135deg, #ff2d55 0%, #5856d6 100%)' : 'rgba(255, 255, 255, 0.1)')};
+    color: ${props => props.active ? '#fff' : (props.$isDark ? '#fff' : '#1a1a2e')};
+    background: ${(props) => (props.active
+      ? 'linear-gradient(135deg, #ff2d55 0%, #5856d6 100%)'
+      : props.$isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)')};
   }
 `;
 
@@ -97,8 +111,10 @@ const LabelRow = styled.div`
   margin-bottom: 12px;
 `;
 
-const Label = styled.label`
-  color: rgba(255, 255, 255, 0.6);
+const Label = styled.label<{ $isDark: boolean }>`
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
   font-size: 14px;
   font-weight: 500;
 `;
@@ -124,20 +140,26 @@ const InputWrapper = styled.div`
   position: relative;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ $isDark: boolean }>`
   width: 100%;
   padding: 18px 80px 18px 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(0, 0, 0, 0.03)'};
+  border: 2px solid ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.1)'
+    : 'rgba(0, 0, 0, 0.1)'};
   border-radius: 16px;
-  color: #fff;
+  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
   font-size: 24px;
   font-weight: 600;
   box-sizing: border-box;
   transition: all 0.3s ease;
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.2);
+    color: ${props => props.$isDark
+      ? 'rgba(255, 255, 255, 0.2)'
+      : 'rgba(0, 0, 0, 0.2)'};
     font-weight: 400;
   }
 
@@ -152,12 +174,14 @@ const Input = styled.input`
   }
 `;
 
-const TokenLabel = styled.div`
+const TokenLabel = styled.div<{ $isDark: boolean }>`
   position: absolute;
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.5);
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.5)'
+    : 'rgba(0, 0, 0, 0.5)'};
   font-size: 14px;
   font-weight: 600;
 `;
@@ -246,31 +270,37 @@ const ExplorerLink = styled.a`
   }
 `;
 
-const InfoBox = styled.div`
-  background: rgba(255, 255, 255, 0.03);
+const InfoBox = styled.div<{ $isDark: boolean }>`
+  background: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.03)'
+    : 'rgba(0, 0, 0, 0.02)'};
   border-radius: 12px;
   padding: 16px;
   margin-top: 20px;
 `;
 
-const InfoRow = styled.div`
+const InfoRow = styled.div<{ $isDark: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
 
   &:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid ${props => props.$isDark
+      ? 'rgba(255, 255, 255, 0.05)'
+      : 'rgba(0, 0, 0, 0.05)'};
   }
 `;
 
-const InfoLabel = styled.span`
-  color: rgba(255, 255, 255, 0.5);
+const InfoLabel = styled.span<{ $isDark: boolean }>`
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.5)'
+    : 'rgba(0, 0, 0, 0.5)'};
   font-size: 14px;
 `;
 
-const InfoValue = styled.span`
-  color: #fff;
+const InfoValue = styled.span<{ $isDark: boolean }>`
+  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
   font-size: 14px;
   font-weight: 600;
 `;
@@ -285,20 +315,26 @@ const ConnectIcon = styled.div`
   margin-bottom: 16px;
 `;
 
-const ConnectText = styled.p`
-  color: rgba(255, 255, 255, 0.6);
+const ConnectText = styled.p<{ $isDark: boolean }>`
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
   font-size: 16px;
   margin-bottom: 8px;
 `;
 
-const ConnectSubtext = styled.p`
-  color: rgba(255, 255, 255, 0.4);
+const ConnectSubtext = styled.p<{ $isDark: boolean }>`
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.4)'
+    : 'rgba(0, 0, 0, 0.4)'};
   font-size: 14px;
 `;
 
 export const StakingForm: React.FC = () => {
   const { activeAccount } = useCsprClick();
   const { stake, unstake, isProcessing, deployHash, status, error } = useStaking();
+  const theme = useTheme() as any;
+  const isDark = theme?.mode === 'dark';
   const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
   const [amount, setAmount] = useState('');
 
@@ -327,28 +363,36 @@ export const StakingForm: React.FC = () => {
 
   if (!activeAccount) {
     return (
-      <Container>
+      <Container $isDark={isDark}>
         <ConnectPrompt>
           <ConnectIcon>🔐</ConnectIcon>
-          <ConnectText>Connect your wallet to start staking</ConnectText>
-          <ConnectSubtext>Use the connect button in the top bar</ConnectSubtext>
+          <ConnectText $isDark={isDark}>Connect your wallet to start staking</ConnectText>
+          <ConnectSubtext $isDark={isDark}>Use the connect button in the top bar</ConnectSubtext>
         </ConnectPrompt>
       </Container>
     );
   }
 
   return (
-    <Container>
+    <Container $isDark={isDark}>
       <Header>
-        <Title>
+        <Title $isDark={isDark}>
           <TitleIcon>{activeTab === 'stake' ? '💎' : '🔄'}</TitleIcon>
           {activeTab === 'stake' ? 'Stake' : 'Unstake'}
         </Title>
-        <TabContainer>
-          <Tab active={activeTab === 'stake'} onClick={() => setActiveTab('stake')}>
+        <TabContainer $isDark={isDark}>
+          <Tab
+            active={activeTab === 'stake'}
+            $isDark={isDark}
+            onClick={() => setActiveTab('stake')}
+          >
             Stake
           </Tab>
-          <Tab active={activeTab === 'unstake'} onClick={() => setActiveTab('unstake')}>
+          <Tab
+            active={activeTab === 'unstake'}
+            $isDark={isDark}
+            onClick={() => setActiveTab('unstake')}
+          >
             Unstake
           </Tab>
         </TabContainer>
@@ -357,11 +401,14 @@ export const StakingForm: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <InputGroup>
           <LabelRow>
-            <Label>{activeTab === 'stake' ? 'Amount to stake' : 'Amount to unstake'}</Label>
+            <Label $isDark={isDark}>
+              {activeTab === 'stake' ? 'Amount to stake' : 'Amount to unstake'}
+            </Label>
             <MaxButton type="button" onClick={handleMaxClick}>MAX</MaxButton>
           </LabelRow>
           <InputWrapper>
             <Input
+              $isDark={isDark}
               type="number"
               step="0.000000001"
               min="0"
@@ -370,7 +417,9 @@ export const StakingForm: React.FC = () => {
               placeholder="0.00"
               disabled={isProcessing}
             />
-            <TokenLabel>{activeTab === 'stake' ? 'CSPR' : 'stCSPR'}</TokenLabel>
+            <TokenLabel $isDark={isDark}>
+              {activeTab === 'stake' ? 'CSPR' : 'stCSPR'}
+            </TokenLabel>
           </InputWrapper>
         </InputGroup>
 
@@ -406,18 +455,18 @@ export const StakingForm: React.FC = () => {
 
         {error && <Message type="error">{error}</Message>}
 
-        <InfoBox>
-          <InfoRow>
-            <InfoLabel>Exchange Rate</InfoLabel>
-            <InfoValue>1 CSPR = 1 stCSPR</InfoValue>
+        <InfoBox $isDark={isDark}>
+          <InfoRow $isDark={isDark}>
+            <InfoLabel $isDark={isDark}>Exchange Rate</InfoLabel>
+            <InfoValue $isDark={isDark}>1 CSPR = 1 stCSPR</InfoValue>
           </InfoRow>
-          <InfoRow>
-            <InfoLabel>APY</InfoLabel>
-            <InfoValue style={{ color: '#30d158' }}>10.00%</InfoValue>
+          <InfoRow $isDark={isDark}>
+            <InfoLabel $isDark={isDark}>APY</InfoLabel>
+            <InfoValue $isDark={isDark} style={{ color: '#30d158' }}>~8-12%</InfoValue>
           </InfoRow>
-          <InfoRow>
-            <InfoLabel>Gas Fee</InfoLabel>
-            <InfoValue>~5 CSPR</InfoValue>
+          <InfoRow $isDark={isDark}>
+            <InfoLabel $isDark={isDark}>Gas Fee</InfoLabel>
+            <InfoValue $isDark={isDark}>~5 CSPR</InfoValue>
           </InfoRow>
         </InfoBox>
       </form>
