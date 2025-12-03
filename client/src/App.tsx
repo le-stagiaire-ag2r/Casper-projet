@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
-import { ClickProvider } from '@make-software/csprclick-ui';
+import { ClickProvider, ClickUI } from '@make-software/csprclick-ui';
 import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-core-types';
 import { WalletConnect } from './components/WalletConnect';
 import { Dashboard } from './components/Dashboard';
@@ -119,6 +119,8 @@ const AppContent: React.FC = () => {
   return (
     <>
       <GlobalStyle />
+      {/* ClickUI handles all CSPR.click modals and popups */}
+      <ClickUI />
       <AppContainer>
         <Header>
           <Logo>
