@@ -98,8 +98,8 @@ export const buildStakeTransaction = (
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  // Return in CSPR.click expected format
-  return { deploy: deploy.toJSON() };
+  // Return in CSPR.click expected format (toJSON is a static method)
+  return { deploy: Deploy.toJSON(deploy) };
 };
 
 /**
@@ -147,7 +147,7 @@ export const buildUnstakeTransaction = (
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  return { deploy: deploy.toJSON() };
+  return { deploy: Deploy.toJSON(deploy) };
 };
 
 /**
@@ -203,7 +203,7 @@ export const buildTransferStCsprTransaction = (
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  return { deploy: deploy.toJSON() };
+  return { deploy: Deploy.toJSON(deploy) };
 };
 
 /**
