@@ -25,28 +25,40 @@ const config = window.config;
 /**
  * Fetch user's main purse URef from the network
  * Required for V6.1 stake/unstake operations
- * Uses our Vercel API route to proxy the request (avoids CORS)
+ * Uses CORS proxy to call Casper RPC directly
  */
 export const fetchMainPurse = async (publicKeyHex: string): Promise<string> => {
   try {
-    // Use our API route to proxy the RPC request (avoids CORS)
-    const apiUrl = `/api/account?publicKey=${encodeURIComponent(publicKeyHex)}`;
+    // Use a CORS proxy to call Casper RPC directly
+    const rpcUrl = 'https://rpc.testnet.casperlabs.io/rpc';
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rpcUrl)}`;
 
-    const response = await fetch(apiUrl, {
-      method: 'GET',
+    const response = await fetch(proxyUrl, {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'state_get_account_info',
+        params: {
+          public_key: publicKeyHex,
+        },
+      }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error: ${response.status}`);
+      throw new Error(`HTTP error: ${response.status}`);
     }
 
     const data = await response.json();
 
-    const mainPurse = data?.main_purse;
+    if (data.error) {
+      throw new Error(data.error.message || 'RPC error');
+    }
+
+    const mainPurse = data.result?.account?.main_purse;
     if (!mainPurse) {
       throw new Error('Could not find main purse in account info');
     }
