@@ -193,17 +193,19 @@ fn untrack_validator_stake(validator: PublicKey, amount: U512) {
 }
 
 /// Entry point to stake CSPR
-/// V6.0: Now actually transfers CSPR from user to contract
+/// V6.1: User must pass their purse as parameter for security
 #[no_mangle]
 pub extern "C" fn stake() {
     // Get the amount parameter
     let amount: U512 = runtime::get_named_arg(STAKED_AMOUNT_KEY);
 
+    // V6.1: Get source purse from user (passed as parameter)
+    let source_purse: URef = runtime::get_named_arg("source_purse");
+
     // Get caller address
     let caller = runtime::get_caller();
 
-    // V6.0: Transfer CSPR from caller's main purse to contract purse
-    let source_purse = account::get_main_purse();
+    // V6.1: Transfer CSPR from user's purse to contract purse
     let contract_purse = get_contract_purse();
 
     system::transfer_from_purse_to_purse(source_purse, contract_purse, amount, None)
@@ -273,11 +275,14 @@ pub extern "C" fn stake() {
 }
 
 /// Entry point to unstake CSPR
-/// V6.0: Now actually transfers CSPR from contract back to user
+/// V6.1: User must pass their purse as parameter for security
 #[no_mangle]
 pub extern "C" fn unstake() {
     // Get the amount parameter
     let amount: U512 = runtime::get_named_arg(STAKED_AMOUNT_KEY);
+
+    // V6.1: Get destination purse from user (passed as parameter)
+    let dest_purse: URef = runtime::get_named_arg("dest_purse");
 
     // Get caller address
     let caller = runtime::get_caller();
@@ -298,11 +303,10 @@ pub extern "C" fn unstake() {
         runtime::revert(ApiError::User(100)); // Custom error: Insufficient staked amount
     }
 
-    // V6.0: Transfer CSPR from contract purse back to user's main purse
+    // V6.1: Transfer CSPR from contract purse to user's purse
     let contract_purse = get_contract_purse();
-    let user_purse = account::get_main_purse();
 
-    system::transfer_from_purse_to_purse(contract_purse, user_purse, amount, None)
+    system::transfer_from_purse_to_purse(contract_purse, dest_purse, amount, None)
         .unwrap_or_revert_with(ApiError::User(221)); // Transfer back failed
 
     // Update user's stake
@@ -713,20 +717,26 @@ pub extern "C" fn call() {
     // Create entry points
     let mut entry_points = EntryPoints::new();
 
-    // stake(amount: U512)
+    // V6.1: stake(amount: U512, source_purse: URef)
     entry_points.add_entry_point(EntryPoint::new(
         "stake",
-        vec![Parameter::new(STAKED_AMOUNT_KEY, CLType::U512)],
+        vec![
+            Parameter::new(STAKED_AMOUNT_KEY, CLType::U512),
+            Parameter::new("source_purse", CLType::URef),
+        ],
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
         EntryPointPayment::Caller,
     ));
 
-    // unstake(amount: U512)
+    // V6.1: unstake(amount: U512, dest_purse: URef)
     entry_points.add_entry_point(EntryPoint::new(
         "unstake",
-        vec![Parameter::new(STAKED_AMOUNT_KEY, CLType::U512)],
+        vec![
+            Parameter::new(STAKED_AMOUNT_KEY, CLType::U512),
+            Parameter::new("dest_purse", CLType::URef),
+        ],
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
