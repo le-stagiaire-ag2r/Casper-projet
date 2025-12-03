@@ -114,20 +114,13 @@ export const useCsprClick = () => {
 
   /**
    * Disconnect wallet completely
-   * Uses both signOut and disconnect to ensure full session clearing
    */
   const disconnect = async () => {
     if (!clickRef) return;
 
     try {
-      // First sign out from the dApp session
+      // Sign out from the dApp session
       clickRef.signOut();
-
-      // Also try to disconnect from wallet provider if method exists
-      if (typeof clickRef.disconnect === 'function') {
-        clickRef.disconnect();
-      }
-
       setActiveAccount(null);
     } catch (err: any) {
       console.error('Error disconnecting:', err);
