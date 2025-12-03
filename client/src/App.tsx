@@ -23,43 +23,8 @@ const clickOptions: CsprClickInitOptions = {
   providers: config.cspr_click_providers,
 };
 
-// App themes for light/dark mode
-const lightTheme = {
-  mode: 'light' as const,
-  colors: {
-    primary: '#ff2d55',
-    secondary: '#5856d6',
-    background: 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)',
-    card: 'rgba(255, 255, 255, 0.95)',
-    cardBorder: 'rgba(0, 0, 0, 0.08)',
-    text: '#1a1a2e',
-    textSecondary: '#6c757d',
-    success: '#34c759',
-    error: '#ff3b30',
-    warning: '#ff9500',
-    accent: '#af52de',
-  },
-};
-
-const darkTheme = {
-  mode: 'dark' as const,
-  colors: {
-    primary: '#ff375f',
-    secondary: '#5e5ce6',
-    background: 'linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%)',
-    card: 'rgba(30, 30, 50, 0.9)',
-    cardBorder: 'rgba(255, 255, 255, 0.1)',
-    text: '#ffffff',
-    textSecondary: '#a0a0b0',
-    success: '#30d158',
-    error: '#ff453a',
-    warning: '#ff9f0a',
-    accent: '#bf5af2',
-  },
-};
-
-// Global styles that adapt to theme
-const GlobalStyle = createGlobalStyle<{ theme: typeof lightTheme }>`
+// Global styles
+const GlobalStyle = createGlobalStyle<{ $isDark: boolean }>`
   * {
     margin: 0;
     padding: 0;
@@ -71,9 +36,11 @@ const GlobalStyle = createGlobalStyle<{ theme: typeof lightTheme }>`
       'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: ${props => props.theme.colors.background};
+    background: ${props => props.$isDark
+      ? 'linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%)'
+      : 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)'};
     min-height: 100vh;
-    color: ${props => props.theme.colors.text};
+    color: ${props => props.$isDark ? '#ffffff' : '#1a1a2e'};
     transition: background 0.3s ease, color 0.3s ease;
   }
 
@@ -125,9 +92,9 @@ const LogoText = styled.h1`
   letter-spacing: -1px;
 `;
 
-const Tagline = styled.p<{ theme: typeof lightTheme }>`
+const Tagline = styled.p`
   font-size: 18px;
-  color: ${props => props.theme.colors.textSecondary};
+  color: rgba(255, 255, 255, 0.6);
   font-weight: 500;
 `;
 
@@ -147,14 +114,14 @@ const Grid = styled.div`
   }
 `;
 
-const Footer = styled.footer<{ theme: typeof lightTheme }>`
+const Footer = styled.footer`
   max-width: 1200px;
   margin: 48px auto 0;
   padding: 32px 0;
   text-align: center;
-  color: ${props => props.theme.colors.textSecondary};
+  color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
-  border-top: 1px solid ${props => props.theme.colors.cardBorder};
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
 const FooterLinks = styled.div`
@@ -172,24 +139,24 @@ const FooterLink = styled.a`
 
   &:hover {
     opacity: 1;
+    color: #5856d6;
   }
 `;
 
 // Inner App component with theme and network state
 const AppContent: React.FC<{
-  currentTheme: typeof lightTheme;
+  isDark: boolean;
   onThemeChange: (theme: 'light' | 'dark') => void;
   currentNetwork: string;
   onNetworkChange: (network: string) => void;
-}> = ({ currentTheme, onThemeChange, currentNetwork, onNetworkChange }) => {
+}> = ({ isDark, onThemeChange, currentNetwork, onNetworkChange }) => {
   // Top bar settings with account menu items
   const topBarSettings = {
-    // Account menu items (from CSPR.click docs)
     accountMenuItems: [
-      'AccountCardMenuItem',        // Shows account card with name, public key, balances
-      'CopyHashMenuItem',           // Copy public key to clipboard
-      'ViewAccountOnExplorerMenuItem', // Open account on CSPR.live
-      'BuyCSPRMenuItem',            // Buy CSPR with credit card (Topper by Uphold)
+      'AccountCardMenuItem',
+      'CopyHashMenuItem',
+      'ViewAccountOnExplorerMenuItem',
+      'BuyCSPRMenuItem',
     ],
   };
 
@@ -213,8 +180,8 @@ const AppContent: React.FC<{
   };
 
   return (
-    <ThemeProvider theme={currentTheme}>
-      <GlobalStyle theme={currentTheme} />
+    <>
+      <GlobalStyle $isDark={isDark} />
       {/* ClickUI with full configuration */}
       <ClickUI
         topBarSettings={topBarSettings}
@@ -228,9 +195,7 @@ const AppContent: React.FC<{
             <LogoIcon>💎</LogoIcon>
             <LogoText>StakeVue</LogoText>
           </Logo>
-          <Tagline theme={currentTheme}>
-            Liquid Staking on Casper Network
-          </Tagline>
+          <Tagline>Liquid Staking on Casper Network</Tagline>
         </Header>
 
         <MainContent>
@@ -242,7 +207,7 @@ const AppContent: React.FC<{
           </Grid>
         </MainContent>
 
-        <Footer theme={currentTheme}>
+        <Footer>
           <p>StakeVue - Secure Liquid Staking Protocol</p>
           <FooterLinks>
             <FooterLink href="https://cspr.live" target="_blank" rel="noopener noreferrer">
@@ -260,7 +225,7 @@ const AppContent: React.FC<{
           </p>
         </Footer>
       </AppContainer>
-    </ThemeProvider>
+    </>
   );
 };
 
@@ -269,7 +234,6 @@ const App: React.FC = () => {
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
   const [currentNetwork, setCurrentNetwork] = useState(config.chain_name || 'casper-test');
 
-  const currentTheme = themeMode === 'dark' ? darkTheme : lightTheme;
   const csprClickTheme = themeMode === 'dark' ? CsprClickThemes.dark : CsprClickThemes.light;
 
   const handleThemeChange = useCallback((theme: 'light' | 'dark') => {
@@ -278,14 +242,13 @@ const App: React.FC = () => {
 
   const handleNetworkChange = useCallback((network: string) => {
     setCurrentNetwork(network);
-    // Could trigger a reload or update config here
   }, []);
 
   return (
     <ThemeProvider theme={csprClickTheme}>
       <ClickProvider options={clickOptions}>
         <AppContent
-          currentTheme={currentTheme}
+          isDark={themeMode === 'dark'}
           onThemeChange={handleThemeChange}
           currentNetwork={currentNetwork}
           onNetworkChange={handleNetworkChange}
