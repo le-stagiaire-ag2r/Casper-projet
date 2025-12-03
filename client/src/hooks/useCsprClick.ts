@@ -120,8 +120,9 @@ export const useCsprClick = () => {
     try {
       // Use window.csprclick.disconnect() to fully disconnect
       // This forces the user to re-authenticate on next login
-      if (window.csprclick?.disconnect) {
-        window.csprclick.disconnect();
+      // Cast to any to bypass TypeScript strict checking on disconnect signature
+      if ((window as any).csprclick?.disconnect) {
+        (window as any).csprclick.disconnect();
       } else if (clickRef?.signOut) {
         // Fallback to signOut if disconnect not available
         clickRef.signOut();

@@ -23,7 +23,7 @@ declare global {
       signIn: () => void;
       signOut: () => void;
       switchAccount: () => void;
-      disconnect: () => void;
+      disconnect: (provider?: string) => void;
       send: (
         transaction: { Version1: object } | { deploy: object },
         senderPublicKey: string,
