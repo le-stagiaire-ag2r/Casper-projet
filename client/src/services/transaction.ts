@@ -55,11 +55,12 @@ const getContractHashHex = (): string => {
  * This pattern is from the official V2→V5 migration guide:
  * - Uses ExecutableDeployItem and StoredContractByHash
  * - Compatible with Casper Network (both 1.x and 2.x)
+ * - Serializes deploy with toJSON() for CSPR.click compatibility
  */
 export const buildStakeTransaction = (
   senderPublicKeyHex: string,
   amountCspr: string
-): { deploy: object } => {
+): { deploy: any } => {
   // Validate inputs
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
@@ -98,17 +99,18 @@ export const buildStakeTransaction = (
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  // Return deploy object - CSPR.click handles serialization
-  return { deploy };
+  // Serialize deploy for CSPR.click (like lottery demo does with transaction.toJSON())
+  return { deploy: Deploy.toJSON(deploy) };
 };
 
 /**
  * Build an Unstake Transaction
+ * Serializes deploy with toJSON() for CSPR.click compatibility
  */
 export const buildUnstakeTransaction = (
   senderPublicKeyHex: string,
   amountCspr: string
-): { deploy: object } => {
+): { deploy: any } => {
   // Validate inputs
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
@@ -147,17 +149,19 @@ export const buildUnstakeTransaction = (
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  return { deploy };
+  // Serialize deploy for CSPR.click
+  return { deploy: Deploy.toJSON(deploy) };
 };
 
 /**
  * Build a stCSPR Transfer Transaction
+ * Serializes deploy with toJSON() for CSPR.click compatibility
  */
 export const buildTransferStCsprTransaction = (
   senderPublicKeyHex: string,
   recipientAccountHash: string,
   amountCspr: string
-): { deploy: object } => {
+): { deploy: any } => {
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
   }
@@ -203,7 +207,8 @@ export const buildTransferStCsprTransaction = (
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  return { deploy };
+  // Serialize deploy for CSPR.click
+  return { deploy: Deploy.toJSON(deploy) };
 };
 
 /**
