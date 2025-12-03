@@ -3,8 +3,8 @@
 
 window.config = {
   // Smart Contract Configuration
-  contract_hash: "hash-YOUR_CONTRACT_HASH_HERE",
-  contract_package_hash: "YOUR_CONTRACT_PACKAGE_HASH_HERE",
+  contract_hash: "hash-010456c5cfb4b5157854f325f0980e2c504cbce2dfcb5fafce31b7b0a84538652c",
+  contract_package_hash: "010456c5cfb4b5157854f325f0980e2c504cbce2dfcb5fafce31b7b0a84538652c",
 
   // CSPR.click Configuration
   cspr_click_app_name: "StakeVue",
