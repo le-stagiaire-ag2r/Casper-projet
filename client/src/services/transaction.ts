@@ -16,10 +16,51 @@ import {
   ExecutableDeployItem,
   StoredContractByHash,
   ContractHash,
+  URef,
 } from 'casper-js-sdk';
 
 // Get runtime config
 const config = window.config;
+
+/**
+ * Fetch user's main purse URef from the network
+ * Required for V6.1 stake/unstake operations
+ */
+export const fetchMainPurse = async (publicKeyHex: string): Promise<string> => {
+  try {
+    // Query Casper testnet RPC for account info
+    const rpcUrl = 'https://rpc.testnet.casperlabs.io/rpc';
+
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'state_get_account_info',
+        params: {
+          public_key: publicKeyHex,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message || 'Failed to fetch account info');
+    }
+
+    const mainPurse = data.result?.account?.main_purse;
+    if (!mainPurse) {
+      throw new Error('Could not find main purse in account info');
+    }
+
+    return mainPurse; // Returns format: "uref-<hex>-007"
+  } catch (err: any) {
+    console.error('Error fetching main purse:', err);
+    throw new Error(`Failed to fetch main purse: ${err.message}`);
+  }
+};
 
 /**
  * Convert CSPR to motes (smallest unit)
@@ -52,6 +93,8 @@ const getContractHashHex = (): string => {
 /**
  * Build a Stake Transaction using Deploy.makeDeploy pattern
  *
+ * V6.1: Now requires source_purse parameter for real CSPR transfers
+ *
  * This pattern is from the official V2→V5 migration guide:
  * - Uses ExecutableDeployItem and StoredContractByHash
  * - Compatible with Casper Network (both 1.x and 2.x)
@@ -59,7 +102,8 @@ const getContractHashHex = (): string => {
  */
 export const buildStakeTransaction = (
   senderPublicKeyHex: string,
-  amountCspr: string
+  amountCspr: string,
+  sourcePurseURef: string // V6.1: User's main purse URef (format: "uref-<hex>-007")
 ): { deploy: any } => {
   // Validate inputs
   if (!senderPublicKeyHex) {
@@ -70,13 +114,21 @@ export const buildStakeTransaction = (
     throw new Error('Contract hash not configured');
   }
 
+  if (!sourcePurseURef) {
+    throw new Error('Source purse URef is required for V6.1');
+  }
+
   // Convert amounts
   const amountMotes = csprToMotes(amountCspr);
   const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR default
 
-  // Build runtime arguments for 'stake' entry point
+  // Parse the source purse URef from string (format: "uref-<hex>-007")
+  const sourcePurse = URef.fromString(sourcePurseURef);
+
+  // Build runtime arguments for 'stake' entry point (V6.1)
   const args = Args.fromMap({
     amount: CLValue.newCLUInt512(amountMotes),
+    source_purse: CLValue.newCLUref(sourcePurse),
   });
 
   // Build session using StoredContractByHash (V5 pattern)
@@ -105,11 +157,14 @@ export const buildStakeTransaction = (
 
 /**
  * Build an Unstake Transaction
+ *
+ * V6.1: Now requires dest_purse parameter for real CSPR transfers
  * Serializes deploy with toJSON() for CSPR.click compatibility
  */
 export const buildUnstakeTransaction = (
   senderPublicKeyHex: string,
-  amountCspr: string
+  amountCspr: string,
+  destPurseURef: string // V6.1: User's main purse URef to receive CSPR
 ): { deploy: any } => {
   // Validate inputs
   if (!senderPublicKeyHex) {
@@ -120,13 +175,21 @@ export const buildUnstakeTransaction = (
     throw new Error('Contract hash not configured');
   }
 
+  if (!destPurseURef) {
+    throw new Error('Destination purse URef is required for V6.1');
+  }
+
   // Convert amounts
   const amountMotes = csprToMotes(amountCspr);
   const paymentMotes = config.transaction_payment || '5000000000';
 
-  // Build runtime arguments for 'unstake' entry point
+  // Parse the destination purse URef from string (format: "uref-<hex>-007")
+  const destPurse = URef.fromString(destPurseURef);
+
+  // Build runtime arguments for 'unstake' entry point (V6.1)
   const args = Args.fromMap({
     amount: CLValue.newCLUInt512(amountMotes),
+    dest_purse: CLValue.newCLUref(destPurse),
   });
 
   // Build session

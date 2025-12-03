@@ -3,6 +3,7 @@ import { useCsprClick } from './useCsprClick';
 import {
   buildStakeTransaction,
   buildUnstakeTransaction,
+  fetchMainPurse,
   csprToMotes,
   motesToCspr,
 } from '../services/transaction';
@@ -110,16 +111,31 @@ export const useStaking = () => {
     // Reset state and start processing
     setTransactionState({
       isProcessing: true,
-      status: 'Building transaction...',
+      status: 'Fetching account info...',
       deployHash: null,
       error: null,
     });
 
     try {
-      // Build the stake transaction
+      // V6.1: Fetch user's main purse first
+      setTransactionState((prev) => ({
+        ...prev,
+        status: 'Fetching your main purse...',
+      }));
+
+      const mainPurse = await fetchMainPurse(activeAccount.publicKey);
+      console.log('Main purse fetched:', mainPurse);
+
+      setTransactionState((prev) => ({
+        ...prev,
+        status: 'Building transaction...',
+      }));
+
+      // Build the stake transaction with source_purse (V6.1)
       const transaction = buildStakeTransaction(
         activeAccount.publicKey,
-        amountCspr
+        amountCspr,
+        mainPurse // V6.1: Pass user's main purse
       );
 
       setTransactionState((prev) => ({
@@ -219,16 +235,31 @@ export const useStaking = () => {
     // Reset state and start processing
     setTransactionState({
       isProcessing: true,
-      status: 'Building transaction...',
+      status: 'Fetching account info...',
       deployHash: null,
       error: null,
     });
 
     try {
-      // Build the unstake transaction
+      // V6.1: Fetch user's main purse first
+      setTransactionState((prev) => ({
+        ...prev,
+        status: 'Fetching your main purse...',
+      }));
+
+      const mainPurse = await fetchMainPurse(activeAccount.publicKey);
+      console.log('Main purse fetched:', mainPurse);
+
+      setTransactionState((prev) => ({
+        ...prev,
+        status: 'Building transaction...',
+      }));
+
+      // Build the unstake transaction with dest_purse (V6.1)
       const transaction = buildUnstakeTransaction(
         activeAccount.publicKey,
-        amountCspr
+        amountCspr,
+        mainPurse // V6.1: Pass user's main purse as destination
       );
 
       setTransactionState((prev) => ({
