@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 import { ClickProvider, useClickRef } from '@make-software/csprclick-ui';
 import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-core-types';
 import { WalletConnect } from './components/WalletConnect';
@@ -220,11 +220,9 @@ const AppContent: React.FC = () => {
 // Main App component with ClickProvider wrapper
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <ClickProvider options={clickOptions}>
-        <AppContent />
-      </ClickProvider>
-    </ThemeProvider>
+    <ClickProvider options={clickOptions}>
+      <AppContent />
+    </ClickProvider>
   );
 };
 
