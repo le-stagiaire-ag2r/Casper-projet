@@ -25,16 +25,8 @@ const Button = styled.button`
   }
 `;
 
-const SwitchButton = styled(Button)`
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  padding: 12px 16px;
-  font-size: 14px;
-`;
-
 const DisconnectButton = styled(Button)`
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  padding: 12px 16px;
-  font-size: 14px;
 `;
 
 const AccountInfo = styled.div`
@@ -66,7 +58,7 @@ const ErrorMessage = styled.div`
 `;
 
 export const WalletConnect: React.FC = () => {
-  const { activeAccount, isReady, error, connect, disconnect, switchAccount } = useCsprClick();
+  const { activeAccount, isReady, error, connect, disconnect } = useCsprClick();
 
   if (activeAccount) {
     return (
@@ -78,7 +70,6 @@ export const WalletConnect: React.FC = () => {
             {activeAccount.publicKey.substring(activeAccount.publicKey.length - 6)}
           </AccountText>
         </AccountInfo>
-        <SwitchButton onClick={switchAccount}>Switch</SwitchButton>
         <DisconnectButton onClick={disconnect}>Disconnect</DisconnectButton>
       </Container>
     );

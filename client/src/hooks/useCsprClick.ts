@@ -113,30 +113,26 @@ export const useCsprClick = () => {
   };
 
   /**
-   * Disconnect wallet (using signOut which doesn't require args)
+   * Disconnect wallet completely
+   * Uses both signOut and disconnect to ensure full session clearing
    */
   const disconnect = async () => {
     if (!clickRef) return;
 
     try {
+      // First sign out from the dApp session
       clickRef.signOut();
+
+      // Also try to disconnect from wallet provider if method exists
+      if (typeof clickRef.disconnect === 'function') {
+        clickRef.disconnect();
+      }
+
       setActiveAccount(null);
     } catch (err: any) {
       console.error('Error disconnecting:', err);
-    }
-  };
-
-  /**
-   * Switch to another account - opens signIn modal to select different account
-   */
-  const switchAccount = async () => {
-    if (!clickRef) return;
-
-    try {
-      // Use signIn to open wallet selection modal for switching accounts
-      clickRef.signIn();
-    } catch (err: any) {
-      console.error('Error switching account:', err);
+      // Still clear local state even if disconnect fails
+      setActiveAccount(null);
     }
   };
 
@@ -210,7 +206,6 @@ export const useCsprClick = () => {
     error,
     connect,
     disconnect,
-    switchAccount,
     send,
   };
 };
