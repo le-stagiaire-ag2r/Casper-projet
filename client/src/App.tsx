@@ -64,8 +64,11 @@ const GlobalStyle = createGlobalStyle<{ $isDark: boolean }>`
 
 const AppContainer = styled.div`
   min-height: 100vh;
-  padding: 20px;
-  padding-top: 120px; /* Space for CSPR.click bar + navigation */
+  padding-top: 60px; /* Space for CSPR.click top bar only */
+`;
+
+const MainContent = styled.main`
+  padding: 0 20px 20px;
 `;
 
 const Footer = styled.footer<{ $isDark: boolean }>`
@@ -127,34 +130,38 @@ const AppContent: React.FC<{
         themeMode={themeMode}
         topBarSettings={topBarSettings}
       />
-      <Navigation isDark={isDark} />
       <AppContainer>
-        <Routes>
-          <Route path="/" element={<HomePage isDark={isDark} />} />
-          <Route path="/stake" element={<StakePage isDark={isDark} />} />
-          <Route path="/guide" element={<GuidePage isDark={isDark} />} />
-        </Routes>
+        {/* Navigation is now inside the container, below CSPR.click bar */}
+        <Navigation isDark={isDark} />
 
-        <Footer $isDark={isDark}>
-          <p>StakeVue - Secure Liquid Staking Protocol</p>
-          <FooterLinks>
-            <FooterLink href="https://cspr.live" target="_blank" rel="noopener noreferrer">
-              CSPR.live
-            </FooterLink>
-            <FooterLink href="https://docs.cspr.click" target="_blank" rel="noopener noreferrer">
-              CSPR.click Docs
-            </FooterLink>
-            <FooterLink href="https://casper.network" target="_blank" rel="noopener noreferrer">
-              Casper Network
-            </FooterLink>
-            <FooterLink href="https://github.com/le-stagiaire-ag2r/Casper-projet" target="_blank" rel="noopener noreferrer">
-              GitHub
-            </FooterLink>
-          </FooterLinks>
-          <p style={{ marginTop: '16px', fontSize: '12px', opacity: 0.7 }}>
-            Powered by CSPR.click | Built for Casper Hackathon 2025
-          </p>
-        </Footer>
+        <MainContent>
+          <Routes>
+            <Route path="/" element={<HomePage isDark={isDark} />} />
+            <Route path="/stake" element={<StakePage isDark={isDark} />} />
+            <Route path="/guide" element={<GuidePage isDark={isDark} />} />
+          </Routes>
+
+          <Footer $isDark={isDark}>
+            <p>StakeVue - Secure Liquid Staking Protocol</p>
+            <FooterLinks>
+              <FooterLink href="https://cspr.live" target="_blank" rel="noopener noreferrer">
+                CSPR.live
+              </FooterLink>
+              <FooterLink href="https://docs.cspr.click" target="_blank" rel="noopener noreferrer">
+                CSPR.click Docs
+              </FooterLink>
+              <FooterLink href="https://casper.network" target="_blank" rel="noopener noreferrer">
+                Casper Network
+              </FooterLink>
+              <FooterLink href="https://github.com/le-stagiaire-ag2r/Casper-projet" target="_blank" rel="noopener noreferrer">
+                GitHub
+              </FooterLink>
+            </FooterLinks>
+            <p style={{ marginTop: '16px', fontSize: '12px', opacity: 0.7 }}>
+              Powered by CSPR.click | Built for Casper Hackathon 2025
+            </p>
+          </Footer>
+        </MainContent>
       </AppContainer>
     </>
   );
