@@ -136,6 +136,12 @@ const Select = styled.select<{ $isDark: boolean }>`
     outline: none;
     border-color: #5856d6;
   }
+
+  option {
+    background: ${props => props.$isDark ? '#1a1a2e' : '#fff'};
+    color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+    padding: 12px;
+  }
 `;
 
 const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
