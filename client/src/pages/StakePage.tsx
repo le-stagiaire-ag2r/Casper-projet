@@ -7,6 +7,8 @@ import { StakingCalculator } from '../components/StakingCalculator';
 import { RewardsChart } from '../components/RewardsChart';
 import { ValidatorRanking } from '../components/ValidatorRanking';
 import { GlobalStats } from '../components/GlobalStats';
+import { PriceAlertComponent } from '../components/PriceAlert';
+import { PortfolioHistory } from '../components/PortfolioHistory';
 import { useBalanceContext } from '../context/BalanceContext';
 
 const Container = styled.div`
@@ -133,6 +135,11 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
       <FullWidthSection>
         <GlobalStats isDark={isDark} />
       </FullWidthSection>
+
+      <ChartsSection>
+        <PortfolioHistory isDark={isDark} />
+        <PriceAlertComponent isDark={isDark} />
+      </ChartsSection>
     </Container>
   );
 };
