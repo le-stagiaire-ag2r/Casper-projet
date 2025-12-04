@@ -193,22 +193,22 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
 
   const isPositive = priceChangePercent >= 0;
 
-  // Chart dimensions
-  const padding = { top: 10, right: 10, bottom: 25, left: 40 };
-  const width = 100; // percentage
-  const height = 150;
-  const chartWidth = width - (padding.left + padding.right) / 4;
-  const chartHeight = height - padding.top - padding.bottom;
+  // Chart dimensions - using fixed viewBox for consistent scaling
+  const viewBoxWidth = 400;
+  const viewBoxHeight = 150;
+  const padding = { top: 15, right: 15, bottom: 30, left: 55 };
+  const chartWidth = viewBoxWidth - padding.left - padding.right;
+  const chartHeight = viewBoxHeight - padding.top - padding.bottom;
 
   // Generate chart path
   const generatePath = () => {
-    if (prices.length < 2) return { linePath: '', areaPath: '' };
+    if (prices.length < 2) return { linePath: '', areaPath: '', points: [] };
 
     const xStep = chartWidth / (prices.length - 1);
-    const priceRange = maxPrice - minPrice || 1;
+    const priceRange = maxPrice - minPrice || 0.0001;
 
     const points = prices.map((p, i) => {
-      const x = padding.left / 4 + i * xStep;
+      const x = padding.left + i * xStep;
       const y = padding.top + chartHeight - ((p.price - minPrice) / priceRange) * chartHeight;
       return { x, y, ...p };
     });
@@ -248,7 +248,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
         </ErrorMessage>
       ) : (
         <ChartContainer>
-          <ChartSVG viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+          <ChartSVG viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor={isPositive ? '#30d158' : '#ff453a'} stopOpacity="0.4" />
@@ -261,9 +261,9 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
               <GridLine
                 key={i}
                 $isDark={isDark}
-                x1={padding.left / 4}
+                x1={padding.left}
                 y1={padding.top + chartHeight * (1 - ratio)}
-                x2={width - padding.right / 4}
+                x2={viewBoxWidth - padding.right}
                 y2={padding.top + chartHeight * (1 - ratio)}
               />
             ))}
@@ -291,7 +291,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
                 key={i}
                 $isDark={isDark}
                 x={p.x}
-                y={height - 5}
+                y={viewBoxHeight - 8}
               >
                 {p.date}
               </XLabel>
@@ -302,10 +302,10 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
               <YLabel
                 key={i}
                 $isDark={isDark}
-                x={padding.left / 4 - 2}
-                y={padding.top + chartHeight * (1 - i / 2) + 3}
+                x={padding.left - 8}
+                y={padding.top + chartHeight * (1 - i / 2) + 4}
               >
-                ${price.toFixed(3)}
+                ${price.toFixed(4)}
               </YLabel>
             ))}
           </ChartSVG>
