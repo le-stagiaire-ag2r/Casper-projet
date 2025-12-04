@@ -13,8 +13,7 @@
 
 ## Live Demo
 
-**Web App:** [https://casper-stake.vercel.app](https://casper-stake.vercel.app)
-
+**Web App:** casper-projet.vercel.app
 **Contract on Explorer:** [View on Testnet](https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80)
 
 ---
