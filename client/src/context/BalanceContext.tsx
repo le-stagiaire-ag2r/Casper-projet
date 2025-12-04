@@ -19,12 +19,44 @@ interface BalanceProviderProps {
   children: ReactNode;
 }
 
+// LocalStorage key for stCSPR balance
+const STCSPR_STORAGE_KEY = 'stakevue_stcspr_balance';
+
+// Load stCSPR balance from localStorage
+const loadStCsprBalance = (publicKey: string | undefined): number => {
+  if (!publicKey) return 0;
+  try {
+    const stored = localStorage.getItem(`${STCSPR_STORAGE_KEY}_${publicKey}`);
+    return stored ? parseFloat(stored) : 0;
+  } catch {
+    return 0;
+  }
+};
+
+// Save stCSPR balance to localStorage
+const saveStCsprBalance = (publicKey: string | undefined, balance: number) => {
+  if (!publicKey) return;
+  try {
+    localStorage.setItem(`${STCSPR_STORAGE_KEY}_${publicKey}`, balance.toString());
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) => {
   const { activeAccount, clickRef } = useCsprClick();
   const [csprBalance, setCsprBalance] = useState<number>(0);
   const [stCsprBalance, setStCsprBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRealBalance, setIsRealBalance] = useState<boolean>(false);
+
+  // Load stCSPR from localStorage when wallet connects
+  useEffect(() => {
+    if (activeAccount?.publicKey) {
+      const savedBalance = loadStCsprBalance(activeAccount.publicKey);
+      setStCsprBalance(savedBalance);
+    }
+  }, [activeAccount?.publicKey]);
 
   // Fetch balance from CSPR.click
   const fetchBalance = useCallback(async () => {
@@ -117,20 +149,30 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   // Update balances after staking
   const updateAfterStake = useCallback((amount: number) => {
     setCsprBalance(prev => Math.max(0, prev - amount - GAS_FEE_CSPR));
-    setStCsprBalance(prev => prev + amount);
+    setStCsprBalance(prev => {
+      const newBalance = prev + amount;
+      // Save to localStorage
+      saveStCsprBalance(activeAccount?.publicKey, newBalance);
+      return newBalance;
+    });
 
     // Refetch real balance after a delay
     setTimeout(fetchBalance, 5000);
-  }, [fetchBalance]);
+  }, [fetchBalance, activeAccount?.publicKey]);
 
   // Update balances after unstaking
   const updateAfterUnstake = useCallback((amount: number) => {
-    setStCsprBalance(prev => Math.max(0, prev - amount));
+    setStCsprBalance(prev => {
+      const newBalance = Math.max(0, prev - amount);
+      // Save to localStorage
+      saveStCsprBalance(activeAccount?.publicKey, newBalance);
+      return newBalance;
+    });
     setCsprBalance(prev => prev + amount - GAS_FEE_CSPR);
 
     // Refetch real balance after a delay
     setTimeout(fetchBalance, 5000);
-  }, [fetchBalance]);
+  }, [fetchBalance, activeAccount?.publicKey]);
 
   const value: BalanceContextType = {
     csprBalance,
