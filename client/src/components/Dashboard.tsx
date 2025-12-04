@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
-import { useBalance, useCsprPrice } from '../hooks/useBalance';
+import { useCsprPrice } from '../hooks/useBalance';
+import { useBalanceContext } from '../context/BalanceContext';
 import { PriceChart } from './PriceChart';
 
 const shimmer = keyframes`
@@ -244,9 +245,6 @@ const PriceChartWrapper = styled.div`
   margin-top: 24px;
 `;
 
-// Fallback demo balances
-const DEMO_CSPR_BALANCE = 1000;
-const DEMO_STCSPR_BALANCE = 0;
 const APY_AVG = 0.10; // 10%
 
 export const Dashboard: React.FC = () => {
@@ -255,16 +253,9 @@ export const Dashboard: React.FC = () => {
   const isDark = theme?.mode === 'dark';
   const [loading, setLoading] = useState(true);
 
-  // Fetch real balance and price
-  const { csprBalance: realBalance, isLoading: balanceLoading } = useBalance(
-    activeAccount?.publicKey || null
-  );
+  // Use shared balance context
+  const { csprBalance, stCsprBalance, isLoading: balanceLoading, isRealBalance } = useBalanceContext();
   const { usdPrice, usdChange24h, isLoading: priceLoading } = useCsprPrice();
-
-  // Use real balance if available, otherwise fallback to demo
-  const csprBalance = realBalance > 0 ? realBalance : DEMO_CSPR_BALANCE;
-  const isRealBalance = realBalance > 0;
-  const stCsprBalance = DEMO_STCSPR_BALANCE; // TODO: Fetch from stCSPR contract
 
   useEffect(() => {
     // Simulate loading

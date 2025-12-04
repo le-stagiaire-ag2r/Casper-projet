@@ -16,6 +16,7 @@ import { Navigation } from './components/Navigation';
 import { HomePage } from './pages/HomePage';
 import { StakePage } from './pages/StakePage';
 import { GuidePage } from './pages/GuidePage';
+import { BalanceProvider } from './context/BalanceContext';
 
 // Get runtime config
 const config = window.config;
@@ -28,25 +29,8 @@ const clickOptions: CsprClickInitOptions = {
   providers: config.cspr_click_providers,
 };
 
-// Global styles with CSS variables for smooth theme transitions
+// Global styles
 const GlobalStyle = createGlobalStyle<{ $isDark: boolean }>`
-  :root {
-    /* Theme colors as CSS variables - these transition smoothly */
-    --bg-primary: ${props => props.$isDark ? '#0a0a1a' : '#f8f9fa'};
-    --bg-secondary: ${props => props.$isDark ? '#1a1a2e' : '#e9ecef'};
-    --bg-tertiary: ${props => props.$isDark ? '#16213e' : '#ffffff'};
-    --bg-card: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.8)'};
-    --bg-card-hover: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.02)'};
-    --text-primary: ${props => props.$isDark ? '#ffffff' : '#1a1a2e'};
-    --text-secondary: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'};
-    --text-tertiary: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'};
-    --border-color: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'};
-    --border-color-hover: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)'};
-
-    /* Transition timing */
-    --theme-transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
   * {
     margin: 0;
     padding: 0;
@@ -58,34 +42,11 @@ const GlobalStyle = createGlobalStyle<{ $isDark: boolean }>`
       'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+    background: ${props => props.$isDark
+      ? 'linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%)'
+      : 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)'};
     min-height: 100vh;
-    color: var(--text-primary);
-    transition: background var(--theme-transition), color var(--theme-transition);
-  }
-
-  /* Smooth theme transition for all elements */
-  *, *::before, *::after {
-    transition:
-      background var(--theme-transition),
-      background-color var(--theme-transition),
-      border-color var(--theme-transition),
-      box-shadow var(--theme-transition),
-      color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      fill 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      stroke 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Prevent transition on elements that shouldn't transition */
-  input, button, a {
-    transition:
-      background var(--theme-transition),
-      background-color var(--theme-transition),
-      border-color var(--theme-transition),
-      box-shadow var(--theme-transition),
-      color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.2s ease,
-      opacity 0.2s ease;
+    color: ${props => props.$isDark ? '#ffffff' : '#1a1a2e'};
   }
 
   /* Custom scrollbar */
@@ -223,11 +184,13 @@ const App: React.FC = () => {
     <BrowserRouter>
       <ThemeProvider theme={csprClickTheme}>
         <ClickProvider options={clickOptions}>
-          <AppContent
-            isDark={themeMode === ThemeModeType.dark}
-            themeMode={themeMode}
-            onThemeSwitch={handleThemeSwitch}
-          />
+          <BalanceProvider>
+            <AppContent
+              isDark={themeMode === ThemeModeType.dark}
+              themeMode={themeMode}
+              onThemeSwitch={handleThemeSwitch}
+            />
+          </BalanceProvider>
         </ClickProvider>
       </ThemeProvider>
     </BrowserRouter>
