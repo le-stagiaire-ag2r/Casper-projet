@@ -16,7 +16,7 @@ const Title = styled.h1<{ $isDark: boolean }>`
 
 const Subtitle = styled.p<{ $isDark: boolean }>`
   font-size: 18px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
   margin-bottom: 48px;
 `;
 
@@ -154,7 +154,7 @@ const PersonaName = styled.h4<{ $isDark: boolean }>`
 
 const PersonaRole = styled.span<{ $isDark: boolean }>`
   font-size: 13px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'};
 `;
 
 const PersonaQuote = styled.p<{ $isDark: boolean }>`
@@ -168,7 +168,7 @@ const PersonaQuote = styled.p<{ $isDark: boolean }>`
 
 const PersonaAction = styled.div<{ $isDark: boolean }>`
   font-size: 13px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
   background: ${props => props.$isDark
     ? 'rgba(88, 86, 214, 0.2)'
     : 'rgba(88, 86, 214, 0.1)'};
@@ -274,7 +274,7 @@ const StepTitle = styled.h4<{ $isDark: boolean }>`
 
 const StepDescription = styled.p<{ $isDark: boolean }>`
   font-size: 14px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
   line-height: 1.6;
 `;
 
@@ -287,69 +287,69 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
 
   const faqs = [
     {
-      question: "Qu'est-ce que le liquid staking ?",
-      answer: "Le liquid staking permet de staker vos tokens tout en conservant leur liquidité. Vous recevez un token représentatif (stCSPR) que vous pouvez utiliser, échanger ou transférer, pendant que vos CSPR originaux génèrent des récompenses."
+      question: "What is liquid staking?",
+      answer: "Liquid staking allows you to stake your tokens while keeping their liquidity. You receive a representative token (stCSPR) that you can use, trade, or transfer, while your original CSPR generates rewards."
     },
     {
-      question: "Est-ce que mes CSPR sont en sécurité ?",
-      answer: "Le contrat StakeVue a été audité par CasperSecure avec une note A+. Toutes les opérations arithmétiques sont sécurisées pour éviter les attaques par overflow/underflow. Le code est open source et vérifiable."
+      question: "Are my CSPR safe?",
+      answer: "The StakeVue contract has been audited by CasperSecure with an A+ grade. All arithmetic operations are secured to prevent overflow/underflow attacks. The code is open source and verifiable."
     },
     {
-      question: "Combien puis-je gagner avec StakeVue ?",
-      answer: "Le taux actuel est de 10% APY (Annual Percentage Yield). Par exemple, si vous stakez 1000 CSPR, vous gagnez environ 100 CSPR par an en récompenses."
+      question: "How much can I earn with StakeVue?",
+      answer: "The current rate is 10% APY (Annual Percentage Yield). For example, if you stake 1000 CSPR, you earn approximately 100 CSPR per year in rewards."
     },
     {
-      question: "Puis-je unstaker à tout moment ?",
-      answer: "Oui ! Vous pouvez unstaker vos CSPR à tout moment en brûlant vos tokens stCSPR. Il n'y a pas de période de blocage obligatoire."
+      question: "Can I unstake at any time?",
+      answer: "Yes! You can unstake your CSPR at any time by burning your stCSPR tokens. There is no mandatory lock-up period."
     },
     {
-      question: "Quelle est la différence avec le staking classique ?",
-      answer: "Avec le staking classique, vos tokens sont bloqués et inutilisables pendant la durée du staking. Avec le liquid staking, vous recevez des stCSPR que vous pouvez utiliser librement tout en continuant à gagner des récompenses."
+      question: "What's the difference with traditional staking?",
+      answer: "With traditional staking, your tokens are locked and unusable during the staking period. With liquid staking, you receive stCSPR that you can use freely while still earning rewards."
     }
   ];
 
   return (
     <Container>
-      <Title $isDark={isDark}>📖 Guide StakeVue</Title>
+      <Title $isDark={isDark}>📖 StakeVue Guide</Title>
       <Subtitle $isDark={isDark}>
-        Tout ce que vous devez savoir sur le liquid staking
+        Everything you need to know about liquid staking
       </Subtitle>
 
       <Section>
         <SectionTitle $isDark={isDark}>
           <SectionIcon>💡</SectionIcon>
-          Qu'est-ce que le Liquid Staking ?
+          What is Liquid Staking?
         </SectionTitle>
         <ExplanationCard $isDark={isDark}>
           <Paragraph $isDark={isDark}>
-            Le <Highlight>liquid staking</Highlight> est une innovation DeFi qui résout
-            le plus gros problème du staking traditionnel : <Highlight>la perte de liquidité</Highlight>.
+            <Highlight>Liquid staking</Highlight> is a DeFi innovation that solves
+            the biggest problem of traditional staking: <Highlight>loss of liquidity</Highlight>.
           </Paragraph>
           <Paragraph $isDark={isDark}>
-            Normalement, quand vous stakez vos tokens, ils sont bloqués. Vous ne pouvez
-            pas les utiliser, les vendre, ou les transférer. Avec le liquid staking,
-            vous recevez un <Highlight>token représentatif</Highlight> (stCSPR) que vous
-            pouvez utiliser librement, pendant que vos CSPR génèrent des récompenses.
+            Normally, when you stake your tokens, they are locked. You cannot use them,
+            sell them, or transfer them. With liquid staking, you receive a
+            <Highlight> representative token</Highlight> (stCSPR) that you can
+            use freely, while your CSPR generates rewards.
           </Paragraph>
 
           <ComparisonTable $isDark={isDark}>
             <ComparisonCard $isDark={isDark} $type="bad">
-              <ComparisonTitle $isDark={isDark}>❌ Staking Classique</ComparisonTitle>
+              <ComparisonTitle $isDark={isDark}>❌ Traditional Staking</ComparisonTitle>
               <ComparisonList $isDark={isDark}>
-                <ComparisonItem $isDark={isDark}>🔒 Tokens bloqués</ComparisonItem>
-                <ComparisonItem $isDark={isDark}>⏳ Période d'unbonding longue</ComparisonItem>
-                <ComparisonItem $isDark={isDark}>🚫 Impossible de transférer</ComparisonItem>
-                <ComparisonItem $isDark={isDark}>📉 Opportunités manquées</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>🔒 Tokens locked</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>⏳ Long unbonding period</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>🚫 Cannot transfer</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>📉 Missed opportunities</ComparisonItem>
               </ComparisonList>
             </ComparisonCard>
 
             <ComparisonCard $isDark={isDark} $type="good">
               <ComparisonTitle $isDark={isDark}>✅ Liquid Staking (StakeVue)</ComparisonTitle>
               <ComparisonList $isDark={isDark}>
-                <ComparisonItem $isDark={isDark}>🔓 Tokens liquides (stCSPR)</ComparisonItem>
-                <ComparisonItem $isDark={isDark}>⚡ Unstake quand vous voulez</ComparisonItem>
-                <ComparisonItem $isDark={isDark}>🔄 Transférable et tradeable</ComparisonItem>
-                <ComparisonItem $isDark={isDark}>📈 Utilisable en DeFi</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>🔓 Liquid tokens (stCSPR)</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>⚡ Unstake anytime</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>🔄 Transferable & tradeable</ComparisonItem>
+                <ComparisonItem $isDark={isDark}>📈 Usable in DeFi</ComparisonItem>
               </ComparisonList>
             </ComparisonCard>
           </ComparisonTable>
@@ -359,7 +359,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
       <Section>
         <SectionTitle $isDark={isDark}>
           <SectionIcon>👥</SectionIcon>
-          Qui utilise StakeVue ?
+          Who Uses StakeVue?
         </SectionTitle>
         <PersonaGrid>
           <PersonaCard $isDark={isDark}>
@@ -367,16 +367,16 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
               <PersonaAvatar>👨‍💼</PersonaAvatar>
               <PersonaInfo>
                 <PersonaName $isDark={isDark}>Thomas</PersonaName>
-                <PersonaRole $isDark={isDark}>Investisseur long-terme</PersonaRole>
+                <PersonaRole $isDark={isDark}>Long-term investor</PersonaRole>
               </PersonaInfo>
             </PersonaHeader>
             <PersonaQuote $isDark={isDark}>
-              "Je veux gagner des récompenses sur mes CSPR sans perdre la possibilité
-              de réagir aux opportunités du marché."
+              "I want to earn rewards on my CSPR without losing the ability
+              to react to market opportunities."
             </PersonaQuote>
             <PersonaAction $isDark={isDark}>
-              ✅ Thomas stake 5000 CSPR, reçoit 5000 stCSPR, et gagne 500 CSPR/an
-              tout en gardant la possibilité de vendre si nécessaire.
+              ✅ Thomas stakes 5000 CSPR, receives 5000 stCSPR, and earns 500 CSPR/year
+              while keeping the ability to sell if needed.
             </PersonaAction>
           </PersonaCard>
 
@@ -384,17 +384,17 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
             <PersonaHeader>
               <PersonaAvatar>👩‍🎓</PersonaAvatar>
               <PersonaInfo>
-                <PersonaName $isDark={isDark}>Marie</PersonaName>
-                <PersonaRole $isDark={isDark}>Nouvelle en crypto</PersonaRole>
+                <PersonaName $isDark={isDark}>Sarah</PersonaName>
+                <PersonaRole $isDark={isDark}>Crypto beginner</PersonaRole>
               </PersonaInfo>
             </PersonaHeader>
             <PersonaQuote $isDark={isDark}>
-              "Je veux un revenu passif simple, sans devoir gérer des validateurs
-              ou comprendre des concepts techniques compliqués."
+              "I want simple passive income without having to manage validators
+              or understand complicated technical concepts."
             </PersonaQuote>
             <PersonaAction $isDark={isDark}>
-              ✅ Marie connecte son wallet, stake 100 CSPR en 2 clics, et commence
-              à gagner des récompenses automatiquement.
+              ✅ Sarah connects her wallet, stakes 100 CSPR in 2 clicks, and starts
+              earning rewards automatically.
             </PersonaAction>
           </PersonaCard>
 
@@ -403,16 +403,16 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
               <PersonaAvatar>👨‍💻</PersonaAvatar>
               <PersonaInfo>
                 <PersonaName $isDark={isDark}>Alex</PersonaName>
-                <PersonaRole $isDark={isDark}>Trader DeFi</PersonaRole>
+                <PersonaRole $isDark={isDark}>DeFi trader</PersonaRole>
               </PersonaInfo>
             </PersonaHeader>
             <PersonaQuote $isDark={isDark}>
-              "Je veux utiliser mes stCSPR comme collatéral dans d'autres protocoles
-              pour maximiser mes rendements."
+              "I want to use my stCSPR as collateral in other protocols
+              to maximize my yields."
             </PersonaQuote>
             <PersonaAction $isDark={isDark}>
-              ✅ Alex stake ses CSPR, utilise ses stCSPR dans d'autres protocoles DeFi,
-              et cumule les rendements.
+              ✅ Alex stakes his CSPR, uses his stCSPR in other DeFi protocols,
+              and stacks yields.
             </PersonaAction>
           </PersonaCard>
         </PersonaGrid>
@@ -421,17 +421,17 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
       <Section>
         <SectionTitle $isDark={isDark}>
           <SectionIcon>📝</SectionIcon>
-          Tutoriel pas-à-pas
+          Step-by-Step Tutorial
         </SectionTitle>
         <TutorialSteps>
           <TutorialStep $isDark={isDark}>
             <StepNumber>1</StepNumber>
             <StepContent>
-              <StepTitle $isDark={isDark}>Installez un wallet Casper</StepTitle>
+              <StepTitle $isDark={isDark}>Install a Casper Wallet</StepTitle>
               <StepDescription $isDark={isDark}>
-                Téléchargez Casper Wallet depuis le Chrome Web Store ou utilisez
-                un Ledger. Créez un compte et sauvegardez votre phrase de récupération
-                dans un endroit sûr.
+                Download Casper Wallet from the Chrome Web Store or use
+                a Ledger. Create an account and save your recovery phrase
+                in a safe place.
               </StepDescription>
             </StepContent>
           </TutorialStep>
@@ -439,11 +439,11 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
           <TutorialStep $isDark={isDark}>
             <StepNumber>2</StepNumber>
             <StepContent>
-              <StepTitle $isDark={isDark}>Obtenez des CSPR</StepTitle>
+              <StepTitle $isDark={isDark}>Get Some CSPR</StepTitle>
               <StepDescription $isDark={isDark}>
-                Achetez des CSPR sur un exchange (Binance, Coinbase, etc.) et
-                transférez-les vers votre wallet Casper. Pour le testnet, utilisez
-                le faucet gratuit.
+                Buy CSPR on an exchange (Binance, Coinbase, etc.) and
+                transfer them to your Casper wallet. For testnet, use
+                the free faucet.
               </StepDescription>
             </StepContent>
           </TutorialStep>
@@ -451,10 +451,10 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
           <TutorialStep $isDark={isDark}>
             <StepNumber>3</StepNumber>
             <StepContent>
-              <StepTitle $isDark={isDark}>Connectez-vous à StakeVue</StepTitle>
+              <StepTitle $isDark={isDark}>Connect to StakeVue</StepTitle>
               <StepDescription $isDark={isDark}>
-                Cliquez sur le bouton "Connect" en haut de la page. Sélectionnez
-                votre wallet dans la liste et approuvez la connexion.
+                Click the "Connect" button at the top of the page. Select
+                your wallet from the list and approve the connection.
               </StepDescription>
             </StepContent>
           </TutorialStep>
@@ -462,11 +462,11 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
           <TutorialStep $isDark={isDark}>
             <StepNumber>4</StepNumber>
             <StepContent>
-              <StepTitle $isDark={isDark}>Stakez vos CSPR</StepTitle>
+              <StepTitle $isDark={isDark}>Stake Your CSPR</StepTitle>
               <StepDescription $isDark={isDark}>
-                Entrez le montant de CSPR que vous souhaitez staker et cliquez
-                sur "Stake". Signez la transaction dans votre wallet. Vous recevrez
-                instantanément vos tokens stCSPR.
+                Enter the amount of CSPR you want to stake and click
+                "Stake". Sign the transaction in your wallet. You will
+                instantly receive your stCSPR tokens.
               </StepDescription>
             </StepContent>
           </TutorialStep>
@@ -474,11 +474,11 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
           <TutorialStep $isDark={isDark}>
             <StepNumber>5</StepNumber>
             <StepContent>
-              <StepTitle $isDark={isDark}>Profitez !</StepTitle>
+              <StepTitle $isDark={isDark}>Enjoy!</StepTitle>
               <StepDescription $isDark={isDark}>
-                C'est tout ! Vos CSPR génèrent maintenant des récompenses (10% APY).
-                Vous pouvez utiliser, transférer ou trader vos stCSPR librement.
-                Pour récupérer vos CSPR, utilisez la fonction Unstake.
+                That's it! Your CSPR is now generating rewards (10% APY).
+                You can use, transfer, or trade your stCSPR freely.
+                To get your CSPR back, use the Unstake function.
               </StepDescription>
             </StepContent>
           </TutorialStep>
@@ -488,7 +488,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
       <Section>
         <SectionTitle $isDark={isDark}>
           <SectionIcon>❓</SectionIcon>
-          Questions fréquentes
+          Frequently Asked Questions
         </SectionTitle>
         <FAQList>
           {faqs.map((faq, index) => (

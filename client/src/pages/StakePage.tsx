@@ -27,7 +27,7 @@ const Title = styled.h1`
 
 const Subtitle = styled.p<{ $isDark: boolean }>`
   font-size: 16px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
 `;
 
 const Grid = styled.div`
@@ -78,16 +78,16 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
       <Header>
         <Title>💰 Stake & Unstake</Title>
         <Subtitle $isDark={isDark}>
-          Gérez vos CSPR stakés et vos tokens stCSPR
+          Manage your staked CSPR and stCSPR tokens
         </Subtitle>
       </Header>
 
       <DemoNotice $isDark={isDark}>
         <NoticeIcon>⚠️</NoticeIcon>
         <NoticeText $isDark={isDark}>
-          <strong>Mode Démo :</strong> Cette version utilise un contrat de démonstration.
-          Les transactions sont enregistrées sur la blockchain, mais les CSPR ne sont
-          pas réellement transférés. C'est un environnement de test sécurisé.
+          <strong>Demo Mode:</strong> This version uses a demonstration contract.
+          Transactions are recorded on the blockchain, but CSPR is not
+          actually transferred. This is a safe test environment.
         </NoticeText>
       </DemoNotice>
 

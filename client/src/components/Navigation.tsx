@@ -7,14 +7,17 @@ const Nav = styled.nav<{ $isDark: boolean }>`
   top: 60px; /* Below CSPR.click bar */
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 50; /* Lower than CSPR.click dropdowns */
   background: ${props => props.$isDark
-    ? 'rgba(10, 10, 26, 0.95)'
-    : 'rgba(255, 255, 255, 0.95)'};
+    ? 'rgba(10, 10, 26, 0.98)'
+    : 'rgba(255, 255, 255, 0.98)'};
   backdrop-filter: blur(10px);
   border-bottom: 1px solid ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.1)'
     : 'rgba(0, 0, 0, 0.1)'};
+  box-shadow: ${props => props.$isDark
+    ? '0 2px 10px rgba(0, 0, 0, 0.3)'
+    : '0 2px 10px rgba(0, 0, 0, 0.1)'};
 `;
 
 const NavContainer = styled.div`
@@ -33,7 +36,7 @@ const NavItem = styled(NavLink)<{ $isDark: boolean }>`
   font-size: 14px;
   color: ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.6)'
-    : 'rgba(0, 0, 0, 0.5)'};
+    : 'rgba(0, 0, 0, 0.6)'};
   transition: all 0.2s ease;
   position: relative;
   display: flex;
@@ -41,7 +44,10 @@ const NavItem = styled(NavLink)<{ $isDark: boolean }>`
   gap: 8px;
 
   &:hover {
-    color: ${props => props.$isDark ? '#fff' : '#000'};
+    color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+    background: ${props => props.$isDark
+      ? 'rgba(255, 255, 255, 0.05)'
+      : 'rgba(0, 0, 0, 0.05)'};
   }
 
   &.active {
@@ -75,7 +81,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isDark }) => {
       <NavContainer>
         <NavItem to="/" $isDark={isDark} end>
           <NavIcon>🏠</NavIcon>
-          Accueil
+          Home
         </NavItem>
         <NavItem to="/stake" $isDark={isDark}>
           <NavIcon>💰</NavIcon>

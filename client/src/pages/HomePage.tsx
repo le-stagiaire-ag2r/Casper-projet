@@ -133,7 +133,7 @@ const StepTitle = styled.h3<{ $isDark: boolean }>`
 
 const StepDescription = styled.p<{ $isDark: boolean }>`
   font-size: 15px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
   line-height: 1.6;
 `;
 
@@ -176,7 +176,7 @@ const BenefitTitle = styled.h4<{ $isDark: boolean }>`
 
 const BenefitDescription = styled.p<{ $isDark: boolean }>`
   font-size: 14px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
   line-height: 1.5;
 `;
 
@@ -242,52 +242,52 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
         <HeroIcon>💎</HeroIcon>
         <HeroTitle>StakeVue</HeroTitle>
         <HeroSubtitle $isDark={isDark}>
-          Le protocole de liquid staking sur Casper Network.
-          Stakez vos CSPR, recevez des stCSPR, et gardez votre liquidité
-          tout en gagnant des récompenses.
+          The liquid staking protocol on Casper Network.
+          Stake your CSPR, receive stCSPR tokens, and keep your liquidity
+          while earning rewards.
         </HeroSubtitle>
         <CTAButton onClick={() => navigate('/stake')}>
-          Commencer à Staker →
+          Start Staking →
         </CTAButton>
       </Hero>
 
       <Section $isDark={isDark}>
-        <SectionTitle $isDark={isDark}>Comment ça marche ?</SectionTitle>
+        <SectionTitle $isDark={isDark}>How Does It Work?</SectionTitle>
         <StepsGrid>
           <StepCard $isDark={isDark}>
             <StepNumber>1</StepNumber>
             <StepIcon>🔗</StepIcon>
-            <StepTitle $isDark={isDark}>Connectez votre wallet</StepTitle>
+            <StepTitle $isDark={isDark}>Connect Your Wallet</StepTitle>
             <StepDescription $isDark={isDark}>
-              Utilisez CSPR.click pour connecter votre wallet Casper en un clic.
-              Compatible avec Casper Wallet, Ledger, et plus.
+              Use CSPR.click to connect your Casper wallet in one click.
+              Compatible with Casper Wallet, Ledger, and more.
             </StepDescription>
           </StepCard>
 
           <StepCard $isDark={isDark}>
             <StepNumber>2</StepNumber>
             <StepIcon>💰</StepIcon>
-            <StepTitle $isDark={isDark}>Stakez vos CSPR</StepTitle>
+            <StepTitle $isDark={isDark}>Stake Your CSPR</StepTitle>
             <StepDescription $isDark={isDark}>
-              Déposez vos CSPR dans le protocole. Recevez instantanément
-              des tokens stCSPR (1:1). Vos CSPR sont distribués entre 10 validateurs.
+              Deposit your CSPR into the protocol. Instantly receive
+              stCSPR tokens (1:1). Your CSPR is distributed across 10 validators.
             </StepDescription>
           </StepCard>
 
           <StepCard $isDark={isDark}>
             <StepNumber>3</StepNumber>
             <StepIcon>🚀</StepIcon>
-            <StepTitle $isDark={isDark}>Profitez de la liquidité</StepTitle>
+            <StepTitle $isDark={isDark}>Enjoy Liquidity</StepTitle>
             <StepDescription $isDark={isDark}>
-              Utilisez vos stCSPR librement : tradez, transférez, ou utilisez-les
-              dans d'autres protocoles DeFi. Tout en gagnant 10% APY !
+              Use your stCSPR freely: trade, transfer, or use them
+              in other DeFi protocols. All while earning 10% APY!
             </StepDescription>
           </StepCard>
         </StepsGrid>
 
         <ExampleBox $isDark={isDark}>
           <ExampleTitle $isDark={isDark}>
-            💡 Exemple concret
+            💡 Real Example
           </ExampleTitle>
           <ExampleContent $isDark={isDark}>
             <ExampleStep $isDark={isDark}>
@@ -303,22 +303,22 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
             </ExampleStep>
             <Arrow>→</Arrow>
             <ExampleStep $isDark={isDark}>
-              +100 CSPR/an (10% APY)
+              +100 CSPR/year (10% APY)
             </ExampleStep>
           </ExampleContent>
         </ExampleBox>
       </Section>
 
       <Section $isDark={isDark}>
-        <SectionTitle $isDark={isDark}>Pourquoi StakeVue ?</SectionTitle>
+        <SectionTitle $isDark={isDark}>Why StakeVue?</SectionTitle>
         <BenefitsGrid>
           <BenefitCard $isDark={isDark}>
             <BenefitIcon>🔓</BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>Gardez votre liquidité</BenefitTitle>
+              <BenefitTitle $isDark={isDark}>Keep Your Liquidity</BenefitTitle>
               <BenefitDescription $isDark={isDark}>
-                Contrairement au staking classique, vos tokens restent utilisables.
-                Pas de période de blocage !
+                Unlike traditional staking, your tokens remain usable.
+                No lock-up period!
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
@@ -326,10 +326,10 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
           <BenefitCard $isDark={isDark}>
             <BenefitIcon>📈</BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>10% APY de récompenses</BenefitTitle>
+              <BenefitTitle $isDark={isDark}>10% APY Rewards</BenefitTitle>
               <BenefitDescription $isDark={isDark}>
-                Gagnez des récompenses de staking automatiquement,
-                sans rien faire.
+                Earn staking rewards automatically,
+                without doing anything.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
@@ -337,10 +337,10 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
           <BenefitCard $isDark={isDark}>
             <BenefitIcon>🛡️</BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>Sécurisé et audité</BenefitTitle>
+              <BenefitTitle $isDark={isDark}>Secure & Audited</BenefitTitle>
               <BenefitDescription $isDark={isDark}>
-                Contrat audité par CasperSecure avec une note A+.
-                10 vulnérabilités corrigées.
+                Contract audited by CasperSecure with A+ grade.
+                10 vulnerabilities fixed.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
@@ -348,10 +348,10 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
           <BenefitCard $isDark={isDark}>
             <BenefitIcon>⚡</BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>Multi-validateurs</BenefitTitle>
+              <BenefitTitle $isDark={isDark}>Multi-Validator</BenefitTitle>
               <BenefitDescription $isDark={isDark}>
-                Distribution automatique sur 10 validateurs pour
-                réduire les risques et maximiser les rendements.
+                Automatic distribution across 10 validators to
+                reduce risks and maximize returns.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
