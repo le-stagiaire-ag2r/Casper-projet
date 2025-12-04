@@ -82,17 +82,19 @@ const DataPoint = styled.circle`
 
 const XLabel = styled.text<{ $isDark: boolean }>`
   fill: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  font-size: 10px;
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
+  font-size: 12px;
+  font-weight: 500;
   text-anchor: middle;
 `;
 
 const YLabel = styled.text<{ $isDark: boolean }>`
   fill: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  font-size: 10px;
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
+  font-size: 11px;
+  font-weight: 500;
   text-anchor: end;
 `;
 
@@ -177,11 +179,12 @@ export const RewardsChart: React.FC<RewardsChartProps> = ({
     return data;
   }, [stakedAmount, apy]);
 
-  // Calculate chart dimensions
-  const padding = { top: 20, right: 20, bottom: 30, left: 50 };
-  const height = 200;
-  const chartWidth = 100 - padding.left / 3 - padding.right / 3;
-  const chartHeight = height - padding.top - padding.bottom;
+  // Calculate chart dimensions - use larger viewBox for better text rendering
+  const viewBoxWidth = 400;
+  const viewBoxHeight = 200;
+  const padding = { top: 20, right: 20, bottom: 35, left: 45 };
+  const chartWidth = viewBoxWidth - padding.left - padding.right;
+  const chartHeight = viewBoxHeight - padding.top - padding.bottom;
 
   // Calculate scales
   const maxValue = Math.max(...chartData.map(d => d.cumulative), 1);
@@ -189,7 +192,7 @@ export const RewardsChart: React.FC<RewardsChartProps> = ({
 
   // Generate path
   const points = chartData.map((d, i) => {
-    const x = padding.left / 3 + i * xStep;
+    const x = padding.left + i * xStep;
     const y = padding.top + chartHeight - (d.cumulative / maxValue) * chartHeight;
     return { x, y, data: d };
   });
@@ -241,13 +244,13 @@ export const RewardsChart: React.FC<RewardsChartProps> = ({
       </ChartHeader>
 
       <SVGContainer>
-        <ChartSVG viewBox={`0 0 100 ${height}`} preserveAspectRatio="none">
+        <ChartSVG viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} preserveAspectRatio="xMidYMid meet">
           <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="rewardsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#ff2d55" />
               <stop offset="100%" stopColor="#5856d6" />
             </linearGradient>
-            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <linearGradient id="rewardsAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#5856d6" stopOpacity="0.4" />
               <stop offset="100%" stopColor="#5856d6" stopOpacity="0" />
             </linearGradient>
@@ -258,18 +261,18 @@ export const RewardsChart: React.FC<RewardsChartProps> = ({
             <GridLine
               key={i}
               $isDark={isDark}
-              x1={padding.left / 3}
+              x1={padding.left}
               y1={padding.top + chartHeight * (1 - ratio)}
-              x2={100 - padding.right / 3}
+              x2={viewBoxWidth - padding.right}
               y2={padding.top + chartHeight * (1 - ratio)}
             />
           ))}
 
           {/* Area under curve */}
-          <AreaPath d={areaPath} />
+          <AreaPath d={areaPath} style={{ fill: 'url(#rewardsAreaGradient)' }} />
 
           {/* Line */}
-          <ChartPath d={linePath} />
+          <ChartPath d={linePath} style={{ stroke: 'url(#rewardsGradient)' }} />
 
           {/* Data points */}
           {points.map((p, i) => (
@@ -277,17 +280,17 @@ export const RewardsChart: React.FC<RewardsChartProps> = ({
               key={i}
               cx={p.x}
               cy={p.y}
-              r={4}
+              r={6}
             />
           ))}
 
-          {/* X-axis labels */}
+          {/* X-axis labels - show every other month */}
           {points.filter((_, i) => i % 2 === 0).map((p, i) => (
             <XLabel
               key={i}
               $isDark={isDark}
               x={p.x}
-              y={height - 5}
+              y={viewBoxHeight - 8}
             >
               {p.data.month}
             </XLabel>
@@ -298,8 +301,8 @@ export const RewardsChart: React.FC<RewardsChartProps> = ({
             <YLabel
               key={i}
               $isDark={isDark}
-              x={padding.left / 3 - 2}
-              y={padding.top + chartHeight * (1 - ratio) + 3}
+              x={padding.left - 8}
+              y={padding.top + chartHeight * (1 - ratio) + 4}
             >
               {(maxValue * ratio).toFixed(0)}
             </YLabel>
