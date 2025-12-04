@@ -46,7 +46,21 @@ const GlobalStyle = createGlobalStyle<{ $isDark: boolean }>`
       : 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)'};
     min-height: 100vh;
     color: ${props => props.$isDark ? '#ffffff' : '#1a1a2e'};
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Smooth theme transition for all elements */
+  *, *::before, *::after {
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Exclude animations and transforms from theme transition */
+  @keyframes * {
+    transition: none;
   }
 
   /* Custom scrollbar */
