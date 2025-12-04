@@ -171,4 +171,97 @@ export const useCsprPrice = () => {
   };
 };
 
+/**
+ * Hook to fetch CSPR price history from CoinGecko (7 days)
+ */
+interface PriceHistoryPoint {
+  timestamp: number;
+  price: number;
+  date: string;
+}
+
+interface PriceHistoryData {
+  prices: PriceHistoryPoint[];
+  minPrice: number;
+  maxPrice: number;
+  priceChange: number;
+  priceChangePercent: number;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export const useCsprPriceHistory = (days: number = 7) => {
+  const [historyData, setHistoryData] = useState<PriceHistoryData>({
+    prices: [],
+    minPrice: 0,
+    maxPrice: 0,
+    priceChange: 0,
+    priceChangePercent: 0,
+    isLoading: false,
+    error: null,
+  });
+
+  const fetchPriceHistory = useCallback(async () => {
+    setHistoryData(prev => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const response = await fetch(
+        `${COINGECKO_API}/coins/casper-network/market_chart?vs_currency=usd&days=${days}&interval=daily`
+      );
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const prices: PriceHistoryPoint[] = data.prices.map((p: [number, number]) => ({
+        timestamp: p[0],
+        price: p[1],
+        date: new Date(p[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      }));
+
+      const priceValues = prices.map(p => p.price);
+      const minPrice = Math.min(...priceValues);
+      const maxPrice = Math.max(...priceValues);
+      const firstPrice = prices[0]?.price || 0;
+      const lastPrice = prices[prices.length - 1]?.price || 0;
+      const priceChange = lastPrice - firstPrice;
+      const priceChangePercent = firstPrice > 0 ? (priceChange / firstPrice) * 100 : 0;
+
+      setHistoryData({
+        prices,
+        minPrice,
+        maxPrice,
+        priceChange,
+        priceChangePercent,
+        isLoading: false,
+        error: null,
+      });
+    } catch (err: any) {
+      console.error('Failed to fetch price history:', err);
+      setHistoryData(prev => ({
+        ...prev,
+        isLoading: false,
+        error: err.message || 'Failed to fetch price history',
+      }));
+    }
+  }, [days]);
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchPriceHistory();
+  }, [fetchPriceHistory]);
+
+  // Auto-refresh every 5 minutes for history
+  useEffect(() => {
+    const interval = setInterval(fetchPriceHistory, 300000);
+    return () => clearInterval(interval);
+  }, [fetchPriceHistory]);
+
+  return {
+    ...historyData,
+    refetch: fetchPriceHistory,
+  };
+};
+
 export default useBalance;

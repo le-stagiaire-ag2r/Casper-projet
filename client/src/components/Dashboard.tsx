@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { useBalance, useCsprPrice } from '../hooks/useBalance';
+import { PriceChart } from './PriceChart';
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -239,6 +240,10 @@ const PortfolioSubtext = styled.div<{ $isDark: boolean }>`
   margin-top: 4px;
 `;
 
+const PriceChartWrapper = styled.div`
+  margin-top: 24px;
+`;
+
 // Fallback demo balances
 const DEMO_CSPR_BALANCE = 1000;
 const DEMO_STCSPR_BALANCE = 0;
@@ -339,6 +344,11 @@ export const Dashboard: React.FC = () => {
               </PortfolioSubtext>
             </PortfolioCard>
           </PortfolioGrid>
+
+          {/* Price Chart */}
+          <PriceChartWrapper>
+            <PriceChart isDark={isDark} />
+          </PriceChartWrapper>
         </PortfolioSection>
       )}
 
