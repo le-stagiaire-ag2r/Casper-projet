@@ -3,6 +3,8 @@ import styled, { keyframes, useTheme } from 'styled-components';
 import { useStaking } from '../hooks/useStaking';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { useToast } from './Toast';
+import { useBalance } from '../hooks/useBalance';
+import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
 
 // Get config values
 const config = (window as any).config || {};
@@ -465,10 +467,23 @@ export const StakingForm: React.FC = () => {
   const [amount, setAmount] = useState('');
   const { success: toastSuccess, error: toastError, ToastComponent } = useToast();
 
-  // Simulated balances for demo mode
-  // In production, these would be fetched from the blockchain
+  // Fetch real balance from blockchain
+  const { csprBalance: realCsprBalance, isLoading: balanceLoading, refetch: refetchBalance } = useBalance(
+    activeAccount?.publicKey || null
+  );
+
+  // Use real balance, fallback to demo if API fails
   const [csprBalance, setCsprBalance] = useState<number>(1000);
   const [stCsprBalance, setStCsprBalance] = useState<number>(0);
+  const [isRealBalance, setIsRealBalance] = useState<boolean>(false);
+
+  // Update balance when real data is fetched
+  useEffect(() => {
+    if (realCsprBalance > 0) {
+      setCsprBalance(realCsprBalance);
+      setIsRealBalance(true);
+    }
+  }, [realCsprBalance]);
 
   // Track last transaction for balance update and toast
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
@@ -479,7 +494,7 @@ export const StakingForm: React.FC = () => {
     if (deployHash && deployHash !== lastTxHash) {
       const txAmount = parseFloat(amount) || 0;
       if (!error) {
-        // Update balances
+        // Update balances locally (will be refreshed from blockchain)
         if (activeTab === 'stake') {
           setCsprBalance(prev => Math.max(0, prev - txAmount - GAS_FEE_CSPR));
           setStCsprBalance(prev => prev + txAmount);
@@ -487,11 +502,15 @@ export const StakingForm: React.FC = () => {
           setStCsprBalance(prev => Math.max(0, prev - txAmount));
           setCsprBalance(prev => prev + txAmount - GAS_FEE_CSPR);
         }
+        // Play success sound
+        playSuccessSound();
         // Show success toast
         toastSuccess(
           activeTab === 'stake' ? 'Stake Successful!' : 'Unstake Successful!',
           `${txAmount} ${activeTab === 'stake' ? 'CSPR staked' : 'stCSPR unstaked'}`
         );
+        // Refresh balance from blockchain after a delay
+        setTimeout(() => refetchBalance(), 5000);
       }
       setLastTxHash(deployHash);
     }
@@ -501,6 +520,8 @@ export const StakingForm: React.FC = () => {
   // Show error toast
   useEffect(() => {
     if (error && error !== lastError) {
+      // Play error sound
+      playErrorSound();
       toastError('Transaction Failed', error);
       setLastError(error);
     }
@@ -671,7 +692,9 @@ export const StakingForm: React.FC = () => {
       <BalanceDisplay $isDark={isDark}>
         <BalanceLabel $isDark={isDark}>
           💰 Available {tokenSymbol}
-          <DemoTag>DEMO</DemoTag>
+          {!isRealBalance && <DemoTag>DEMO</DemoTag>}
+          {isRealBalance && <DemoTag style={{ background: 'rgba(48, 209, 88, 0.2)', color: '#30d158' }}>LIVE</DemoTag>}
+          {balanceLoading && <DemoTag style={{ background: 'rgba(88, 86, 214, 0.2)', color: '#5856d6' }}>...</DemoTag>}
         </BalanceLabel>
         <BalanceValue $isDark={isDark}>
           {currentBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {tokenSymbol}

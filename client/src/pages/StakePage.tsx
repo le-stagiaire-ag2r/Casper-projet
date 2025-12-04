@@ -4,6 +4,8 @@ import { Dashboard } from '../components/Dashboard';
 import { StakingForm } from '../components/StakingForm';
 import { StakeHistory } from '../components/StakeHistory';
 import { StakingCalculator } from '../components/StakingCalculator';
+import { RewardsChart } from '../components/RewardsChart';
+import { ValidatorRanking } from '../components/ValidatorRanking';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -42,6 +44,21 @@ const Grid = styled.div`
   }
 `;
 
+const ChartsSection = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FullWidthSection = styled.div`
+  margin-bottom: 32px;
+`;
+
 const DemoNotice = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
     ? 'rgba(255, 204, 0, 0.1)'
@@ -74,6 +91,9 @@ interface StakePageProps {
 }
 
 export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
+  // For demo, assume 0 staked - in production would fetch from contract
+  const stakedAmount = 0;
+
   return (
     <Container>
       <Header>
@@ -99,7 +119,14 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
         <StakeHistory />
       </Grid>
 
-      <StakingCalculator />
+      <ChartsSection>
+        <RewardsChart isDark={isDark} stakedAmount={stakedAmount} />
+        <StakingCalculator />
+      </ChartsSection>
+
+      <FullWidthSection>
+        <ValidatorRanking isDark={isDark} />
+      </FullWidthSection>
     </Container>
   );
 };
