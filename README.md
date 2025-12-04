@@ -2,7 +2,7 @@
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-Demo-yellow)
-![Version](https://img.shields.io/badge/Version-6.2.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-6.3.0-brightgreen)
 ![Security](https://img.shields.io/badge/Security-A+-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -24,50 +24,92 @@
 StakeVue is a **liquid staking protocol** for Casper Network. Stake your CSPR and receive **stCSPR** tokens that you can use while earning staking rewards.
 
 ```
-Stake CSPR → Get stCSPR → Earn 10% APY → Stay Liquid
+Stake CSPR → Get stCSPR → Earn 11.5% APY → Stay Liquid
 ```
 
 ---
 
-## Features (V6.2)
+## Features (V6.3)
 
 ### Core Staking
 | Feature | Description |
 |---------|-------------|
 | Stake CSPR | Deposit CSPR and receive stCSPR (1:1 ratio) |
 | Unstake | Burn stCSPR to get your CSPR back |
-| 10% APY | Earn staking rewards automatically |
+| 11.5% APY | Earn staking rewards automatically |
+| Instant Liquidity | Use stCSPR in DeFi while staking |
 
 ### Live Blockchain Data
 | Feature | Description |
 |---------|-------------|
 | Real Balance | Fetch your actual CSPR balance from blockchain |
 | CSPR Price | Live USD price from CoinGecko API |
+| 24h Change | Price change indicator with color coding |
 | Auto-Refresh | Balance updates every 30s, price every 60s |
 | LIVE/DEMO Badge | Shows if data is real or simulated |
 
-### Interactive Tools
+### Portfolio & Analytics
 | Feature | Description |
 |---------|-------------|
+| Portfolio History | Interactive chart showing balance evolution over time |
+| Rewards Projection | 12-month earnings forecast based on current stake |
+| Protocol Statistics | TVL, total stakers, APY, and total rewards distributed |
 | Staking Calculator | Estimate earnings over 1-36 months |
-| Rewards Chart | Visual projection of 12-month earnings |
+
+### Price Alerts (NEW)
+| Feature | Description |
+|---------|-------------|
+| Custom Alerts | Set price targets for CSPR (above/below threshold) |
+| Browser Notifications | Get notified when target price is reached |
+| Sound Alerts | Audio notification on price trigger |
+| Persistent Storage | Alerts saved in localStorage |
+
+### Validator System
+| Feature | Description |
+|---------|-------------|
 | Validator Ranking | Top validators with APY, stake, commission |
+| Performance Metrics | Delegation rate and total stake |
+| One-Click Select | Easy validator selection for staking |
 
 ### User Experience
 | Feature | Description |
 |---------|-------------|
-| Sound Notifications | Audio feedback on transaction success/error |
+| Confetti Animation | Celebration effect on successful stake |
+| Sound Notifications | Audio feedback on success/error |
 | Toast Notifications | Visual alerts with auto-dismiss |
 | Input Validation | Real-time validation with error messages |
 | Preview Box | "You will receive" preview before staking |
-| Copy Hash | One-click copy transaction hash |
+| Dark/Light Mode | Full theme support across all components |
 
 ### Multi-Page Navigation
 | Page | Description |
 |------|-------------|
-| Home | Landing page with protocol overview |
+| Home | Modern landing page with protocol overview |
 | Stake | Full staking interface with all tools |
-| Guide | Step-by-step instructions |
+| Guide | Interactive tutorial with FAQ section |
+
+---
+
+## Screenshots
+
+### Home Page
+- Hero section with animated gradient border
+- Protocol statistics (APY, Instant, No Lock, Audited)
+- Step-by-step guide cards
+- Benefits grid
+
+### Stake Page
+- Real-time balance dashboard
+- Staking/Unstaking forms
+- Portfolio history chart
+- Rewards projection
+- Price alerts panel
+- Validator ranking
+
+### Guide Page
+- Comparison: Traditional vs Liquid Staking
+- Interactive FAQ with animations
+- Step-by-step tutorial
 
 ---
 
@@ -77,8 +119,11 @@ Stake CSPR → Get stCSPR → Earn 10% APY → Stay Liquid
 |-----------|------------|
 | **Smart Contract** | Rust, casper-contract 5.0.0, WASM |
 | **Frontend** | React 18, TypeScript, styled-components |
+| **State Management** | React Context API (BalanceContext) |
 | **Wallet** | CSPR.click integration |
 | **Data** | CSPR.cloud API, CoinGecko API |
+| **Storage** | localStorage for persistence |
+| **Notifications** | Web Audio API, Browser Notifications API |
 | **Deployment** | Vercel (frontend), Casper Testnet (contract) |
 
 ---
@@ -91,21 +136,27 @@ Casper-projet/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Dashboard.tsx        # Portfolio summary with live data
-│   │   │   ├── StakingForm.tsx      # Stake/unstake form
+│   │   │   ├── StakingForm.tsx      # Stake/unstake form + confetti
 │   │   │   ├── StakeHistory.tsx     # Transaction history
 │   │   │   ├── StakingCalculator.tsx # Earnings calculator
 │   │   │   ├── RewardsChart.tsx     # 12-month projection chart
 │   │   │   ├── ValidatorRanking.tsx # Top validators table
+│   │   │   ├── PortfolioHistory.tsx # Balance evolution chart (NEW)
+│   │   │   ├── PriceAlert.tsx       # Price alert system (NEW)
+│   │   │   ├── Confetti.tsx         # Celebration animation (NEW)
+│   │   │   ├── GlobalStats.tsx      # Protocol statistics (NEW)
 │   │   │   ├── Toast.tsx            # Notification system
 │   │   │   └── Navigation.tsx       # Multi-page navigation
+│   │   ├── contexts/
+│   │   │   └── BalanceContext.tsx   # Shared balance state (NEW)
 │   │   ├── hooks/
 │   │   │   ├── useBalance.ts        # Blockchain balance + CSPR price
 │   │   │   ├── useCsprClick.ts      # Wallet connection
 │   │   │   └── useStaking.ts        # Staking operations
 │   │   ├── pages/
-│   │   │   ├── HomePage.tsx
-│   │   │   ├── StakePage.tsx
-│   │   │   └── GuidePage.tsx
+│   │   │   ├── HomePage.tsx         # Redesigned landing page
+│   │   │   ├── StakePage.tsx        # Full staking interface
+│   │   │   └── GuidePage.tsx        # Tutorial + FAQ
 │   │   └── utils/
 │   │       └── notificationSound.ts # Web Audio API sounds
 │   └── public/
@@ -138,7 +189,7 @@ Status: Live on Vercel
 | `transfer_stcspr(recipient, amount)` | Transfer stCSPR tokens |
 | `get_my_stake()` | Query your staked amount |
 | `my_stcspr_balance()` | Query your stCSPR balance |
-| `calculate_my_rewards()` | Calculate rewards (10% APY) |
+| `calculate_my_rewards()` | Calculate rewards (11.5% APY) |
 
 ---
 
@@ -154,6 +205,10 @@ Status: Live on Vercel
 - **Endpoint:** `https://api.coingecko.com/api/v3/simple/price`
 - **Data:** Price + 24h change percentage
 - **Refresh:** Every 60 seconds
+
+### Browser Notifications API
+- **Purpose:** Price alert notifications
+- **Trigger:** When CSPR price crosses user-defined threshold
 
 ---
 
@@ -187,6 +242,7 @@ npm run build
 
 | Version | Highlights |
 |---------|------------|
+| **V6.3** | Price alerts, portfolio history, confetti, redesigned UI |
 | **V6.2** | Live blockchain data, CSPR price, charts, sound notifications |
 | **V6.1** | Multi-page navigation, toast notifications, staking calculator |
 | **V6.0** | React frontend with CSPR.click, Vercel deployment |
@@ -196,25 +252,36 @@ npm run build
 
 ---
 
-## What's New in V6.2
+## What's New in V6.3
 
-### Live Data Integration
-- Real CSPR balance from CSPR.cloud API
-- Live USD price from CoinGecko with 24h change
-- Auto-refresh (30s balance, 60s price)
-- LIVE/DEMO badge to show data source
+### Price Alerts System
+- Set custom price targets for CSPR
+- Choose "above" or "below" threshold
+- Browser notifications when target is reached
+- Audio alert with sound notification
+- Persistent alerts saved in localStorage
 
-### Interactive Charts & Tools
-- 12-month rewards projection chart (SVG)
-- Staking calculator with period slider (1-36 months)
-- Validator ranking table with APY, stake, commission
+### Portfolio History
+- Interactive line chart showing balance evolution
+- Combines CSPR + stCSPR holdings
+- Tracks changes over time
+- localStorage persistence
 
-### Enhanced UX
-- Sound notifications using Web Audio API (no external files)
-- Toast notifications with slide animations
-- Input validation with real-time error messages
-- "You will receive" preview box
-- Copy transaction hash button with feedback
+### Confetti Celebration
+- Animated confetti on successful stake
+- 100 colorful particles
+- Enhances user experience
+
+### UI/UX Redesign
+- **Home Page:** Gradient hero, animated icons, stats row, step cards, benefits grid
+- **Guide Page:** Comparison cards, interactive FAQ, step-by-step tutorial
+- **Stake Page:** Integrated portfolio history and price alerts
+
+### Technical Improvements
+- BalanceContext for shared state management
+- stCSPR balance persistence in localStorage
+- Fixed chart viewBox for proper label rendering
+- Improved dark/light mode support
 
 ---
 
