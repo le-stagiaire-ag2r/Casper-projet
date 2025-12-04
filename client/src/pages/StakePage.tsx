@@ -6,6 +6,8 @@ import { StakeHistory } from '../components/StakeHistory';
 import { StakingCalculator } from '../components/StakingCalculator';
 import { RewardsChart } from '../components/RewardsChart';
 import { ValidatorRanking } from '../components/ValidatorRanking';
+import { GlobalStats } from '../components/GlobalStats';
+import { FAQ } from '../components/FAQ';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -126,6 +128,14 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
 
       <FullWidthSection>
         <ValidatorRanking isDark={isDark} />
+      </FullWidthSection>
+
+      <FullWidthSection>
+        <GlobalStats isDark={isDark} />
+      </FullWidthSection>
+
+      <FullWidthSection>
+        <FAQ isDark={isDark} />
       </FullWidthSection>
     </Container>
   );
