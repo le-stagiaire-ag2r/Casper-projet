@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import {
   ClickProvider,
@@ -11,9 +12,10 @@ import {
   ThemeModeType
 } from '@make-software/csprclick-ui';
 import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-core-types';
-import { Dashboard } from './components/Dashboard';
-import { StakingForm } from './components/StakingForm';
-import { StakeHistory } from './components/StakeHistory';
+import { Navigation } from './components/Navigation';
+import { HomePage } from './pages/HomePage';
+import { StakePage } from './pages/StakePage';
+import { GuidePage } from './pages/GuidePage';
 
 // Get runtime config
 const config = window.config;
@@ -63,66 +65,13 @@ const GlobalStyle = createGlobalStyle<{ $isDark: boolean }>`
 const AppContainer = styled.div`
   min-height: 100vh;
   padding: 20px;
-  padding-top: 80px; /* Space for CSPR.click top bar */
-`;
-
-const Header = styled.header`
-  max-width: 1200px;
-  margin: 0 auto 40px;
-  text-align: center;
-`;
-
-const Logo = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 16px;
-`;
-
-const LogoIcon = styled.div`
-  font-size: 48px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-`;
-
-const LogoText = styled.h1`
-  font-size: 42px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #ff2d55 0%, #5856d6 50%, #af52de 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -1px;
-`;
-
-const Tagline = styled.p<{ $isDark: boolean }>`
-  font-size: 18px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.6)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  font-weight: 500;
-`;
-
-const MainContent = styled.main`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 32px;
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-  }
+  padding-top: 120px; /* Space for CSPR.click bar + navigation */
 `;
 
 const Footer = styled.footer<{ $isDark: boolean }>`
   max-width: 1200px;
   margin: 48px auto 0;
-  padding: 32px 0;
+  padding: 32px 20px;
   text-align: center;
   color: ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.5)'
@@ -138,6 +87,7 @@ const FooterLinks = styled.div`
   justify-content: center;
   gap: 24px;
   margin-top: 16px;
+  flex-wrap: wrap;
 `;
 
 const FooterLink = styled.a`
@@ -177,23 +127,13 @@ const AppContent: React.FC<{
         themeMode={themeMode}
         topBarSettings={topBarSettings}
       />
+      <Navigation isDark={isDark} />
       <AppContainer>
-        <Header>
-          <Logo>
-            <LogoIcon>💎</LogoIcon>
-            <LogoText>StakeVue</LogoText>
-          </Logo>
-          <Tagline $isDark={isDark}>Liquid Staking on Casper Network</Tagline>
-        </Header>
-
-        <MainContent>
-          <Dashboard />
-
-          <Grid>
-            <StakingForm />
-            <StakeHistory />
-          </Grid>
-        </MainContent>
+        <Routes>
+          <Route path="/" element={<HomePage isDark={isDark} />} />
+          <Route path="/stake" element={<StakePage isDark={isDark} />} />
+          <Route path="/guide" element={<GuidePage isDark={isDark} />} />
+        </Routes>
 
         <Footer $isDark={isDark}>
           <p>StakeVue - Secure Liquid Staking Protocol</p>
@@ -207,9 +147,12 @@ const AppContent: React.FC<{
             <FooterLink href="https://casper.network" target="_blank" rel="noopener noreferrer">
               Casper Network
             </FooterLink>
+            <FooterLink href="https://github.com/le-stagiaire-ag2r/Casper-projet" target="_blank" rel="noopener noreferrer">
+              GitHub
+            </FooterLink>
           </FooterLinks>
           <p style={{ marginTop: '16px', fontSize: '12px', opacity: 0.7 }}>
-            Powered by CSPR.click | Built for Casper Hackathon
+            Powered by CSPR.click | Built for Casper Hackathon 2025
           </p>
         </Footer>
       </AppContainer>
@@ -231,15 +174,17 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <ThemeProvider theme={csprClickTheme}>
-      <ClickProvider options={clickOptions}>
-        <AppContent
-          isDark={themeMode === ThemeModeType.dark}
-          themeMode={themeMode}
-          onThemeSwitch={handleThemeSwitch}
-        />
-      </ClickProvider>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider theme={csprClickTheme}>
+        <ClickProvider options={clickOptions}>
+          <AppContent
+            isDark={themeMode === ThemeModeType.dark}
+            themeMode={themeMode}
+            onThemeSwitch={handleThemeSwitch}
+          />
+        </ClickProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   );
 };
 
