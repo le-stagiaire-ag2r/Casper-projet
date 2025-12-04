@@ -172,13 +172,16 @@ Casper-projet/
 
 ## Smart Contract
 
-### Current Contract
+### Current Contract (V5.0 - Production Demo)
 
 ```
 Contract Hash: 3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 Network: casper-test
+Version: 2.0.4
 Status: Live on Vercel
 ```
+
+This contract uses internal tracking for stakes and stCSPR tokens. Perfect for demonstration and POC purposes.
 
 ### Entry Points
 
@@ -190,6 +193,52 @@ Status: Live on Vercel
 | `get_my_stake()` | Query your staked amount |
 | `my_stcspr_balance()` | Query your stCSPR balance |
 | `calculate_my_rewards()` | Calculate rewards (11.5% APY) |
+
+---
+
+## Experimental Contract (V6.1 - Real Transfers)
+
+### Deployed Contract
+
+```
+Contract Hash: hash-d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
+Package Hash: da7ec3951ab01e272bd340cbd69344814755da63f0b60016f56ebd90ae10e82a
+Network: casper-test
+Status: Deployed but not integrated
+```
+
+### What Was Built
+
+We developed an advanced contract with **real CSPR transfers**:
+
+- `stake(amount, source_purse)` - Accepts user's purse for receiving CSPR
+- `unstake(amount, dest_purse)` - Accepts user's purse for returning CSPR
+- Uses `system::transfer_from_purse_to_purse()` for actual token movement
+
+### Technical Challenge
+
+The Casper VM prevents contracts from accessing user purses via `account::get_main_purse()` (causes "Forged reference" error). Our solution: pass purse as parameter - when user signs, contract gets temporary access.
+
+### Integration Blocker: CORS Restrictions
+
+To use V6.1, the frontend needs to fetch the user's main purse from the Casper RPC. All attempts were blocked:
+
+| Attempt | Result |
+|---------|--------|
+| Direct RPC call to `rpc.testnet.casperlabs.io` | CORS blocked |
+| Vercel Serverless Function | Runtime configuration issues |
+| CORS Proxies (corsproxy.io, allorigins, cors-anywhere) | All failed |
+| CSPR.cloud API | CORS issues from browser |
+
+### Future Solutions
+
+1. Deploy a backend server (Node.js/Express) to proxy RPC calls
+2. Use CSPR.click native features if they add purse fetching
+3. Session code deployment (WASM running in user context)
+
+### Conclusion
+
+The V6.1 contract is **fully functional on testnet**. The limitation is browser CORS restrictions, not the smart contract itself. For the hackathon demo, we use the V5.0 contract which works perfectly for demonstration purposes
 
 ---
 
