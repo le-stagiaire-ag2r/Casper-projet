@@ -167,6 +167,13 @@ const TransactionAmount = styled.div<{ type: string }>`
   margin-bottom: 4px;
 `;
 
+const HashContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+`;
+
 const TransactionHash = styled.a<{ $isDark: boolean }>`
   font-size: 12px;
   color: ${props => props.$isDark
@@ -178,6 +185,41 @@ const TransactionHash = styled.a<{ $isDark: boolean }>`
 
   &:hover {
     color: #5856d6;
+  }
+`;
+
+const CopyButton = styled.button<{ $isDark: boolean; $copied: boolean }>`
+  background: ${props => props.$copied
+    ? 'rgba(48, 209, 88, 0.2)'
+    : props.$isDark
+      ? 'rgba(255, 255, 255, 0.05)'
+      : 'rgba(0, 0, 0, 0.05)'};
+  border: 1px solid ${props => props.$copied
+    ? 'rgba(48, 209, 88, 0.3)'
+    : props.$isDark
+      ? 'rgba(255, 255, 255, 0.1)'
+      : 'rgba(0, 0, 0, 0.1)'};
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: ${props => props.$copied
+    ? '#30d158'
+    : props.$isDark
+      ? 'rgba(255, 255, 255, 0.5)'
+      : 'rgba(0, 0, 0, 0.5)'};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    background: ${props => props.$copied
+      ? 'rgba(48, 209, 88, 0.3)'
+      : props.$isDark
+        ? 'rgba(255, 255, 255, 0.1)'
+        : 'rgba(0, 0, 0, 0.1)'};
+    color: ${props => props.$copied ? '#30d158' : '#5856d6'};
   }
 `;
 
@@ -223,6 +265,17 @@ export const StakeHistory: React.FC = () => {
   const isDark = theme?.mode === 'dark';
   const [transactions, setTransactions] = useState<LocalTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
+
+  const copyToClipboard = async (hash: string) => {
+    try {
+      await navigator.clipboard.writeText(hash);
+      setCopiedHash(hash);
+      setTimeout(() => setCopiedHash(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   const fetchHistory = useCallback(() => {
     if (!activeAccount) {
@@ -380,14 +433,24 @@ export const StakeHistory: React.FC = () => {
                 {tx.actionType === 'stake' ? '+' : '-'}{formatAmount(tx.amount)} CSPR
               </TransactionAmount>
               {tx.txHash && (
-                <TransactionHash
-                  $isDark={isDark}
-                  href={`${window.config?.cspr_live_url || 'https://testnet.cspr.live'}/deploy/${tx.txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {tx.txHash.substring(0, 8)}...{tx.txHash.substring(tx.txHash.length - 6)}
-                </TransactionHash>
+                <HashContainer>
+                  <TransactionHash
+                    $isDark={isDark}
+                    href={`${(window as any).config?.cspr_live_url || 'https://testnet.cspr.live'}/deploy/${tx.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {tx.txHash.substring(0, 8)}...{tx.txHash.substring(tx.txHash.length - 6)}
+                  </TransactionHash>
+                  <CopyButton
+                    $isDark={isDark}
+                    $copied={copiedHash === tx.txHash}
+                    onClick={() => copyToClipboard(tx.txHash)}
+                    title="Copy full hash"
+                  >
+                    {copiedHash === tx.txHash ? '✓' : '📋'}
+                  </CopyButton>
+                </HashContainer>
               )}
             </TransactionRight>
           </TransactionItem>

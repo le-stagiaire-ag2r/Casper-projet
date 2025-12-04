@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useStaking } from '../hooks/useStaking';
 import { useCsprClick } from '../hooks/useCsprClick';
+
+// Get config values
+const config = (window as any).config || {};
+const MIN_STAKE_CSPR = parseFloat(config.min_stake_amount || '1000000000') / 1_000_000_000;
+const GAS_FEE_CSPR = parseFloat(config.transaction_payment || '5000000000') / 1_000_000_000;
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -330,6 +335,73 @@ const ConnectSubtext = styled.p<{ $isDark: boolean }>`
   font-size: 14px;
 `;
 
+const BalanceDisplay = styled.div<{ $isDark: boolean }>`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: ${props => props.$isDark
+    ? 'rgba(88, 86, 214, 0.1)'
+    : 'rgba(88, 86, 214, 0.08)'};
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid ${props => props.$isDark
+    ? 'rgba(88, 86, 214, 0.2)'
+    : 'rgba(88, 86, 214, 0.15)'};
+`;
+
+const BalanceLabel = styled.span<{ $isDark: boolean }>`
+  font-size: 13px;
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const BalanceValue = styled.span<{ $isDark: boolean }>`
+  font-size: 15px;
+  font-weight: 700;
+  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+`;
+
+const ValidationMessage = styled.div<{ $type: 'error' | 'warning' | 'info' }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: ${props => {
+    switch (props.$type) {
+      case 'error': return 'rgba(255, 69, 58, 0.1)';
+      case 'warning': return 'rgba(255, 159, 10, 0.1)';
+      default: return 'rgba(88, 86, 214, 0.1)';
+    }
+  }};
+  color: ${props => {
+    switch (props.$type) {
+      case 'error': return '#ff453a';
+      case 'warning': return '#ff9f0a';
+      default: return '#5856d6';
+    }
+  }};
+`;
+
+const DemoTag = styled.span`
+  display: inline-block;
+  background: rgba(255, 159, 10, 0.2);
+  color: #ff9f0a;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+`;
+
 export const StakingForm: React.FC = () => {
   const { activeAccount } = useCsprClick();
   const { stake, unstake, isProcessing, deployHash, status, error } = useStaking();
@@ -338,10 +410,96 @@ export const StakingForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
   const [amount, setAmount] = useState('');
 
+  // Simulated balances for demo mode
+  // In production, these would be fetched from the blockchain
+  const [csprBalance, setCsprBalance] = useState<number>(1000);
+  const [stCsprBalance, setStCsprBalance] = useState<number>(0);
+
+  // Track last transaction for balance update
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+
+  // Update simulated balance when transactions complete
+  useEffect(() => {
+    if (deployHash && deployHash !== lastTxHash && !error) {
+      const txAmount = parseFloat(amount) || 0;
+      if (activeTab === 'stake') {
+        setCsprBalance(prev => Math.max(0, prev - txAmount - GAS_FEE_CSPR));
+        setStCsprBalance(prev => prev + txAmount);
+      } else {
+        setStCsprBalance(prev => Math.max(0, prev - txAmount));
+        setCsprBalance(prev => prev + txAmount - GAS_FEE_CSPR);
+      }
+      setLastTxHash(deployHash);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deployHash]);
+
+  // Get current balance based on active tab
+  const currentBalance = activeTab === 'stake' ? csprBalance : stCsprBalance;
+  const tokenSymbol = activeTab === 'stake' ? 'CSPR' : 'stCSPR';
+
+  // Validation logic
+  const validation = useMemo(() => {
+    const numAmount = parseFloat(amount) || 0;
+
+    if (!amount || numAmount === 0) {
+      return { valid: true, message: null, type: 'info' as const };
+    }
+
+    if (numAmount < 0) {
+      return { valid: false, message: 'Amount must be positive', type: 'error' as const };
+    }
+
+    if (activeTab === 'stake') {
+      if (numAmount < MIN_STAKE_CSPR) {
+        return {
+          valid: false,
+          message: `Minimum stake is ${MIN_STAKE_CSPR} CSPR`,
+          type: 'error' as const
+        };
+      }
+
+      const totalNeeded = numAmount + GAS_FEE_CSPR;
+      if (totalNeeded > csprBalance) {
+        return {
+          valid: false,
+          message: `Insufficient balance (need ${totalNeeded.toFixed(2)} CSPR including gas)`,
+          type: 'error' as const
+        };
+      }
+
+      if (numAmount > csprBalance * 0.9) {
+        return {
+          valid: true,
+          message: `Consider keeping some CSPR for future gas fees`,
+          type: 'warning' as const
+        };
+      }
+    } else {
+      if (numAmount > stCsprBalance) {
+        return {
+          valid: false,
+          message: `Insufficient stCSPR balance`,
+          type: 'error' as const
+        };
+      }
+
+      if (GAS_FEE_CSPR > csprBalance) {
+        return {
+          valid: false,
+          message: `Insufficient CSPR for gas fee (need ${GAS_FEE_CSPR} CSPR)`,
+          type: 'error' as const
+        };
+      }
+    }
+
+    return { valid: true, message: null, type: 'info' as const };
+  }, [amount, activeTab, csprBalance, stCsprBalance]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!amount || parseFloat(amount) <= 0) {
+    if (!amount || parseFloat(amount) <= 0 || !validation.valid) {
       return;
     }
 
@@ -357,8 +515,14 @@ export const StakingForm: React.FC = () => {
   };
 
   const handleMaxClick = () => {
-    // In a real app, this would fetch the user's balance
-    setAmount('1000');
+    if (activeTab === 'stake') {
+      // Leave enough for gas fee
+      const maxStake = Math.max(0, csprBalance - GAS_FEE_CSPR - 1);
+      setAmount(maxStake > 0 ? maxStake.toFixed(2) : '0');
+    } else {
+      // For unstake, use full stCSPR balance
+      setAmount(stCsprBalance > 0 ? stCsprBalance.toFixed(2) : '0');
+    }
   };
 
   if (!activeAccount) {
@@ -398,32 +562,52 @@ export const StakingForm: React.FC = () => {
         </TabContainer>
       </Header>
 
+      {/* Balance Display */}
+      <BalanceDisplay $isDark={isDark}>
+        <BalanceLabel $isDark={isDark}>
+          💰 Available {tokenSymbol}
+          <DemoTag>DEMO</DemoTag>
+        </BalanceLabel>
+        <BalanceValue $isDark={isDark}>
+          {currentBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {tokenSymbol}
+        </BalanceValue>
+      </BalanceDisplay>
+
       <form onSubmit={handleSubmit}>
         <InputGroup>
           <LabelRow>
             <Label $isDark={isDark}>
               {activeTab === 'stake' ? 'Amount to stake' : 'Amount to unstake'}
             </Label>
-            <MaxButton type="button" onClick={handleMaxClick}>MAX</MaxButton>
+            <MaxButton type="button" onClick={handleMaxClick} disabled={isProcessing}>
+              MAX
+            </MaxButton>
           </LabelRow>
           <InputWrapper>
             <Input
               $isDark={isDark}
               type="number"
-              step="0.000000001"
-              min="0"
+              step="0.01"
+              min={activeTab === 'stake' ? MIN_STAKE_CSPR : 0}
+              max={currentBalance}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
+              placeholder={activeTab === 'stake' ? `Min ${MIN_STAKE_CSPR} CSPR` : '0.00'}
               disabled={isProcessing}
             />
             <TokenLabel $isDark={isDark}>
-              {activeTab === 'stake' ? 'CSPR' : 'stCSPR'}
+              {tokenSymbol}
             </TokenLabel>
           </InputWrapper>
+          {validation.message && (
+            <ValidationMessage $type={validation.type}>
+              {validation.type === 'error' ? '⚠️' : validation.type === 'warning' ? '💡' : 'ℹ️'}
+              {validation.message}
+            </ValidationMessage>
+          )}
         </InputGroup>
 
-        <SubmitButton type="submit" disabled={isProcessing || !amount}>
+        <SubmitButton type="submit" disabled={isProcessing || !amount || !validation.valid}>
           {isProcessing ? (
             <>
               <Spinner />
@@ -461,12 +645,16 @@ export const StakingForm: React.FC = () => {
             <InfoValue $isDark={isDark}>1 CSPR = 1 stCSPR</InfoValue>
           </InfoRow>
           <InfoRow $isDark={isDark}>
-            <InfoLabel $isDark={isDark}>APY</InfoLabel>
+            <InfoLabel $isDark={isDark}>APY (estimated)</InfoLabel>
             <InfoValue $isDark={isDark} style={{ color: '#30d158' }}>~8-12%</InfoValue>
           </InfoRow>
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>Gas Fee</InfoLabel>
-            <InfoValue $isDark={isDark}>~5 CSPR</InfoValue>
+            <InfoValue $isDark={isDark}>{GAS_FEE_CSPR} CSPR</InfoValue>
+          </InfoRow>
+          <InfoRow $isDark={isDark}>
+            <InfoLabel $isDark={isDark}>Min. Stake</InfoLabel>
+            <InfoValue $isDark={isDark}>{MIN_STAKE_CSPR} CSPR</InfoValue>
           </InfoRow>
         </InfoBox>
       </form>
