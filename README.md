@@ -1,7 +1,7 @@
 # StakeVue - Liquid Staking Protocol for Casper Network
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
-![Status](https://img.shields.io/badge/Status-Live-success)
+![Status](https://img.shields.io/badge/Status-Demo-yellow)
 ![Version](https://img.shields.io/badge/Version-6.0.0-brightgreen)
 ![Security](https://img.shields.io/badge/Security-A+-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
@@ -19,15 +19,77 @@
 
 ---
 
+## Current State - Important Notice
+
+### What Works Now (V6.0 - Demo Version)
+
+The current deployed version is a **demonstration/showcase site**:
+
+| Feature | Status | Details |
+|---------|--------|---------|
+| Connect Wallet | ✅ Works | CSPR.click integration |
+| Stake Interface | ✅ Works | Enter amount, sign transaction |
+| Unstake Interface | ✅ Works | Enter amount, sign transaction |
+| stCSPR Tracking | ✅ Works | Internal balance tracking |
+| Contract Execution | ✅ Works | Transaction succeeds on-chain |
+| **Real CSPR Transfer** | ❌ No | CSPR stays in your wallet |
+
+**In other words:** The contract executes successfully, you can see it on the explorer, but your CSPR tokens **don't actually move**. It's an internal tracking system that demonstrates the liquid staking concept.
+
+### What We Built (V6.1 - Real Transfers)
+
+We developed a **new contract** (V6.1) that actually transfers CSPR:
+
+```
+V6.1 Contract Hash: d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
+Status: Deployed on Testnet ✅
+Integration: NOT POSSIBLE ❌
+```
+
+**Why V6.1 wasn't deployed to the frontend:**
+
+To transfer real CSPR, the frontend needs to fetch the user's "purse" (wallet address) from the Casper network. Browser security (CORS) blocks these requests.
+
+| Solution Tried | Result |
+|----------------|--------|
+| Direct RPC call | Blocked by CORS |
+| Vercel Serverless Function | Runtime errors |
+| CORS Proxies (5 different ones) | All failed |
+| CSPR.cloud API | CORS issues |
+
+**Full technical details:** [docs/V6.1-DEVELOPMENT-NOTES.md](./docs/V6.1-DEVELOPMENT-NOTES.md)
+
+### Summary
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  CURRENT LIVE SITE (V6.0)                                       │
+│  ─────────────────────────────────────────────────────────────  │
+│  ✅ Contract works                                              │
+│  ✅ UI works                                                    │
+│  ✅ Wallet connection works                                     │
+│  ❌ CSPR doesn't move (demo/showcase only)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  NEW CONTRACT DEVELOPED (V6.1)                                  │
+│  ─────────────────────────────────────────────────────────────  │
+│  ✅ Contract deployed and working on testnet                    │
+│  ✅ Real CSPR transfers work                                    │
+│  ❌ Can't connect frontend (CORS blocking)                      │
+│  📋 Needs backend server to proxy requests                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Overview
 
 StakeVue is a **liquid staking protocol** built on Casper Network that introduces **stCSPR**, a transferable liquid staking token.
 
-### How It Works
+### How It Works (Concept)
 
 ```
 1. Connect Wallet     →  Use CSPR.click to connect
-2. Stake CSPR         →  Enter amount and stake
+2. Stake CSPR         →  Deposit CSPR into the contract
 3. Receive stCSPR     →  Get 1 stCSPR per 1 CSPR staked
 4. Earn Rewards       →  10% APY on staked CSPR
 5. Stay Liquid        →  Transfer/trade your stCSPR freely
@@ -78,16 +140,6 @@ MEDIUM Vulns: 10                →     0
 Attack Risk: HIGH               →     PROTECTED
 ```
 
-**Example Fix:**
-```rust
-// V4.0 - VULNERABLE
-let new_stake = current_stake - amount;  // Could underflow!
-
-// V5.0 - SECURED
-let new_stake = current_stake.checked_sub(amount)
-    .unwrap_or_revert_with(ApiError::User(211));  // Safe revert
-```
-
 **Full Report:** [SECURITY_AUDIT_BEFORE_AFTER.md](./SECURITY_AUDIT_BEFORE_AFTER.md)
 
 ---
@@ -124,15 +176,24 @@ Casper-projet/
 
 ---
 
-## Smart Contract
+## Smart Contracts
 
-### Deployed Contract
+### Current Contract (V6.0 - Demo)
 
 ```
 Contract Hash: 3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 Network: casper-test
-Entry Points: 18
-Code: 857 lines
+Type: Internal tracking (no real transfers)
+Status: Live on Vercel
+```
+
+### New Contract (V6.1 - Real Transfers)
+
+```
+Contract Hash: d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
+Network: casper-test
+Type: Real CSPR transfers
+Status: Deployed but not integrated (CORS blocking)
 ```
 
 ### Entry Points
@@ -186,6 +247,7 @@ cargo build --release --target wasm32-unknown-unknown
 
 | Version | Highlights |
 |---------|------------|
+| **V6.1** | Real CSPR transfers (deployed but not integrated - CORS) |
 | **V6.0** | React frontend with CSPR.click, Vercel deployment |
 | **V5.0** | Security hardening, 10 vulnerabilities fixed, A+ audit |
 | **V4.0** | Multi-validator support, round-robin distribution |
@@ -193,18 +255,24 @@ cargo build --release --target wasm32-unknown-unknown
 | **V2.0** | Per-user tracking, rewards calculation |
 | **V1.0** | Core stake/unstake functionality |
 
-### V6.1 Development (Not Deployed)
+---
 
-We developed V6.1 with **real CSPR transfers** but couldn't deploy due to CORS restrictions when fetching user purse data from the browser.
+## Next Steps (Future Work)
 
-**Details:** [docs/V6.1-DEVELOPMENT-NOTES.md](./docs/V6.1-DEVELOPMENT-NOTES.md)
+To enable real CSPR transfers (V6.1), we need:
+
+1. **Backend Proxy Server** - Node.js/Express server to proxy RPC calls and bypass CORS
+2. **Or** - Wait for CSPR.click to add native purse fetching support
+
+The V6.1 contract is ready and working. Only the frontend integration is blocked.
 
 ---
 
 ## Links
 
 - **Live Demo:** https://casper-stake.vercel.app
-- **Contract:** https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
+- **Current Contract (V6.0):** https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
+- **New Contract (V6.1):** https://testnet.cspr.live/contract/d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
 - **CasperSecure:** https://github.com/le-stagiaire-ag2r/CasperSecure
 - **Casper Network:** https://casper.network
 
