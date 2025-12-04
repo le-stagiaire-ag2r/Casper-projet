@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useStaking } from '../hooks/useStaking';
 import { useCsprClick } from '../hooks/useCsprClick';
+import { useToast } from './Toast';
 
 // Get config values
 const config = (window as any).config || {};
@@ -402,6 +403,59 @@ const DemoTag = styled.span`
   text-transform: uppercase;
 `;
 
+const PreviewBox = styled.div<{ $isDark: boolean }>`
+  background: ${props => props.$isDark
+    ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%)'
+    : 'linear-gradient(135deg, rgba(48, 209, 88, 0.08) 0%, rgba(88, 86, 214, 0.08) 100%)'};
+  border: 1px solid ${props => props.$isDark
+    ? 'rgba(48, 209, 88, 0.2)'
+    : 'rgba(48, 209, 88, 0.15)'};
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+`;
+
+const PreviewTitle = styled.div<{ $isDark: boolean }>`
+  font-size: 12px;
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.5)'
+    : 'rgba(0, 0, 0, 0.5)'};
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const PreviewRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const PreviewLabel = styled.span<{ $isDark: boolean }>`
+  font-size: 13px;
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
+`;
+
+const PreviewValue = styled.span<{ $isDark: boolean; $highlight?: boolean }>`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${props => props.$highlight
+    ? '#30d158'
+    : props.$isDark ? '#fff' : '#1a1a2e'};
+`;
+
+// APY constants for calculations
+const APY_MIN = 0.08; // 8%
+const APY_MAX = 0.12; // 12%
+const APY_AVG = (APY_MIN + APY_MAX) / 2; // 10%
+
 export const StakingForm: React.FC = () => {
   const { activeAccount } = useCsprClick();
   const { stake, unstake, isProcessing, deployHash, status, error } = useStaking();
@@ -409,30 +463,49 @@ export const StakingForm: React.FC = () => {
   const isDark = theme?.mode === 'dark';
   const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
   const [amount, setAmount] = useState('');
+  const { success: toastSuccess, error: toastError, ToastComponent } = useToast();
 
   // Simulated balances for demo mode
   // In production, these would be fetched from the blockchain
   const [csprBalance, setCsprBalance] = useState<number>(1000);
   const [stCsprBalance, setStCsprBalance] = useState<number>(0);
 
-  // Track last transaction for balance update
+  // Track last transaction for balance update and toast
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
 
-  // Update simulated balance when transactions complete
+  // Show toast notifications for transactions
   useEffect(() => {
-    if (deployHash && deployHash !== lastTxHash && !error) {
+    if (deployHash && deployHash !== lastTxHash) {
       const txAmount = parseFloat(amount) || 0;
-      if (activeTab === 'stake') {
-        setCsprBalance(prev => Math.max(0, prev - txAmount - GAS_FEE_CSPR));
-        setStCsprBalance(prev => prev + txAmount);
-      } else {
-        setStCsprBalance(prev => Math.max(0, prev - txAmount));
-        setCsprBalance(prev => prev + txAmount - GAS_FEE_CSPR);
+      if (!error) {
+        // Update balances
+        if (activeTab === 'stake') {
+          setCsprBalance(prev => Math.max(0, prev - txAmount - GAS_FEE_CSPR));
+          setStCsprBalance(prev => prev + txAmount);
+        } else {
+          setStCsprBalance(prev => Math.max(0, prev - txAmount));
+          setCsprBalance(prev => prev + txAmount - GAS_FEE_CSPR);
+        }
+        // Show success toast
+        toastSuccess(
+          activeTab === 'stake' ? 'Stake Successful!' : 'Unstake Successful!',
+          `${txAmount} ${activeTab === 'stake' ? 'CSPR staked' : 'stCSPR unstaked'}`
+        );
       }
       setLastTxHash(deployHash);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deployHash]);
+
+  // Show error toast
+  useEffect(() => {
+    if (error && error !== lastError) {
+      toastError('Transaction Failed', error);
+      setLastError(error);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error]);
 
   // Get current balance based on active tab
   const currentBalance = activeTab === 'stake' ? csprBalance : stCsprBalance;
@@ -496,6 +569,36 @@ export const StakingForm: React.FC = () => {
     return { valid: true, message: null, type: 'info' as const };
   }, [amount, activeTab, csprBalance, stCsprBalance]);
 
+  // Calculate preview values
+  const preview = useMemo(() => {
+    const numAmount = parseFloat(amount) || 0;
+    if (numAmount <= 0) return null;
+
+    if (activeTab === 'stake') {
+      const stCsprReceived = numAmount; // 1:1 exchange rate
+      const yearlyEarningsMin = numAmount * APY_MIN;
+      const yearlyEarningsMax = numAmount * APY_MAX;
+      const monthlyEarnings = (numAmount * APY_AVG) / 12;
+
+      return {
+        receive: stCsprReceived,
+        receiveToken: 'stCSPR',
+        yearlyMin: yearlyEarningsMin,
+        yearlyMax: yearlyEarningsMax,
+        monthly: monthlyEarnings,
+      };
+    } else {
+      const csprReceived = numAmount; // 1:1 exchange rate
+      return {
+        receive: csprReceived,
+        receiveToken: 'CSPR',
+        yearlyMin: 0,
+        yearlyMax: 0,
+        monthly: 0,
+      };
+    }
+  }, [amount, activeTab]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -538,8 +641,10 @@ export const StakingForm: React.FC = () => {
   }
 
   return (
-    <Container $isDark={isDark}>
-      <Header>
+    <>
+      <ToastComponent />
+      <Container $isDark={isDark}>
+        <Header>
         <Title $isDark={isDark}>
           <TitleIcon>{activeTab === 'stake' ? '💎' : '🔄'}</TitleIcon>
           {activeTab === 'stake' ? 'Stake' : 'Unstake'}
@@ -607,6 +712,37 @@ export const StakingForm: React.FC = () => {
           )}
         </InputGroup>
 
+        {/* Preview Box */}
+        {preview && validation.valid && (
+          <PreviewBox $isDark={isDark}>
+            <PreviewTitle $isDark={isDark}>
+              {activeTab === 'stake' ? '📊 You will receive' : '📊 You will get back'}
+            </PreviewTitle>
+            <PreviewRow>
+              <PreviewLabel $isDark={isDark}>Amount</PreviewLabel>
+              <PreviewValue $isDark={isDark}>
+                {preview.receive.toLocaleString(undefined, { maximumFractionDigits: 2 })} {preview.receiveToken}
+              </PreviewValue>
+            </PreviewRow>
+            {activeTab === 'stake' && (
+              <>
+                <PreviewRow>
+                  <PreviewLabel $isDark={isDark}>Est. yearly earnings</PreviewLabel>
+                  <PreviewValue $isDark={isDark} $highlight>
+                    +{preview.yearlyMin.toFixed(1)} - {preview.yearlyMax.toFixed(1)} CSPR
+                  </PreviewValue>
+                </PreviewRow>
+                <PreviewRow>
+                  <PreviewLabel $isDark={isDark}>Est. monthly earnings</PreviewLabel>
+                  <PreviewValue $isDark={isDark} $highlight>
+                    +{preview.monthly.toFixed(2)} CSPR
+                  </PreviewValue>
+                </PreviewRow>
+              </>
+            )}
+          </PreviewBox>
+        )}
+
         <SubmitButton type="submit" disabled={isProcessing || !amount || !validation.valid}>
           {isProcessing ? (
             <>
@@ -658,6 +794,7 @@ export const StakingForm: React.FC = () => {
           </InfoRow>
         </InfoBox>
       </form>
-    </Container>
+      </Container>
+    </>
   );
 };
