@@ -477,38 +477,12 @@ export const StakingForm: React.FC = () => {
     updateAfterUnstake
   } = useBalanceContext();
 
-  // Track last transaction for balance update and toast
-  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+  // Track last error for toast
   const [lastError, setLastError] = useState<string | null>(null);
-
-  // Show toast notifications for transactions
-  useEffect(() => {
-    if (deployHash && deployHash !== lastTxHash) {
-      const txAmount = parseFloat(amount) || 0;
-      if (!error) {
-        // Update balances via context (will also trigger refresh)
-        if (activeTab === 'stake') {
-          updateAfterStake(txAmount);
-        } else {
-          updateAfterUnstake(txAmount);
-        }
-        // Play success sound
-        playSuccessSound();
-        // Show success toast
-        toastSuccess(
-          activeTab === 'stake' ? 'Stake Successful!' : 'Unstake Successful!',
-          `${txAmount} ${activeTab === 'stake' ? 'CSPR staked' : 'stCSPR unstaked'}`
-        );
-      }
-      setLastTxHash(deployHash);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deployHash]);
 
   // Show error toast
   useEffect(() => {
     if (error && error !== lastError) {
-      // Play error sound
       playErrorSound();
       toastError('Transaction Failed', error);
       setLastError(error);
@@ -615,14 +589,26 @@ export const StakingForm: React.FC = () => {
       return;
     }
 
-    if (activeTab === 'stake') {
-      await stake(amount);
-    } else {
-      await unstake(amount);
-    }
+    const txAmount = parseFloat(amount);
 
-    if (!error) {
-      setAmount('');
+    if (activeTab === 'stake') {
+      const result = await stake(amount);
+      // Update balance immediately on success (demo mode support)
+      if (result.success || result.deployHash) {
+        updateAfterStake(txAmount);
+        playSuccessSound();
+        toastSuccess('Stake Successful!', `${txAmount} CSPR staked → ${txAmount} stCSPR received`);
+        setAmount('');
+      }
+    } else {
+      const result = await unstake(amount);
+      // Update balance immediately on success (demo mode support)
+      if (result.success || result.deployHash) {
+        updateAfterUnstake(txAmount);
+        playSuccessSound();
+        toastSuccess('Unstake Successful!', `${txAmount} stCSPR burned → ${txAmount} CSPR received`);
+        setAmount('');
+      }
     }
   };
 
