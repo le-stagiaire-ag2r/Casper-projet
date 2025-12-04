@@ -7,6 +7,7 @@ import { StakingCalculator } from '../components/StakingCalculator';
 import { RewardsChart } from '../components/RewardsChart';
 import { ValidatorRanking } from '../components/ValidatorRanking';
 import { GlobalStats } from '../components/GlobalStats';
+import { useBalanceContext } from '../context/BalanceContext';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -92,8 +93,8 @@ interface StakePageProps {
 }
 
 export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
-  // For demo, assume 0 staked - in production would fetch from contract
-  const stakedAmount = 0;
+  // Get stCSPR balance from context (this is the staked amount)
+  const { stCsprBalance } = useBalanceContext();
 
   return (
     <Container>
@@ -121,7 +122,7 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
       </Grid>
 
       <ChartsSection>
-        <RewardsChart isDark={isDark} stakedAmount={stakedAmount} />
+        <RewardsChart isDark={isDark} stakedAmount={stCsprBalance} />
         <StakingCalculator />
       </ChartsSection>
 
