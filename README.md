@@ -2,7 +2,7 @@
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-Demo-yellow)
-![Version](https://img.shields.io/badge/Version-6.0.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-6.2.0-brightgreen)
 ![Security](https://img.shields.io/badge/Security-A+-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -19,128 +19,55 @@
 
 ---
 
-## Current State - Important Notice
+## What is StakeVue?
 
-### What Works Now (V6.0 - Demo Version)
-
-The current deployed version is a **demonstration/showcase site**:
-
-| Feature | Status | Details |
-|---------|--------|---------|
-| Connect Wallet | ✅ Works | CSPR.click integration |
-| Stake Interface | ✅ Works | Enter amount, sign transaction |
-| Unstake Interface | ✅ Works | Enter amount, sign transaction |
-| stCSPR Tracking | ✅ Works | Internal balance tracking |
-| Contract Execution | ✅ Works | Transaction succeeds on-chain |
-| **Real CSPR Transfer** | ❌ No | CSPR stays in your wallet |
-
-**In other words:** The contract executes successfully, you can see it on the explorer, but your CSPR tokens **don't actually move**. It's an internal tracking system that demonstrates the liquid staking concept.
-
-### What We Built (V6.1 - Real Transfers)
-
-We developed a **new contract** (V6.1) that actually transfers CSPR:
+StakeVue is a **liquid staking protocol** for Casper Network. Stake your CSPR and receive **stCSPR** tokens that you can use while earning staking rewards.
 
 ```
-V6.1 Contract Hash: d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
-Status: Deployed on Testnet ✅
-Integration: NOT POSSIBLE ❌
-```
-
-**Why V6.1 wasn't deployed to the frontend:**
-
-To transfer real CSPR, the frontend needs to fetch the user's "purse" (wallet address) from the Casper network. Browser security (CORS) blocks these requests.
-
-| Solution Tried | Result |
-|----------------|--------|
-| Direct RPC call | Blocked by CORS |
-| Vercel Serverless Function | Runtime errors |
-| CORS Proxies (5 different ones) | All failed |
-| CSPR.cloud API | CORS issues |
-
-**Full technical details:** [docs/V6.1-DEVELOPMENT-NOTES.md](./docs/V6.1-DEVELOPMENT-NOTES.md)
-
-### Summary
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  CURRENT LIVE SITE (V6.0)                                       │
-│  ─────────────────────────────────────────────────────────────  │
-│  ✅ Contract works                                              │
-│  ✅ UI works                                                    │
-│  ✅ Wallet connection works                                     │
-│  ❌ CSPR doesn't move (demo/showcase only)                      │
-├─────────────────────────────────────────────────────────────────┤
-│  NEW CONTRACT DEVELOPED (V6.1)                                  │
-│  ─────────────────────────────────────────────────────────────  │
-│  ✅ Contract deployed and working on testnet                    │
-│  ✅ Real CSPR transfers work                                    │
-│  ❌ Can't connect frontend (CORS blocking)                      │
-│  📋 Needs backend server to proxy requests                      │
-└─────────────────────────────────────────────────────────────────┘
+Stake CSPR → Get stCSPR → Earn 10% APY → Stay Liquid
 ```
 
 ---
 
-## Overview
-
-StakeVue is a **liquid staking protocol** built on Casper Network that introduces **stCSPR**, a transferable liquid staking token.
-
-### How It Works (Concept)
-
-```
-1. Connect Wallet     →  Use CSPR.click to connect
-2. Stake CSPR         →  Deposit CSPR into the contract
-3. Receive stCSPR     →  Get 1 stCSPR per 1 CSPR staked
-4. Earn Rewards       →  10% APY on staked CSPR
-5. Stay Liquid        →  Transfer/trade your stCSPR freely
-6. Unstake Anytime    →  Burn stCSPR to get CSPR back
-```
-
-**Example:** Stake 1000 CSPR → Get 1000 stCSPR → Your CSPR earns rewards while you use stCSPR!
-
----
-
-## Features
+## Features (V6.2)
 
 ### Core Staking
-- **Stake CSPR** - Deposit CSPR and receive stCSPR tokens (1:1 ratio)
-- **Unstake CSPR** - Burn stCSPR to withdraw your CSPR
-- **10% APY** - Earn staking rewards on your deposited CSPR
+| Feature | Description |
+|---------|-------------|
+| Stake CSPR | Deposit CSPR and receive stCSPR (1:1 ratio) |
+| Unstake | Burn stCSPR to get your CSPR back |
+| 10% APY | Earn staking rewards automatically |
 
-### Liquid Token (stCSPR)
-- **Transferable** - Send stCSPR to any account
-- **Tradeable** - Use in DeFi protocols
-- **ERC20-like** - Standard token interface (name, symbol, decimals)
+### Live Blockchain Data
+| Feature | Description |
+|---------|-------------|
+| Real Balance | Fetch your actual CSPR balance from blockchain |
+| CSPR Price | Live USD price from CoinGecko API |
+| Auto-Refresh | Balance updates every 30s, price every 60s |
+| LIVE/DEMO Badge | Shows if data is real or simulated |
 
-### Multi-Validator (V4.0+)
-- **10 Validators** - Stake across multiple validators
-- **Round-Robin** - Intelligent distribution algorithm
-- **Admin Managed** - Secure validator list management
+### Interactive Tools
+| Feature | Description |
+|---------|-------------|
+| Staking Calculator | Estimate earnings over 1-36 months |
+| Rewards Chart | Visual projection of 12-month earnings |
+| Validator Ranking | Top validators with APY, stake, commission |
 
-### Security (V5.0+)
-- **Audited** - CasperSecure automated analysis (A+ grade)
-- **Safe Arithmetic** - All operations use checked_add/checked_sub
-- **10 Vulnerabilities Fixed** - Integer overflow/underflow eliminated
+### User Experience
+| Feature | Description |
+|---------|-------------|
+| Sound Notifications | Audio feedback on transaction success/error |
+| Toast Notifications | Visual alerts with auto-dismiss |
+| Input Validation | Real-time validation with error messages |
+| Preview Box | "You will receive" preview before staking |
+| Copy Hash | One-click copy transaction hash |
 
----
-
-## Security Story
-
-### How We Found and Fixed Critical Bugs
-
-We built **[CasperSecure](https://github.com/le-stagiaire-ag2r/CasperSecure)** - an automated security analyzer for Casper contracts. Then we used it on our own contract.
-
-**Result:** 10 critical arithmetic vulnerabilities found and fixed.
-
-```
-Before (V4.0)                          After (V5.0)
-─────────────────────────────────────────────────────────
-Security Score: 0/100 (F)       →     100/100 (A+)
-MEDIUM Vulns: 10                →     0
-Attack Risk: HIGH               →     PROTECTED
-```
-
-**Full Report:** [SECURITY_AUDIT_BEFORE_AFTER.md](./SECURITY_AUDIT_BEFORE_AFTER.md)
+### Multi-Page Navigation
+| Page | Description |
+|------|-------------|
+| Home | Landing page with protocol overview |
+| Stake | Full staking interface with all tools |
+| Guide | Step-by-step instructions |
 
 ---
 
@@ -149,8 +76,9 @@ Attack Risk: HIGH               →     PROTECTED
 | Component | Technology |
 |-----------|------------|
 | **Smart Contract** | Rust, casper-contract 5.0.0, WASM |
-| **Frontend** | React, TypeScript, styled-components |
+| **Frontend** | React 18, TypeScript, styled-components |
 | **Wallet** | CSPR.click integration |
+| **Data** | CSPR.cloud API, CoinGecko API |
 | **Deployment** | Vercel (frontend), Casper Testnet (contract) |
 
 ---
@@ -159,58 +87,73 @@ Attack Risk: HIGH               →     PROTECTED
 
 ```
 Casper-projet/
-├── client/                    # React frontend (Vercel)
+├── client/                      # React frontend
 │   ├── src/
-│   │   ├── components/        # React components
-│   │   ├── services/          # Casper transaction builders
-│   │   └── hooks/             # Custom React hooks
+│   │   ├── components/
+│   │   │   ├── Dashboard.tsx        # Portfolio summary with live data
+│   │   │   ├── StakingForm.tsx      # Stake/unstake form
+│   │   │   ├── StakeHistory.tsx     # Transaction history
+│   │   │   ├── StakingCalculator.tsx # Earnings calculator
+│   │   │   ├── RewardsChart.tsx     # 12-month projection chart
+│   │   │   ├── ValidatorRanking.tsx # Top validators table
+│   │   │   ├── Toast.tsx            # Notification system
+│   │   │   └── Navigation.tsx       # Multi-page navigation
+│   │   ├── hooks/
+│   │   │   ├── useBalance.ts        # Blockchain balance + CSPR price
+│   │   │   ├── useCsprClick.ts      # Wallet connection
+│   │   │   └── useStaking.ts        # Staking operations
+│   │   ├── pages/
+│   │   │   ├── HomePage.tsx
+│   │   │   ├── StakePage.tsx
+│   │   │   └── GuidePage.tsx
+│   │   └── utils/
+│   │       └── notificationSound.ts # Web Audio API sounds
 │   └── public/
-├── smart-contract/            # Rust contract
-│   └── src/lib.rs             # Contract code (857 lines)
-├── docs/                      # Documentation
-│   └── V6.1-DEVELOPMENT-NOTES.md
-├── keys/                      # Deployment keys
-├── archive/                   # Old files (reference)
+│       └── config.js                # Runtime configuration
+├── smart-contract/              # Rust contract
+│   └── src/lib.rs
+├── docs/                        # Documentation
+├── archive/                     # Old versions (reference only)
 └── README.md
 ```
 
 ---
 
-## Smart Contracts
+## Smart Contract
 
-### Current Contract (V6.0 - Demo)
+### Current Contract
 
 ```
 Contract Hash: 3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 Network: casper-test
-Type: Internal tracking (no real transfers)
 Status: Live on Vercel
-```
-
-### New Contract (V6.1 - Real Transfers)
-
-```
-Contract Hash: d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
-Network: casper-test
-Type: Real CSPR transfers
-Status: Deployed but not integrated (CORS blocking)
 ```
 
 ### Entry Points
 
 | Function | Description |
 |----------|-------------|
-| `stake(amount)` | Stake CSPR, mint stCSPR |
-| `unstake(amount)` | Burn stCSPR, unstake CSPR |
+| `stake(amount)` | Stake CSPR, receive stCSPR |
+| `unstake(amount)` | Burn stCSPR, get CSPR back |
 | `transfer_stcspr(recipient, amount)` | Transfer stCSPR tokens |
-| `get_my_stake()` | Query your staked CSPR |
+| `get_my_stake()` | Query your staked amount |
 | `my_stcspr_balance()` | Query your stCSPR balance |
-| `calculate_my_rewards()` | Calculate your rewards (10% APY) |
-| `total_supply_stcspr()` | Total stCSPR in circulation |
-| `get_staked_amount()` | Total CSPR staked (all users) |
-| `add_validator(pubkey)` | Add validator (admin) |
-| `remove_validator(pubkey)` | Remove validator (admin) |
-| `get_validators()` | List approved validators |
+| `calculate_my_rewards()` | Calculate rewards (10% APY) |
+
+---
+
+## API Integrations
+
+### CSPR.cloud API
+- **Purpose:** Fetch real CSPR balance from blockchain
+- **Endpoint:** `https://api.testnet.cspr.cloud/accounts/{publicKey}`
+- **Refresh:** Every 30 seconds
+
+### CoinGecko API
+- **Purpose:** Get live CSPR price in USD
+- **Endpoint:** `https://api.coingecko.com/api/v3/simple/price`
+- **Data:** Price + 24h change percentage
+- **Refresh:** Every 60 seconds
 
 ---
 
@@ -219,8 +162,7 @@ Status: Deployed but not integrated (CORS blocking)
 ### Prerequisites
 
 - Node.js 18+
-- Rust nightly-2024-07-31
-- Casper CLI tools
+- npm or yarn
 
 ### Run Frontend
 
@@ -232,13 +174,11 @@ npm start
 
 Open http://localhost:3000
 
-### Build Contract
+### Build for Production
 
 ```bash
-cd smart-contract
-rustup override set nightly-2024-07-31
-rustup target add wasm32-unknown-unknown
-cargo build --release --target wasm32-unknown-unknown
+cd client
+npm run build
 ```
 
 ---
@@ -247,32 +187,41 @@ cargo build --release --target wasm32-unknown-unknown
 
 | Version | Highlights |
 |---------|------------|
-| **V6.1** | Real CSPR transfers (deployed but not integrated - CORS) |
+| **V6.2** | Live blockchain data, CSPR price, charts, sound notifications |
+| **V6.1** | Multi-page navigation, toast notifications, staking calculator |
 | **V6.0** | React frontend with CSPR.click, Vercel deployment |
-| **V5.0** | Security hardening, 10 vulnerabilities fixed, A+ audit |
-| **V4.0** | Multi-validator support, round-robin distribution |
-| **V3.0** | stCSPR liquid token, ERC20-like interface |
-| **V2.0** | Per-user tracking, rewards calculation |
-| **V1.0** | Core stake/unstake functionality |
+| **V5.0** | Security hardening, A+ audit score |
+| **V4.0** | Multi-validator support |
+| **V3.0** | stCSPR liquid token |
 
 ---
 
-## Next Steps (Future Work)
+## What's New in V6.2
 
-To enable real CSPR transfers (V6.1), we need:
+### Live Data Integration
+- Real CSPR balance from CSPR.cloud API
+- Live USD price from CoinGecko with 24h change
+- Auto-refresh (30s balance, 60s price)
+- LIVE/DEMO badge to show data source
 
-1. **Backend Proxy Server** - Node.js/Express server to proxy RPC calls and bypass CORS
-2. **Or** - Wait for CSPR.click to add native purse fetching support
+### Interactive Charts & Tools
+- 12-month rewards projection chart (SVG)
+- Staking calculator with period slider (1-36 months)
+- Validator ranking table with APY, stake, commission
 
-The V6.1 contract is ready and working. Only the frontend integration is blocked.
+### Enhanced UX
+- Sound notifications using Web Audio API (no external files)
+- Toast notifications with slide animations
+- Input validation with real-time error messages
+- "You will receive" preview box
+- Copy transaction hash button with feedback
 
 ---
 
 ## Links
 
 - **Live Demo:** https://casper-projet.vercel.app
-- **Current Contract (V6.0):** https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
-- **New Contract (V6.1):** https://testnet.cspr.live/contract/d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
+- **Contract:** https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 - **CasperSecure:** https://github.com/le-stagiaire-ag2r/CasperSecure
 - **Casper Network:** https://casper.network
 
@@ -280,7 +229,7 @@ The V6.1 contract is ready and working. Only the frontend integration is blocked
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License
 
 ---
 
