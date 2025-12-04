@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
+import { useBalance, useCsprPrice } from '../hooks/useBalance';
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -238,7 +239,7 @@ const PortfolioSubtext = styled.div<{ $isDark: boolean }>`
   margin-top: 4px;
 `;
 
-// Demo balances - would be fetched from blockchain in production
+// Fallback demo balances
 const DEMO_CSPR_BALANCE = 1000;
 const DEMO_STCSPR_BALANCE = 0;
 const APY_AVG = 0.10; // 10%
@@ -249,6 +250,17 @@ export const Dashboard: React.FC = () => {
   const isDark = theme?.mode === 'dark';
   const [loading, setLoading] = useState(true);
 
+  // Fetch real balance and price
+  const { csprBalance: realBalance, isLoading: balanceLoading } = useBalance(
+    activeAccount?.publicKey || null
+  );
+  const { usdPrice, usdChange24h, isLoading: priceLoading } = useCsprPrice();
+
+  // Use real balance if available, otherwise fallback to demo
+  const csprBalance = realBalance > 0 ? realBalance : DEMO_CSPR_BALANCE;
+  const isRealBalance = realBalance > 0;
+  const stCsprBalance = DEMO_STCSPR_BALANCE; // TODO: Fetch from stCSPR contract
+
   useEffect(() => {
     // Simulate loading
     const timer = setTimeout(() => setLoading(false), 800);
@@ -256,32 +268,49 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   // Calculate estimated rewards
-  const estimatedYearlyRewards = DEMO_STCSPR_BALANCE * APY_AVG;
-  const totalPortfolioValue = DEMO_CSPR_BALANCE + DEMO_STCSPR_BALANCE;
+  const estimatedYearlyRewards = stCsprBalance * APY_AVG;
 
   return (
     <>
       {/* Portfolio Summary - only show when connected */}
       {activeAccount && (
         <PortfolioSection>
-          <PortfolioTitle $isDark={isDark}>📊 Your Portfolio</PortfolioTitle>
+          <PortfolioTitle $isDark={isDark}>
+            📊 Your Portfolio
+            {isRealBalance && (
+              <span style={{
+                fontSize: '10px',
+                background: 'rgba(48, 209, 88, 0.2)',
+                color: '#30d158',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                marginLeft: '8px',
+                fontWeight: 600
+              }}>
+                LIVE
+              </span>
+            )}
+          </PortfolioTitle>
           <PortfolioGrid>
             <PortfolioCard $isDark={isDark}>
               <PortfolioLabel $isDark={isDark}>
                 💰 Available CSPR
               </PortfolioLabel>
               <PortfolioValue $isDark={isDark}>
-                {DEMO_CSPR_BALANCE.toLocaleString()} CSPR
+                {balanceLoading ? '...' : csprBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} CSPR
               </PortfolioValue>
-              <PortfolioSubtext $isDark={isDark}>Ready to stake</PortfolioSubtext>
+              <PortfolioSubtext $isDark={isDark}>
+                {usdPrice > 0 && `≈ $${(csprBalance * usdPrice).toFixed(2)} USD`}
+                {!usdPrice && 'Ready to stake'}
+              </PortfolioSubtext>
             </PortfolioCard>
 
-            <PortfolioCard $isDark={isDark} $highlight={DEMO_STCSPR_BALANCE > 0}>
+            <PortfolioCard $isDark={isDark} $highlight={stCsprBalance > 0}>
               <PortfolioLabel $isDark={isDark}>
                 💎 Staked (stCSPR)
               </PortfolioLabel>
-              <PortfolioValue $isDark={isDark} $highlight={DEMO_STCSPR_BALANCE > 0}>
-                {DEMO_STCSPR_BALANCE.toLocaleString()} stCSPR
+              <PortfolioValue $isDark={isDark} $highlight={stCsprBalance > 0}>
+                {stCsprBalance.toLocaleString()} stCSPR
               </PortfolioValue>
               <PortfolioSubtext $isDark={isDark}>Earning rewards</PortfolioSubtext>
             </PortfolioCard>
@@ -298,12 +327,16 @@ export const Dashboard: React.FC = () => {
 
             <PortfolioCard $isDark={isDark}>
               <PortfolioLabel $isDark={isDark}>
-                🏦 Total Value
+                💵 CSPR Price
               </PortfolioLabel>
               <PortfolioValue $isDark={isDark}>
-                {totalPortfolioValue.toLocaleString()} CSPR
+                {priceLoading ? '...' : `$${usdPrice.toFixed(4)}`}
               </PortfolioValue>
-              <PortfolioSubtext $isDark={isDark}>Combined holdings</PortfolioSubtext>
+              <PortfolioSubtext $isDark={isDark} style={{
+                color: usdChange24h >= 0 ? '#30d158' : '#ff453a'
+              }}>
+                {usdChange24h >= 0 ? '↑' : '↓'} {Math.abs(usdChange24h).toFixed(2)}% (24h)
+              </PortfolioSubtext>
             </PortfolioCard>
           </PortfolioGrid>
         </PortfolioSection>
