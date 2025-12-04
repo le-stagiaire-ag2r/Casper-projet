@@ -13,7 +13,8 @@
 
 ## Live Demo
 
-**Web App:**  https://casper-stake.vercel.app
+**Web App:** [https://casper-projet.vercel.app](https://casper-projet.vercel.app)
+
 **Contract on Explorer:** [View on Testnet](https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80)
 
 ---
@@ -269,7 +270,7 @@ The V6.1 contract is ready and working. Only the frontend integration is blocked
 
 ## Links
 
-- **Live Demo:** https://casper-stake.vercel.app
+- **Live Demo:** https://casper-projet.vercel.app
 - **Current Contract (V6.0):** https://testnet.cspr.live/contract/3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80
 - **New Contract (V6.1):** https://testnet.cspr.live/contract/d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499
 - **CasperSecure:** https://github.com/le-stagiaire-ag2r/CasperSecure
