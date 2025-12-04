@@ -5,6 +5,7 @@ import { useCsprClick } from '../hooks/useCsprClick';
 import { useToast } from './Toast';
 import { useBalanceContext } from '../context/BalanceContext';
 import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
+import { useConfetti } from './Confetti';
 
 // Get config values
 const config = (window as any).config || {};
@@ -466,6 +467,7 @@ export const StakingForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
   const [amount, setAmount] = useState('');
   const { success: toastSuccess, error: toastError, ToastComponent } = useToast();
+  const { triggerConfetti, ConfettiComponent } = useConfetti();
 
   // Use shared balance context
   const {
@@ -597,6 +599,7 @@ export const StakingForm: React.FC = () => {
       if (result.success || result.deployHash) {
         updateAfterStake(txAmount);
         playSuccessSound();
+        triggerConfetti(); // 🎉 Celebration!
         toastSuccess('Stake Successful!', `${txAmount} CSPR staked → ${txAmount} stCSPR received`);
         setAmount('');
       }
@@ -638,6 +641,7 @@ export const StakingForm: React.FC = () => {
   return (
     <>
       <ToastComponent />
+      <ConfettiComponent />
       <Container $isDark={isDark}>
         <Header>
         <Title $isDark={isDark}>
