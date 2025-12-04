@@ -170,6 +170,79 @@ const DemoTag = styled.span<{ $isDark: boolean }>`
   letter-spacing: 0.5px;
 `;
 
+const PortfolioSection = styled.div`
+  margin-bottom: 24px;
+`;
+
+const PortfolioTitle = styled.h3<{ $isDark: boolean }>`
+  font-size: 14px;
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+`;
+
+const PortfolioGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+`;
+
+const PortfolioCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
+  background: ${props => props.$highlight
+    ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%)'
+    : props.$isDark
+      ? 'rgba(255, 255, 255, 0.03)'
+      : 'rgba(255, 255, 255, 0.8)'};
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid ${props => props.$highlight
+    ? 'rgba(48, 209, 88, 0.2)'
+    : props.$isDark
+      ? 'rgba(255, 255, 255, 0.08)'
+      : 'rgba(0, 0, 0, 0.08)'};
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+`;
+
+const PortfolioLabel = styled.div<{ $isDark: boolean }>`
+  font-size: 12px;
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.5)'
+    : 'rgba(0, 0, 0, 0.5)'};
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const PortfolioValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
+  font-size: 24px;
+  font-weight: 700;
+  color: ${props => props.$highlight
+    ? '#30d158'
+    : props.$isDark ? '#fff' : '#1a1a2e'};
+`;
+
+const PortfolioSubtext = styled.div<{ $isDark: boolean }>`
+  font-size: 11px;
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.4)'
+    : 'rgba(0, 0, 0, 0.4)'};
+  margin-top: 4px;
+`;
+
+// Demo balances - would be fetched from blockchain in production
+const DEMO_CSPR_BALANCE = 1000;
+const DEMO_STCSPR_BALANCE = 0;
+const APY_AVG = 0.10; // 10%
+
 export const Dashboard: React.FC = () => {
   const { activeAccount } = useCsprClick();
   const theme = useTheme() as any;
@@ -182,7 +255,60 @@ export const Dashboard: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Calculate estimated rewards
+  const estimatedYearlyRewards = DEMO_STCSPR_BALANCE * APY_AVG;
+  const totalPortfolioValue = DEMO_CSPR_BALANCE + DEMO_STCSPR_BALANCE;
+
   return (
+    <>
+      {/* Portfolio Summary - only show when connected */}
+      {activeAccount && (
+        <PortfolioSection>
+          <PortfolioTitle $isDark={isDark}>📊 Your Portfolio</PortfolioTitle>
+          <PortfolioGrid>
+            <PortfolioCard $isDark={isDark}>
+              <PortfolioLabel $isDark={isDark}>
+                💰 Available CSPR
+              </PortfolioLabel>
+              <PortfolioValue $isDark={isDark}>
+                {DEMO_CSPR_BALANCE.toLocaleString()} CSPR
+              </PortfolioValue>
+              <PortfolioSubtext $isDark={isDark}>Ready to stake</PortfolioSubtext>
+            </PortfolioCard>
+
+            <PortfolioCard $isDark={isDark} $highlight={DEMO_STCSPR_BALANCE > 0}>
+              <PortfolioLabel $isDark={isDark}>
+                💎 Staked (stCSPR)
+              </PortfolioLabel>
+              <PortfolioValue $isDark={isDark} $highlight={DEMO_STCSPR_BALANCE > 0}>
+                {DEMO_STCSPR_BALANCE.toLocaleString()} stCSPR
+              </PortfolioValue>
+              <PortfolioSubtext $isDark={isDark}>Earning rewards</PortfolioSubtext>
+            </PortfolioCard>
+
+            <PortfolioCard $isDark={isDark} $highlight={estimatedYearlyRewards > 0}>
+              <PortfolioLabel $isDark={isDark}>
+                📈 Est. Yearly Rewards
+              </PortfolioLabel>
+              <PortfolioValue $isDark={isDark} $highlight={estimatedYearlyRewards > 0}>
+                +{estimatedYearlyRewards.toFixed(1)} CSPR
+              </PortfolioValue>
+              <PortfolioSubtext $isDark={isDark}>At ~10% APY</PortfolioSubtext>
+            </PortfolioCard>
+
+            <PortfolioCard $isDark={isDark}>
+              <PortfolioLabel $isDark={isDark}>
+                🏦 Total Value
+              </PortfolioLabel>
+              <PortfolioValue $isDark={isDark}>
+                {totalPortfolioValue.toLocaleString()} CSPR
+              </PortfolioValue>
+              <PortfolioSubtext $isDark={isDark}>Combined holdings</PortfolioSubtext>
+            </PortfolioCard>
+          </PortfolioGrid>
+        </PortfolioSection>
+      )}
+
     <Container>
       <Card $isDark={isDark}>
         <CardIcon>🌐</CardIcon>
@@ -244,5 +370,6 @@ export const Dashboard: React.FC = () => {
         )}
       </Card>
     </Container>
+    </>
   );
 };

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Dashboard } from '../components/Dashboard';
 import { StakingForm } from '../components/StakingForm';
 import { StakeHistory } from '../components/StakeHistory';
+import { StakingCalculator } from '../components/StakingCalculator';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -97,6 +98,8 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
         <StakingForm />
         <StakeHistory />
       </Grid>
+
+      <StakingCalculator />
     </Container>
   );
 };
