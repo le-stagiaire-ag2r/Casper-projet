@@ -384,7 +384,7 @@ export const Dashboard: React.FC = () => {
           <DemoTag $isDark={isDark}>Demo</DemoTag>
         </CardTitle>
         <CardValue $isDark={isDark}>
-          ~8-12%
+          ~15-18%
           <APYBadge>EST.</APYBadge>
         </CardValue>
         <CardSubtext $isDark={isDark}>Casper Network Average</CardSubtext>
