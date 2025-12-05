@@ -153,7 +153,7 @@ interface RewardsChartProps {
 export const RewardsChart: React.FC<RewardsChartProps> = ({
   isDark,
   stakedAmount,
-  apy = 0.10,
+  apy = 0.17,
 }) => {
   // Generate projected rewards data for 12 months
   const chartData = useMemo(() => {

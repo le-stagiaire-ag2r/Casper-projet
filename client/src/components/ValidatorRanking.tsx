@@ -234,14 +234,14 @@ interface ValidatorRankingProps {
 
 // Simulated validators data (in production, fetch from CSPR.cloud API)
 const MOCK_VALIDATORS: Validator[] = [
-  { publicKey: '01a5c...8f2d', name: 'Casper Labs', stake: 125000000, delegators: 1250, commission: 5, apy: 11.2, isActive: true },
-  { publicKey: '01b7e...4a1c', name: 'BitCat', stake: 98000000, delegators: 890, commission: 8, apy: 10.8, isActive: true },
-  { publicKey: '01c9f...2b3e', name: 'HashQuark', stake: 87000000, delegators: 756, commission: 10, apy: 10.5, isActive: true },
-  { publicKey: '01d2a...5c4f', name: 'StakeVue Official', stake: 72000000, delegators: 623, commission: 3, apy: 11.8, isActive: true },
-  { publicKey: '01e4b...7d6a', name: 'CryptoStake', stake: 65000000, delegators: 542, commission: 12, apy: 9.9, isActive: true },
-  { publicKey: '01f6c...9e8b', name: 'ValidatorX', stake: 54000000, delegators: 421, commission: 15, apy: 9.2, isActive: true },
-  { publicKey: '01a8d...1f2c', name: 'NodeGuard', stake: 43000000, delegators: 356, commission: 7, apy: 10.9, isActive: true },
-  { publicKey: '01b9e...3a4d', name: 'StakePool Pro', stake: 32000000, delegators: 289, commission: 20, apy: 8.5, isActive: false },
+  { publicKey: '01a5c...8f2d', name: 'Casper Labs', stake: 125000000, delegators: 1250, commission: 5, apy: 17.8, isActive: true },
+  { publicKey: '01b7e...4a1c', name: 'BitCat', stake: 98000000, delegators: 890, commission: 8, apy: 17.2, isActive: true },
+  { publicKey: '01c9f...2b3e', name: 'HashQuark', stake: 87000000, delegators: 756, commission: 10, apy: 16.8, isActive: true },
+  { publicKey: '01d2a...5c4f', name: 'StakeVue Official', stake: 72000000, delegators: 623, commission: 3, apy: 18.2, isActive: true },
+  { publicKey: '01e4b...7d6a', name: 'CryptoStake', stake: 65000000, delegators: 542, commission: 12, apy: 16.1, isActive: true },
+  { publicKey: '01f6c...9e8b', name: 'ValidatorX', stake: 54000000, delegators: 421, commission: 15, apy: 15.5, isActive: true },
+  { publicKey: '01a8d...1f2c', name: 'NodeGuard', stake: 43000000, delegators: 356, commission: 7, apy: 17.4, isActive: true },
+  { publicKey: '01b9e...3a4d', name: 'StakePool Pro', stake: 32000000, delegators: 289, commission: 20, apy: 14.8, isActive: false },
 ];
 
 export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) => {

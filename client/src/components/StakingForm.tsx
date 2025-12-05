@@ -455,9 +455,9 @@ const PreviewValue = styled.span<{ $isDark: boolean; $highlight?: boolean }>`
 `;
 
 // APY constants for calculations
-const APY_MIN = 0.08; // 8%
-const APY_MAX = 0.12; // 12%
-const APY_AVG = (APY_MIN + APY_MAX) / 2; // 10%
+const APY_MIN = 0.15; // 15%
+const APY_MAX = 0.18; // 18%
+const APY_AVG = (APY_MIN + APY_MAX) / 2; // ~17%
 
 export const StakingForm: React.FC = () => {
   const { activeAccount } = useCsprClick();
