@@ -318,7 +318,7 @@ export const Dashboard: React.FC = () => {
               <PortfolioValue $isDark={isDark} $highlight={estimatedYearlyRewards > 0}>
                 +{estimatedYearlyRewards.toFixed(1)} CSPR
               </PortfolioValue>
-              <PortfolioSubtext $isDark={isDark}>At ~10% APY</PortfolioSubtext>
+              <PortfolioSubtext $isDark={isDark}>At ~17% APY</PortfolioSubtext>
             </PortfolioCard>
 
             <PortfolioCard $isDark={isDark}>
