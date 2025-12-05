@@ -783,7 +783,7 @@ export const StakingForm: React.FC = () => {
           </InfoRow>
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>APY (estimated)</InfoLabel>
-            <InfoValue $isDark={isDark} style={{ color: '#30d158' }}>~8-12%</InfoValue>
+            <InfoValue $isDark={isDark} style={{ color: '#30d158' }}>~15-18%</InfoValue>
           </InfoRow>
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>Gas Fee</InfoLabel>
