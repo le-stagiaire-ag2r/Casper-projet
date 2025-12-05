@@ -179,8 +179,8 @@ const Disclaimer = styled.div<{ $isDark: boolean }>`
 `;
 
 // APY range
-const APY_MIN = 0.08;
-const APY_MAX = 0.12;
+const APY_MIN = 0.15;
+const APY_MAX = 0.18;
 
 export const StakingCalculator: React.FC = () => {
   const theme = useTheme() as any;
@@ -293,7 +293,7 @@ export const StakingCalculator: React.FC = () => {
       <Disclaimer $isDark={isDark}>
         <span>⚠️</span>
         <span>
-          These are estimates based on current APY rates (8-12%). Actual returns may vary
+          These are estimates based on current APY rates (15-18%). Actual returns may vary
           based on network conditions and validator performance. Past performance does not
           guarantee future results.
         </span>

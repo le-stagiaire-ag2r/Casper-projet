@@ -24,7 +24,7 @@
 StakeVue is a **liquid staking protocol** for Casper Network. Stake your CSPR and receive **stCSPR** tokens that you can use while earning staking rewards.
 
 ```
-Stake CSPR → Get stCSPR → Earn 11.5% APY → Stay Liquid
+Stake CSPR → Get stCSPR → Earn ~17% APY → Stay Liquid
 ```
 
 ---
@@ -36,7 +36,7 @@ Stake CSPR → Get stCSPR → Earn 11.5% APY → Stay Liquid
 |---------|-------------|
 | Stake CSPR | Deposit CSPR and receive stCSPR (1:1 ratio) |
 | Unstake | Burn stCSPR to get your CSPR back |
-| 11.5% APY | Earn staking rewards automatically |
+| ~17% APY | Earn staking rewards automatically |
 | Instant Liquidity | Use stCSPR in DeFi while staking |
 
 ### Live Blockchain Data
@@ -192,7 +192,7 @@ This contract uses internal tracking for stakes and stCSPR tokens. Perfect for d
 | `transfer_stcspr(recipient, amount)` | Transfer stCSPR tokens |
 | `get_my_stake()` | Query your staked amount |
 | `my_stcspr_balance()` | Query your stCSPR balance |
-| `calculate_my_rewards()` | Calculate rewards (11.5% APY) |
+| `calculate_my_rewards()` | Calculate rewards (~17% APY) |
 
 ---
 

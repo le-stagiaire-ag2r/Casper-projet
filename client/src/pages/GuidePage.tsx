@@ -447,7 +447,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
   const faqs = [
     {
       question: "What is liquid staking?",
-      answer: "Liquid staking lets you stake CSPR while receiving stCSPR tokens in return. These tokens represent your staked position and can be freely traded, transferred, or used in DeFi - all while earning ~10% APY rewards."
+      answer: "Liquid staking lets you stake CSPR while receiving stCSPR tokens in return. These tokens represent your staked position and can be freely traded, transferred, or used in DeFi - all while earning ~17% APY rewards."
     },
     {
       question: "Is my stake secure?",
@@ -455,7 +455,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
     },
     {
       question: "How much can I earn?",
-      answer: "Current APY is approximately 8-12% depending on network conditions. For example, staking 1000 CSPR would earn you roughly 100 CSPR per year in rewards, automatically compounded."
+      answer: "Current APY is approximately 15-18% depending on network conditions. For example, staking 1000 CSPR would earn you roughly 170 CSPR per year in rewards, automatically compounded."
     },
     {
       question: "Can I unstake anytime?",
@@ -494,7 +494,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
     },
     {
       title: "Watch Your Rewards Grow",
-      description: "That's it! Your CSPR is now earning ~10% APY. Track your rewards in the dashboard, and unstake anytime you want.",
+      description: "That's it! Your CSPR is now earning ~17% APY. Track your rewards in the dashboard, and unstake anytime you want.",
       tip: "💡 Set price alerts to never miss market opportunities"
     }
   ];
@@ -520,7 +520,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
       <StatsRow>
         <StatCard $isDark={isDark}>
           <StatIcon>📈</StatIcon>
-          <StatValue $color="#30d158">~10%</StatValue>
+          <StatValue $color="#30d158">~17%</StatValue>
           <StatLabel $isDark={isDark}>APY Rewards</StatLabel>
         </StatCard>
         <StatCard $isDark={isDark}>

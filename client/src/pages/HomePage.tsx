@@ -478,7 +478,7 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
         <HeroTitle>StakeVue</HeroTitle>
         <HeroSubtitle $isDark={isDark}>
           The liquid staking protocol on Casper Network.
-          Stake CSPR, receive stCSPR tokens, and earn ~10% APY
+          Stake CSPR, receive stCSPR tokens, and earn ~17% APY
           while keeping full liquidity.
         </HeroSubtitle>
         <HeroButtons>
@@ -495,7 +495,7 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
       <StatsRow>
         <StatCard $isDark={isDark} $gradient="linear-gradient(90deg, #30d158, #34c759)">
           <StatIcon>📈</StatIcon>
-          <StatValue $color="#30d158">~10%</StatValue>
+          <StatValue $color="#30d158">~17%</StatValue>
           <StatLabel $isDark={isDark}>APY Rewards</StatLabel>
         </StatCard>
         <StatCard $isDark={isDark} $gradient="linear-gradient(90deg, #5856d6, #7a78e6)">
@@ -547,7 +547,7 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
             <StepIcon>🚀</StepIcon>
             <StepTitle $isDark={isDark}>Earn Rewards</StepTitle>
             <StepDescription $isDark={isDark}>
-              Your CSPR earns ~10% APY. Use your stCSPR
+              Your CSPR earns ~17% APY. Use your stCSPR
               freely in DeFi or unstake anytime.
             </StepDescription>
           </StepCard>
@@ -564,7 +564,7 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
             <Arrow>→</Arrow>
             <ExampleStep $isDark={isDark}>1000 stCSPR</ExampleStep>
             <Arrow>→</Arrow>
-            <ExampleStep $isDark={isDark} $highlight>+100 CSPR/year</ExampleStep>
+            <ExampleStep $isDark={isDark} $highlight>+170 CSPR/year</ExampleStep>
           </ExampleFlow>
         </ExampleBox>
       </Section>
@@ -590,7 +590,7 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
           <BenefitCard $isDark={isDark} $color="#5856d6">
             <BenefitIconBox $bg="rgba(88, 86, 214, 0.15)">📈</BenefitIconBox>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>~10% APY Returns</BenefitTitle>
+              <BenefitTitle $isDark={isDark}>~17% APY Returns</BenefitTitle>
               <BenefitDescription $isDark={isDark}>
                 Earn automatic staking rewards without any effort.
                 Watch your balance grow over time.

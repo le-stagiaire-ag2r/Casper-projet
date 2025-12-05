@@ -245,7 +245,7 @@ const PriceChartWrapper = styled.div`
   margin-top: 24px;
 `;
 
-const APY_AVG = 0.10; // 10%
+const APY_AVG = 0.17; // 17%
 
 export const Dashboard: React.FC = () => {
   const { activeAccount } = useCsprClick();

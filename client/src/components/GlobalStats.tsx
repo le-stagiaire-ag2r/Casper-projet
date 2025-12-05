@@ -156,7 +156,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
   const [stats, setStats] = useState({
     tvl: 2450000,
     totalStakers: 1247,
-    avgApy: 10.2,
+    avgApy: 17.2,
     totalRewards: 245000,
     validators: 8,
     networkParticipation: 62.4
@@ -224,7 +224,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
             {stats.avgApy.toFixed(1)}%
           </StatValue>
           <StatSubtext $isDark={isDark}>
-            Range: 8-12%
+            Range: 15-18%
           </StatSubtext>
         </StatCard>
 
