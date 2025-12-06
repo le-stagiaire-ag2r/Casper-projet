@@ -29,7 +29,7 @@ const SettingsButton = styled.button<{ $isDark: boolean }>`
   font-size: 24px;
   box-shadow: 0 4px 20px rgba(88, 86, 214, 0.4);
   transition: all 0.3s ease;
-  z-index: 100;
+  z-index: 9999;
 
   &:hover {
     transform: scale(1.1) rotate(30deg);
