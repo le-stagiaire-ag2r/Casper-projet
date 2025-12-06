@@ -12,7 +12,6 @@ import { PortfolioHistory } from '../components/PortfolioHistory';
 import { Leaderboard } from '../components/Leaderboard';
 import { TVLChart } from '../components/TVLChart';
 import { ExportCSV } from '../components/ExportCSV';
-import { SimulationMode } from '../components/SimulationMode';
 import { ValidatorComparator } from '../components/ValidatorComparator';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { NFTBadges } from '../components/NFTBadges';
@@ -155,10 +154,6 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
         <TVLChart isDark={isDark} />
         <ExportCSV isDark={isDark} />
       </ChartsSection>
-
-      <FullWidthSection>
-        <SimulationMode isDark={isDark} />
-      </FullWidthSection>
 
       <ChartsSection>
         <PortfolioHistory isDark={isDark} />
