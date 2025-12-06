@@ -195,25 +195,72 @@ export const useCsprPriceHistory = (days: number = 7) => {
     const dayMs = 24 * 60 * 60 * 1000;
     const prices: PriceHistoryPoint[] = [];
 
-    // For "max" (days=0), generate ~4 years of data since CSPR launch (March 2021)
+    // For "max" (days=0), generate realistic CSPR history since May 2021
     const daysToGenerate = days === 0 ? 1400 : days;
-    let price = basePrice * 0.3; // Start lower for historical simulation
 
-    for (let i = daysToGenerate; i >= 0; i--) {
-      const timestamp = now - i * dayMs;
-      price = price * (1 + (Math.random() - 0.48) * 0.05);
-      price = Math.max(0.002, Math.min(0.15, price)); // CSPR historical range
+    if (days === 0) {
+      // Realistic CSPR price history pattern (May 2021 - present)
+      // Based on cspr.live data: Started HIGH at ~$1.20 in May 2021, then continuous decline
+      const csprLaunch = new Date('2021-05-01').getTime();
+      const totalDays = Math.floor((now - csprLaunch) / dayMs);
 
-      // Only add one point per week for "all time" to keep data manageable
-      if (days === 0 && i % 7 !== 0 && i !== 0) continue;
+      for (let i = 0; i <= totalDays; i += 7) { // Weekly points
+        const timestamp = csprLaunch + i * dayMs;
+        const daysSinceLaunch = i;
+        let price: number;
 
-      prices.push({
-        timestamp,
-        price,
-        date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: days === 0 ? '2-digit' : undefined }),
-      });
+        if (daysSinceLaunch < 30) {
+          // May 2021: Peak around $1.10-1.20
+          price = 1.10 - (daysSinceLaunch / 30) * 0.30;
+        } else if (daysSinceLaunch < 120) {
+          // May-Sep 2021: Sharp crash $0.80 -> $0.15
+          price = 0.80 - ((daysSinceLaunch - 30) / 90) * 0.65;
+        } else if (daysSinceLaunch < 300) {
+          // Sep 2021 - Feb 2022: Continued decline $0.15 -> $0.05
+          price = 0.15 - ((daysSinceLaunch - 120) / 180) * 0.10;
+        } else if (daysSinceLaunch < 700) {
+          // 2022-2023: Bear market $0.05 -> $0.02
+          price = 0.05 - ((daysSinceLaunch - 300) / 400) * 0.03;
+          price = Math.max(0.015, price);
+        } else {
+          // 2024-present: Bottom around $0.005-0.01
+          price = 0.02 - ((daysSinceLaunch - 700) / 700) * 0.015;
+          price = Math.max(0.004, price);
+        }
+
+        // Add some noise
+        price = price * (1 + (Math.random() - 0.5) * 0.08);
+        price = Math.max(0.003, price);
+
+        prices.push({
+          timestamp,
+          price,
+          date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
+        });
+      }
+      // Ensure last point is current price
+      if (prices.length > 0) {
+        prices[prices.length - 1].price = basePrice;
+        prices[prices.length - 1].timestamp = now;
+        prices[prices.length - 1].date = new Date(now).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+      }
+    } else {
+      // For shorter periods, generate simple variance around current price
+      let price = basePrice * 0.95;
+      for (let i = daysToGenerate; i >= 0; i--) {
+        const timestamp = now - i * dayMs;
+        price = price * (1 + (Math.random() - 0.48) * 0.03);
+        price = Math.max(basePrice * 0.8, Math.min(basePrice * 1.2, price));
+
+        prices.push({
+          timestamp,
+          price,
+          date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        });
+      }
+      prices[prices.length - 1].price = basePrice;
     }
-    prices[prices.length - 1].price = basePrice;
+
     return prices;
   }, [days]);
 
