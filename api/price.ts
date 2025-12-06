@@ -15,9 +15,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Get days parameter (default 7)
-    const days = parseInt(req.query.days as string) || 7;
-    const validDays = Math.min(Math.max(days, 1), 365); // Clamp between 1 and 365
+    // Get days parameter (default 7) - "max" means all time since CSPR creation
+    const daysParam = req.query.days as string;
+    const isMax = daysParam === 'max';
+    const days = isMax ? 0 : (parseInt(daysParam) || 7);
+    const validDays = isMax ? 'max' : Math.min(Math.max(days, 1), 365); // Clamp between 1 and 365, or "max"
 
     // Fetch current price
     const priceResponse = await fetch(
@@ -32,7 +34,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const casper = priceData['casper-network'];
 
     // Fetch price history (dynamic days)
-    const interval = validDays <= 30 ? 'daily' : validDays <= 90 ? 'daily' : '';
+    // For "max", CoinGecko returns all available historical data
+    const numericDays = isMax ? 9999 : validDays as number;
+    const interval = numericDays <= 30 ? 'daily' : numericDays <= 90 ? 'daily' : '';
     const historyUrl = interval
       ? `${COINGECKO_API}/coins/casper-network/market_chart?vs_currency=usd&days=${validDays}&interval=${interval}`
       : `${COINGECKO_API}/coins/casper-network/market_chart?vs_currency=usd&days=${validDays}`;
@@ -43,11 +47,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (historyResponse.ok) {
       const historyData = await historyResponse.json();
-      history = historyData.prices?.map((p: [number, number]) => ({
+      let rawPrices = historyData.prices || [];
+
+      // For "max" (all time), downsample to weekly data to keep response manageable
+      if (isMax && rawPrices.length > 200) {
+        const step = Math.ceil(rawPrices.length / 200);
+        rawPrices = rawPrices.filter((_: any, i: number) => i % step === 0 || i === rawPrices.length - 1);
+      }
+
+      history = rawPrices.map((p: [number, number]) => ({
         timestamp: p[0],
         price: p[1],
-        date: new Date(p[0]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      })) || [];
+        date: new Date(p[0]).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: isMax ? '2-digit' : undefined
+        }),
+      }));
     }
 
     return res.status(200).json({
@@ -55,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       change24h: casper?.usd_24h_change || 0,
       marketCap: casper?.usd_market_cap || 0,
       history,
-      days: validDays,
+      days: isMax ? 'max' : validDays,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

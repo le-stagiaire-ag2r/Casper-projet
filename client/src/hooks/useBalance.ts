@@ -194,16 +194,23 @@ export const useCsprPriceHistory = (days: number = 7) => {
     const now = Date.now();
     const dayMs = 24 * 60 * 60 * 1000;
     const prices: PriceHistoryPoint[] = [];
-    let price = basePrice * 0.95;
 
-    for (let i = days; i >= 0; i--) {
+    // For "max" (days=0), generate ~4 years of data since CSPR launch (March 2021)
+    const daysToGenerate = days === 0 ? 1400 : days;
+    let price = basePrice * 0.3; // Start lower for historical simulation
+
+    for (let i = daysToGenerate; i >= 0; i--) {
       const timestamp = now - i * dayMs;
-      price = price * (1 + (Math.random() - 0.48) * 0.03);
-      price = Math.max(0.004, Math.min(0.007, price));
+      price = price * (1 + (Math.random() - 0.48) * 0.05);
+      price = Math.max(0.002, Math.min(0.15, price)); // CSPR historical range
+
+      // Only add one point per week for "all time" to keep data manageable
+      if (days === 0 && i % 7 !== 0 && i !== 0) continue;
+
       prices.push({
         timestamp,
         price,
-        date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: days === 0 ? '2-digit' : undefined }),
       });
     }
     prices[prices.length - 1].price = basePrice;
@@ -213,7 +220,9 @@ export const useCsprPriceHistory = (days: number = 7) => {
   const fetchHistory = useCallback(async () => {
     setHistoryData(prev => ({ ...prev, isLoading: true }));
     try {
-      const response = await fetch(`/api/price?days=${days}`);
+      // days=0 means "max" (all time since CSPR creation)
+      const daysParam = days === 0 ? 'max' : days;
+      const response = await fetch(`/api/price?days=${daysParam}`);
       if (response.ok) {
         const data = await response.json();
         let prices = data.history || [];

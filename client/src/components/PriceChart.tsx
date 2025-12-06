@@ -7,6 +7,7 @@ const TIMEFRAMES = [
   { label: '1M', days: 30 },
   { label: '3M', days: 90 },
   { label: '1Y', days: 365 },
+  { label: 'ALL', days: 0 }, // 0 means "max" (all time since CSPR creation)
 ];
 
 const shimmer = keyframes`

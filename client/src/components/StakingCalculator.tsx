@@ -428,15 +428,6 @@ const DisclaimerIcon = styled.span`
   font-size: 16px;
 `;
 
-// APY presets based on validator performance
-const APY_PRESETS = [
-  { label: '10%', value: 10, desc: 'Conservative' },
-  { label: '15%', value: 15, desc: 'Average' },
-  { label: '17%', value: 17, desc: 'Network avg' },
-  { label: '20%', value: 20, desc: 'Optimistic' },
-  { label: '25%', value: 25, desc: 'Best case' },
-];
-
 export const StakingCalculator: React.FC = () => {
   const theme = useTheme() as any;
   const isDark = theme?.mode === 'dark';
@@ -444,6 +435,8 @@ export const StakingCalculator: React.FC = () => {
   const [stakeAmount, setStakeAmount] = useState<string>('1000');
   const [stakingPeriod, setStakingPeriod] = useState<number>(12); // months
   const [selectedAPY, setSelectedAPY] = useState<number>(17); // Default 17%
+
+  const apySliderPercent = ((selectedAPY - 1) / 99) * 100;
 
   const quickAmounts = [100, 500, 1000, 5000, 10000];
   const periodPresets = [
@@ -504,22 +497,27 @@ export const StakingCalculator: React.FC = () => {
         </APYBadge>
       </Header>
 
-      <InputSection>
-        <Label $isDark={isDark}>Expected APY</Label>
-        <QuickAmounts>
-          {APY_PRESETS.map(preset => (
-            <QuickButton
-              key={preset.value}
-              $isDark={isDark}
-              $active={selectedAPY === preset.value}
-              onClick={() => setSelectedAPY(preset.value)}
-              title={preset.desc}
-            >
-              {preset.label}
-            </QuickButton>
-          ))}
-        </QuickAmounts>
-      </InputSection>
+      <SliderContainer>
+        <SliderHeader>
+          <Label $isDark={isDark}>Expected APY: <strong>{selectedAPY}%</strong></Label>
+        </SliderHeader>
+        <SliderTrack $isDark={isDark}>
+          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #30d158, #ff9f0a)' }} />
+          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #30d158, #34c759)' }} />
+          <Slider
+            type="range"
+            min="1"
+            max="100"
+            value={selectedAPY}
+            onChange={(e) => setSelectedAPY(parseInt(e.target.value))}
+          />
+        </SliderTrack>
+        <SliderLabels>
+          <SliderLabel $isDark={isDark}>1%</SliderLabel>
+          <SliderLabel $isDark={isDark}>~17% avg</SliderLabel>
+          <SliderLabel $isDark={isDark}>100%</SliderLabel>
+        </SliderLabels>
+      </SliderContainer>
 
       <InputSection>
         <Label $isDark={isDark}>Amount to stake</Label>
