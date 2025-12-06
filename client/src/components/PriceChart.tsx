@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useCsprPriceHistory, useCsprPrice } from '../hooks/useBalance';
+
+const TIMEFRAMES = [
+  { label: '1W', days: 7 },
+  { label: '1M', days: 30 },
+  { label: '3M', days: 90 },
+  { label: '1Y', days: 365 },
+];
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -43,6 +50,38 @@ const Subtitle = styled.span<{ $isDark: boolean }>`
   color: ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.5)'
     : 'rgba(0, 0, 0, 0.5)'};
+`;
+
+const TimeframeButtons = styled.div`
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+`;
+
+const TimeframeButton = styled.button<{ $isDark: boolean; $active: boolean }>`
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: ${props => props.$active
+    ? 'linear-gradient(135deg, #5856d6, #af52de)'
+    : props.$isDark
+      ? 'rgba(255, 255, 255, 0.08)'
+      : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.$active
+    ? '#fff'
+    : props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.$active
+      ? 'linear-gradient(135deg, #5856d6, #af52de)'
+      : props.$isDark
+        ? 'rgba(255, 255, 255, 0.12)'
+        : 'rgba(0, 0, 0, 0.08)'};
+  }
 `;
 
 const PriceSection = styled.div`
@@ -188,10 +227,12 @@ interface PriceChartProps {
 }
 
 export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
-  const { prices, minPrice, maxPrice, priceChangePercent, isLoading, error } = useCsprPriceHistory(7);
+  const [selectedDays, setSelectedDays] = useState(7);
+  const { prices, minPrice, maxPrice, priceChangePercent, isLoading, error } = useCsprPriceHistory(selectedDays);
   const { usdPrice } = useCsprPrice();
 
   const isPositive = priceChangePercent >= 0;
+  const selectedTimeframe = TIMEFRAMES.find(t => t.days === selectedDays) || TIMEFRAMES[0];
 
   // Chart dimensions - using fixed viewBox for consistent scaling
   const viewBoxWidth = 400;
@@ -228,7 +269,18 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
           <Title $isDark={isDark}>
             📈 CSPR Price
           </Title>
-          <Subtitle $isDark={isDark}>Last 7 days</Subtitle>
+          <TimeframeButtons>
+            {TIMEFRAMES.map(tf => (
+              <TimeframeButton
+                key={tf.label}
+                $isDark={isDark}
+                $active={selectedDays === tf.days}
+                onClick={() => setSelectedDays(tf.days)}
+              >
+                {tf.label}
+              </TimeframeButton>
+            ))}
+          </TimeframeButtons>
         </TitleSection>
         <PriceSection>
           <CurrentPrice $isDark={isDark}>
@@ -314,15 +366,15 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
 
       <StatsRow $isDark={isDark}>
         <StatItem>
-          <StatLabel $isDark={isDark}>7D Low</StatLabel>
+          <StatLabel $isDark={isDark}>{selectedTimeframe.label} Low</StatLabel>
           <StatValue $isDark={isDark}>${minPrice.toFixed(4)}</StatValue>
         </StatItem>
         <StatItem>
-          <StatLabel $isDark={isDark}>7D High</StatLabel>
+          <StatLabel $isDark={isDark}>{selectedTimeframe.label} High</StatLabel>
           <StatValue $isDark={isDark}>${maxPrice.toFixed(4)}</StatValue>
         </StatItem>
         <StatItem>
-          <StatLabel $isDark={isDark}>7D Change</StatLabel>
+          <StatLabel $isDark={isDark}>{selectedTimeframe.label} Change</StatLabel>
           <StatValue $isDark={isDark} style={{ color: isPositive ? '#30d158' : '#ff453a' }}>
             {isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%
           </StatValue>

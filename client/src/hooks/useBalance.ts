@@ -211,8 +211,9 @@ export const useCsprPriceHistory = (days: number = 7) => {
   }, [days]);
 
   const fetchHistory = useCallback(async () => {
+    setHistoryData(prev => ({ ...prev, isLoading: true }));
     try {
-      const response = await fetch('/api/price');
+      const response = await fetch(`/api/price?days=${days}`);
       if (response.ok) {
         const data = await response.json();
         let prices = data.history || [];
@@ -253,12 +254,10 @@ export const useCsprPriceHistory = (days: number = 7) => {
         error: null,
       });
     }
-  }, [generateFallbackHistory]);
+  }, [days, generateFallbackHistory]);
 
   useEffect(() => {
     fetchHistory();
-    const interval = setInterval(fetchHistory, 300000); // 5 min
-    return () => clearInterval(interval);
   }, [fetchHistory]);
 
   return {

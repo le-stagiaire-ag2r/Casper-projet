@@ -15,6 +15,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Get days parameter (default 7)
+    const days = parseInt(req.query.days as string) || 7;
+    const validDays = Math.min(Math.max(days, 1), 365); // Clamp between 1 and 365
+
     // Fetch current price
     const priceResponse = await fetch(
       `${COINGECKO_API}/simple/price?ids=casper-network&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
@@ -27,10 +31,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const priceData = await priceResponse.json();
     const casper = priceData['casper-network'];
 
-    // Fetch price history (7 days)
-    const historyResponse = await fetch(
-      `${COINGECKO_API}/coins/casper-network/market_chart?vs_currency=usd&days=7&interval=daily`
-    );
+    // Fetch price history (dynamic days)
+    const interval = validDays <= 30 ? 'daily' : validDays <= 90 ? 'daily' : '';
+    const historyUrl = interval
+      ? `${COINGECKO_API}/coins/casper-network/market_chart?vs_currency=usd&days=${validDays}&interval=${interval}`
+      : `${COINGECKO_API}/coins/casper-network/market_chart?vs_currency=usd&days=${validDays}`;
+
+    const historyResponse = await fetch(historyUrl);
 
     let history: { timestamp: number; price: number; date: string }[] = [];
 
@@ -48,6 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       change24h: casper?.usd_24h_change || 0,
       marketCap: casper?.usd_market_cap || 0,
       history,
+      days: validDays,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

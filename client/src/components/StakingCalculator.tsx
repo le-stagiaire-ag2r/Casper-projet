@@ -428,8 +428,14 @@ const DisclaimerIcon = styled.span`
   font-size: 16px;
 `;
 
-// Real Casper Network APY based on mainnet data
-const NETWORK_APY = 17; // ~17% APY on Casper mainnet
+// APY presets based on validator performance
+const APY_PRESETS = [
+  { label: '10%', value: 10, desc: 'Conservative' },
+  { label: '15%', value: 15, desc: 'Average' },
+  { label: '17%', value: 17, desc: 'Network avg' },
+  { label: '20%', value: 20, desc: 'Optimistic' },
+  { label: '25%', value: 25, desc: 'Best case' },
+];
 
 export const StakingCalculator: React.FC = () => {
   const theme = useTheme() as any;
@@ -437,6 +443,7 @@ export const StakingCalculator: React.FC = () => {
 
   const [stakeAmount, setStakeAmount] = useState<string>('1000');
   const [stakingPeriod, setStakingPeriod] = useState<number>(12); // months
+  const [selectedAPY, setSelectedAPY] = useState<number>(17); // Default 17%
 
   const quickAmounts = [100, 500, 1000, 5000, 10000];
   const periodPresets = [
@@ -450,7 +457,7 @@ export const StakingCalculator: React.FC = () => {
     const amount = parseFloat(stakeAmount) || 0;
     const months = stakingPeriod;
     const years = months / 12;
-    const apy = NETWORK_APY / 100;
+    const apy = selectedAPY / 100;
 
     // Compound interest calculation
     const totalWithRewards = amount * Math.pow(1 + apy, years);
@@ -465,7 +472,7 @@ export const StakingCalculator: React.FC = () => {
       dailyAvg,
       percentGain: amount > 0 ? (earnings / amount) * 100 : 0,
     };
-  }, [stakeAmount, stakingPeriod]);
+  }, [stakeAmount, stakingPeriod, selectedAPY]);
 
   const formatNumber = (num: number, decimals: number = 2) => {
     return num.toLocaleString(undefined, {
@@ -493,9 +500,26 @@ export const StakingCalculator: React.FC = () => {
         </Title>
         <APYBadge>
           <span>📈</span>
-          {NETWORK_APY}% APY
+          {selectedAPY}% APY
         </APYBadge>
       </Header>
+
+      <InputSection>
+        <Label $isDark={isDark}>Expected APY</Label>
+        <QuickAmounts>
+          {APY_PRESETS.map(preset => (
+            <QuickButton
+              key={preset.value}
+              $isDark={isDark}
+              $active={selectedAPY === preset.value}
+              onClick={() => setSelectedAPY(preset.value)}
+              title={preset.desc}
+            >
+              {preset.label}
+            </QuickButton>
+          ))}
+        </QuickAmounts>
+      </InputSection>
 
       <InputSection>
         <Label $isDark={isDark}>Amount to stake</Label>
@@ -617,8 +641,8 @@ export const StakingCalculator: React.FC = () => {
       <Disclaimer $isDark={isDark}>
         <DisclaimerIcon>💡</DisclaimerIcon>
         <span>
-          Based on current Casper Network APY (~{NETWORK_APY}%). Rewards compound automatically.
-          Actual returns may vary based on network conditions and validator performance.
+          Calculation based on {selectedAPY}% APY. Network average is ~17%. Rewards compound automatically.
+          Actual returns may vary based on validator choice and network conditions.
         </span>
       </Disclaimer>
     </Container>
