@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 const Nav = styled.nav<{ $isDark: boolean }>`
   position: sticky;
@@ -21,8 +22,20 @@ const NavContainer = styled.div`
   margin: 0 auto;
   padding: 0 20px;
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const NavLinks = styled.div`
+  display: flex;
   justify-content: center;
   gap: 8px;
+  flex: 1;
+`;
+
+const NavRight = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 const NavItem = styled(NavLink)<{ $isDark: boolean }>`
@@ -75,18 +88,23 @@ export const Navigation: React.FC<NavigationProps> = ({ isDark }) => {
   return (
     <Nav $isDark={isDark}>
       <NavContainer>
-        <NavItem to="/" $isDark={isDark} end>
-          <NavIcon>🏠</NavIcon>
-          Home
-        </NavItem>
-        <NavItem to="/stake" $isDark={isDark}>
-          <NavIcon>💰</NavIcon>
-          Stake
-        </NavItem>
-        <NavItem to="/guide" $isDark={isDark}>
-          <NavIcon>📖</NavIcon>
-          Guide
-        </NavItem>
+        <NavLinks>
+          <NavItem to="/" $isDark={isDark} end>
+            <NavIcon>🏠</NavIcon>
+            Home
+          </NavItem>
+          <NavItem to="/stake" $isDark={isDark}>
+            <NavIcon>💰</NavIcon>
+            Stake
+          </NavItem>
+          <NavItem to="/guide" $isDark={isDark}>
+            <NavIcon>📖</NavIcon>
+            Guide
+          </NavItem>
+        </NavLinks>
+        <NavRight>
+          <LanguageSwitcher isDark={isDark} />
+        </NavRight>
       </NavContainer>
     </Nav>
   );
