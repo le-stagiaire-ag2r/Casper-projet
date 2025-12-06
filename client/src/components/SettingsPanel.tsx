@@ -15,25 +15,25 @@ const slideIn = keyframes`
 
 const SettingsButton = styled.button<{ $isDark: boolean }>`
   position: fixed;
-  bottom: 24px;
+  bottom: 96px;
   right: 24px;
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5856d6 0%, #af52de 100%);
+  background: linear-gradient(135deg, #ff9f0a 0%, #ff6b00 100%);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 4px 20px rgba(88, 86, 214, 0.4);
+  font-size: 22px;
+  box-shadow: 0 4px 20px rgba(255, 159, 10, 0.4);
   transition: all 0.3s ease;
-  z-index: 9999;
+  z-index: 9998;
 
   &:hover {
     transform: scale(1.1) rotate(30deg);
-    box-shadow: 0 6px 30px rgba(88, 86, 214, 0.5);
+    box-shadow: 0 6px 30px rgba(255, 159, 10, 0.5);
   }
 
   &:active {

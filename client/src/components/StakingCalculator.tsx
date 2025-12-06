@@ -428,15 +428,15 @@ const DisclaimerIcon = styled.span`
   font-size: 16px;
 `;
 
-// Real Casper Network APY based on mainnet data
-const NETWORK_APY = 17; // ~17% APY on Casper mainnet
-
 export const StakingCalculator: React.FC = () => {
   const theme = useTheme() as any;
   const isDark = theme?.mode === 'dark';
 
   const [stakeAmount, setStakeAmount] = useState<string>('1000');
   const [stakingPeriod, setStakingPeriod] = useState<number>(12); // months
+  const [selectedAPY, setSelectedAPY] = useState<number>(17); // Default 17%
+
+  const apySliderPercent = ((selectedAPY - 1) / 99) * 100;
 
   const quickAmounts = [100, 500, 1000, 5000, 10000];
   const periodPresets = [
@@ -450,7 +450,7 @@ export const StakingCalculator: React.FC = () => {
     const amount = parseFloat(stakeAmount) || 0;
     const months = stakingPeriod;
     const years = months / 12;
-    const apy = NETWORK_APY / 100;
+    const apy = selectedAPY / 100;
 
     // Compound interest calculation
     const totalWithRewards = amount * Math.pow(1 + apy, years);
@@ -465,7 +465,7 @@ export const StakingCalculator: React.FC = () => {
       dailyAvg,
       percentGain: amount > 0 ? (earnings / amount) * 100 : 0,
     };
-  }, [stakeAmount, stakingPeriod]);
+  }, [stakeAmount, stakingPeriod, selectedAPY]);
 
   const formatNumber = (num: number, decimals: number = 2) => {
     return num.toLocaleString(undefined, {
@@ -493,9 +493,31 @@ export const StakingCalculator: React.FC = () => {
         </Title>
         <APYBadge>
           <span>📈</span>
-          {NETWORK_APY}% APY
+          {selectedAPY}% APY
         </APYBadge>
       </Header>
+
+      <SliderContainer>
+        <SliderHeader>
+          <Label $isDark={isDark}>Expected APY: <strong>{selectedAPY}%</strong></Label>
+        </SliderHeader>
+        <SliderTrack $isDark={isDark}>
+          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #30d158, #ff9f0a)' }} />
+          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #30d158, #34c759)' }} />
+          <Slider
+            type="range"
+            min="1"
+            max="100"
+            value={selectedAPY}
+            onChange={(e) => setSelectedAPY(parseInt(e.target.value))}
+          />
+        </SliderTrack>
+        <SliderLabels>
+          <SliderLabel $isDark={isDark}>1%</SliderLabel>
+          <SliderLabel $isDark={isDark}>~17% avg</SliderLabel>
+          <SliderLabel $isDark={isDark}>100%</SliderLabel>
+        </SliderLabels>
+      </SliderContainer>
 
       <InputSection>
         <Label $isDark={isDark}>Amount to stake</Label>
@@ -617,8 +639,8 @@ export const StakingCalculator: React.FC = () => {
       <Disclaimer $isDark={isDark}>
         <DisclaimerIcon>💡</DisclaimerIcon>
         <span>
-          Based on current Casper Network APY (~{NETWORK_APY}%). Rewards compound automatically.
-          Actual returns may vary based on network conditions and validator performance.
+          Calculation based on {selectedAPY}% APY. Network average is ~17%. Rewards compound automatically.
+          Actual returns may vary based on validator choice and network conditions.
         </span>
       </Disclaimer>
     </Container>
