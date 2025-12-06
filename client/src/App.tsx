@@ -17,7 +17,6 @@ import { HomePage } from './pages/HomePage';
 import { StakePage } from './pages/StakePage';
 import { GuidePage } from './pages/GuidePage';
 import { BalanceProvider } from './context/BalanceContext';
-import { LanguageProvider } from './context/LanguageContext';
 import { FAQBot } from './components/FAQBot';
 
 // Get runtime config
@@ -189,15 +188,13 @@ const App: React.FC = () => {
     <BrowserRouter>
       <ThemeProvider theme={csprClickTheme}>
         <ClickProvider options={clickOptions}>
-          <LanguageProvider>
-            <BalanceProvider>
-              <AppContent
-                isDark={themeMode === ThemeModeType.dark}
-                themeMode={themeMode}
-                onThemeSwitch={handleThemeSwitch}
-              />
-            </BalanceProvider>
-          </LanguageProvider>
+          <BalanceProvider>
+            <AppContent
+              isDark={themeMode === ThemeModeType.dark}
+              themeMode={themeMode}
+              onThemeSwitch={handleThemeSwitch}
+            />
+          </BalanceProvider>
         </ClickProvider>
       </ThemeProvider>
     </BrowserRouter>
