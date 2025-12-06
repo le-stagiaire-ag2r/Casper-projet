@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useCsprPriceHistory } from '../hooks/useBalance';
 
 const Container = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
@@ -177,67 +178,79 @@ interface ExportCSVProps {
   isDark: boolean;
 }
 
-type ExportType = 'transactions' | 'rewards' | 'portfolio' | 'all';
+type ExportType = 'price_history' | 'transactions' | 'rewards' | 'portfolio';
 
 export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
-  const [selectedType, setSelectedType] = useState<ExportType>('rewards');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [selectedType, setSelectedType] = useState<ExportType>('price_history');
+  const [selectedDays, setSelectedDays] = useState<number>(365);
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Fetch real price history data
+  const { prices: priceHistory } = useCsprPriceHistory(selectedDays);
+
   const exportOptions = [
-    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: 'All stake/unstake transactions' },
+    { type: 'price_history' as ExportType, icon: '📈', title: 'Price History', desc: 'Real CSPR price data from CoinGecko' },
+    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: 'Your stake/unstake transactions' },
     { type: 'rewards' as ExportType, icon: '💰', title: 'Rewards', desc: 'Staking rewards history' },
     { type: 'portfolio' as ExportType, icon: '📊', title: 'Portfolio', desc: 'Balance snapshots over time' },
-    { type: 'all' as ExportType, icon: '📦', title: 'Complete Export', desc: 'All data combined' },
+  ];
+
+  const daysOptions = [
+    { label: '7 Days', value: 7 },
+    { label: '30 Days', value: 30 },
+    { label: '90 Days', value: 90 },
+    { label: '1 Year', value: 365 },
+    { label: 'All Time', value: 0 },
   ];
 
   const generateCSV = () => {
-    // Generate mock data based on selected type
+    if (selectedType === 'price_history') {
+      // Export real price history data
+      const headers = ['Date', 'Timestamp', 'Price (USD)', 'Price Change %'];
+
+      if (priceHistory.length === 0) {
+        return 'No price data available. Please try again later.';
+      }
+
+      const rows = priceHistory.map((p, i) => {
+        const prevPrice = i > 0 ? priceHistory[i - 1].price : p.price;
+        const changePercent = prevPrice > 0 ? ((p.price - prevPrice) / prevPrice * 100).toFixed(4) : '0';
+        const fullDate = new Date(p.timestamp).toISOString().split('T')[0];
+        return [fullDate, p.timestamp, p.price.toFixed(6), changePercent];
+      });
+
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `${csvHeaders}\n${csvRows}`;
+    }
+
+    // Other export types (demo data - would need real wallet connection)
     const headers = {
       transactions: ['Date', 'Type', 'Amount (CSPR)', 'stCSPR', 'TX Hash', 'Status'],
       rewards: ['Date', 'Reward (CSPR)', 'APY (%)', 'Staked Amount', 'Cumulative'],
       portfolio: ['Date', 'CSPR Balance', 'stCSPR Balance', 'Total Value (USD)', 'CSPR Price'],
-      all: ['Date', 'Type', 'CSPR', 'stCSPR', 'USD Value', 'Details'],
     };
 
+    const demoNote = '# Note: Connect wallet for real transaction data\n';
     const mockData = {
       transactions: [
         ['2025-12-01', 'Stake', '1000', '1000', '0x1a2b...3c4d', 'Confirmed'],
         ['2025-12-02', 'Stake', '500', '500', '0x2b3c...4d5e', 'Confirmed'],
-        ['2025-12-03', 'Unstake', '200', '200', '0x3c4d...5e6f', 'Confirmed'],
-        ['2025-12-04', 'Stake', '750', '750', '0x4d5e...6f7a', 'Confirmed'],
-        ['2025-12-05', 'Reward', '14.2', '0', 'Auto-compound', 'Applied'],
       ],
       rewards: [
         ['2025-12-01', '4.52', '17.2', '1000', '4.52'],
         ['2025-12-02', '6.78', '17.1', '1500', '11.30'],
-        ['2025-12-03', '5.43', '17.0', '1300', '16.73'],
-        ['2025-12-04', '8.67', '17.3', '2050', '25.40'],
-        ['2025-12-05', '8.75', '17.2', '2050', '34.15'],
       ],
       portfolio: [
         ['2025-12-01', '5000', '1000', '180.00', '0.030'],
         ['2025-12-02', '4500', '1500', '180.00', '0.030'],
-        ['2025-12-03', '4700', '1300', '183.60', '0.031'],
-        ['2025-12-04', '3950', '2050', '186.00', '0.031'],
-        ['2025-12-05', '3950', '2064', '189.44', '0.032'],
-      ],
-      all: [
-        ['2025-12-01', 'Stake', '1000', '1000', '$30.00', 'Initial stake'],
-        ['2025-12-02', 'Stake', '500', '500', '$15.00', 'Additional stake'],
-        ['2025-12-03', 'Unstake', '200', '200', '$6.20', 'Partial withdrawal'],
-        ['2025-12-04', 'Stake', '750', '750', '$23.25', 'Re-stake'],
-        ['2025-12-05', 'Reward', '14.2', '0', '$0.45', 'Daily reward'],
       ],
     };
 
     const csvHeaders = headers[selectedType].join(',');
     const csvRows = mockData[selectedType].map(row => row.join(',')).join('\n');
-    const csvContent = `${csvHeaders}\n${csvRows}`;
-
-    return csvContent;
+    return `${demoNote}${csvHeaders}\n${csvRows}`;
   };
 
   const handleExport = async () => {
@@ -295,24 +308,42 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
         ))}
       </OptionsGrid>
 
-      <DateRange>
-        <DateInput $isDark={isDark}>
-          <label>Start Date (optional)</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </DateInput>
-        <DateInput $isDark={isDark}>
-          <label>End Date (optional)</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </DateInput>
-      </DateRange>
+      {selectedType === 'price_history' && (
+        <DateRange>
+          <DateInput $isDark={isDark}>
+            <label>Time Period</label>
+            <select
+              value={selectedDays}
+              onChange={(e) => setSelectedDays(Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
+                border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'}`,
+                background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                color: isDark ? '#fff' : '#1a1a2e',
+                fontSize: '0.9rem',
+              }}
+            >
+              {daysOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </DateInput>
+          <DateInput $isDark={isDark}>
+            <label>Data Points</label>
+            <div style={{
+              padding: '12px',
+              borderRadius: '8px',
+              background: isDark ? 'rgba(48, 209, 88, 0.1)' : 'rgba(48, 209, 88, 0.1)',
+              color: '#30d158',
+              fontWeight: 600,
+            }}>
+              {priceHistory.length} entries
+            </div>
+          </DateInput>
+        </DateRange>
+      )}
 
       <ExportButton
         $isDark={isDark}
