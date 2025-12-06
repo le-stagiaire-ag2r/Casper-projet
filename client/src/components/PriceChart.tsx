@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useCsprPriceHistory, useCsprPrice } from '../hooks/useBalance';
 
@@ -223,12 +223,55 @@ const ErrorMessage = styled.div<{ $isDark: boolean }>`
   font-size: 14px;
 `;
 
+const Tooltip = styled.div<{ $isDark: boolean; $x: number; $y: number; $visible: boolean }>`
+  position: absolute;
+  left: ${props => props.$x}px;
+  top: ${props => props.$y}px;
+  transform: translate(-50%, -120%);
+  background: ${props => props.$isDark ? 'rgba(30, 30, 40, 0.95)' : 'rgba(255, 255, 255, 0.98)'};
+  border: 1px solid ${props => props.$isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)'};
+  border-radius: 10px;
+  padding: 10px 14px;
+  pointer-events: none;
+  opacity: ${props => props.$visible ? 1 : 0};
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  white-space: nowrap;
+`;
+
+const TooltipDate = styled.div<{ $isDark: boolean }>`
+  font-size: 11px;
+  color: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.5)'};
+  margin-bottom: 4px;
+`;
+
+const TooltipPrice = styled.div<{ $isDark: boolean }>`
+  font-size: 16px;
+  font-weight: 700;
+  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+`;
+
+const HoverLine = styled.line<{ $isDark: boolean }>`
+  stroke: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)'};
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+`;
+
+const HoverDot = styled.circle<{ $positive: boolean }>`
+  fill: ${props => props.$positive ? '#30d158' : '#ff453a'};
+  stroke: #fff;
+  stroke-width: 2;
+`;
+
 interface PriceChartProps {
   isDark: boolean;
 }
 
 export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
   const [selectedDays, setSelectedDays] = useState(7);
+  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; price: number; date: string } | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
   const { prices, minPrice, maxPrice, priceChangePercent, isLoading, error } = useCsprPriceHistory(selectedDays);
   const { usdPrice } = useCsprPrice();
 
@@ -262,6 +305,51 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
   };
 
   const { linePath, areaPath, points } = generatePath();
+
+  // Handle mouse move on chart to show tooltip
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!chartRef.current || points.length < 2) return;
+
+    const rect = chartRef.current.getBoundingClientRect();
+    const svgRect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - svgRect.left;
+    const scaleX = viewBoxWidth / svgRect.width;
+    const scaledX = mouseX * scaleX;
+
+    // Find closest point
+    let closestPoint = points[0];
+    let closestDist = Math.abs(scaledX - points[0].x);
+
+    for (const p of points) {
+      const dist = Math.abs(scaledX - p.x);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestPoint = p;
+      }
+    }
+
+    // Convert SVG coordinates to pixel coordinates for tooltip
+    const pixelX = (closestPoint.x / viewBoxWidth) * svgRect.width;
+    const pixelY = (closestPoint.y / viewBoxHeight) * svgRect.height;
+
+    setHoveredPoint({
+      x: pixelX,
+      y: pixelY,
+      price: closestPoint.price,
+      date: closestPoint.date,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredPoint(null);
+  };
+
+  // Get X-axis label indices (6 labels evenly distributed)
+  const getXLabelIndices = () => {
+    if (points.length <= 6) return points.map((_, i) => i);
+    const step = (points.length - 1) / 5;
+    return [0, 1, 2, 3, 4, 5].map(i => Math.round(i * step));
+  };
 
   return (
     <Container $isDark={isDark}>
@@ -300,8 +388,14 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
           Unable to load price data
         </ErrorMessage>
       ) : (
-        <ChartContainer>
-          <ChartSVG viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} preserveAspectRatio="xMidYMid meet">
+        <ChartContainer ref={chartRef}>
+          <ChartSVG
+            viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
+            preserveAspectRatio="xMidYMid meet"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            style={{ cursor: 'crosshair' }}
+          >
             <defs>
               <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor={isPositive ? '#30d158' : '#ff453a'} stopOpacity="0.4" />
@@ -338,15 +432,15 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
               />
             ))}
 
-            {/* X-axis labels */}
-            {points?.filter((_, i) => i === 0 || i === Math.floor(points.length / 2) || i === points.length - 1).map((p, i) => (
+            {/* X-axis labels (6 evenly distributed) */}
+            {getXLabelIndices().map((idx) => points[idx] && (
               <XLabel
-                key={i}
+                key={idx}
                 $isDark={isDark}
-                x={p.x}
+                x={points[idx].x}
                 y={viewBoxHeight - 8}
               >
-                {p.date}
+                {points[idx].date}
               </XLabel>
             ))}
 
@@ -361,7 +455,37 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
                 ${price.toFixed(4)}
               </YLabel>
             ))}
+
+            {/* Hover indicator line and dot */}
+            {hoveredPoint && (
+              <>
+                <HoverLine
+                  $isDark={isDark}
+                  x1={(hoveredPoint.x / chartRef.current!.getBoundingClientRect().width) * viewBoxWidth}
+                  y1={padding.top}
+                  x2={(hoveredPoint.x / chartRef.current!.getBoundingClientRect().width) * viewBoxWidth}
+                  y2={padding.top + chartHeight}
+                />
+                <HoverDot
+                  cx={(hoveredPoint.x / chartRef.current!.getBoundingClientRect().width) * viewBoxWidth}
+                  cy={(hoveredPoint.y / chartRef.current!.getBoundingClientRect().height) * viewBoxHeight}
+                  r={6}
+                  $positive={isPositive}
+                />
+              </>
+            )}
           </ChartSVG>
+
+          {/* Tooltip */}
+          <Tooltip
+            $isDark={isDark}
+            $x={hoveredPoint?.x || 0}
+            $y={hoveredPoint?.y || 0}
+            $visible={!!hoveredPoint}
+          >
+            <TooltipDate $isDark={isDark}>{hoveredPoint?.date}</TooltipDate>
+            <TooltipPrice $isDark={isDark}>${hoveredPoint?.price.toFixed(4)}</TooltipPrice>
+          </Tooltip>
         </ChartContainer>
       )}
 
