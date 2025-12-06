@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { Tooltip } from './Tooltip';
 
 const pulse = keyframes`
   0%, 100% { opacity: 1; }
@@ -97,6 +98,9 @@ const StatLabel = styled.div<{ $isDark: boolean }>`
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
@@ -317,7 +321,15 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
 
         <StatCard $isDark={isDark}>
           <StatIcon>✅</StatIcon>
-          <StatLabel $isDark={isDark}>Active Validators</StatLabel>
+          <StatLabel $isDark={isDark}>
+            Active Validators
+            <Tooltip
+              isDark={isDark}
+              title="Validators"
+              content="Validators are nodes that participate in the consensus mechanism. They validate transactions and create new blocks. More validators means better decentralization and security."
+              position="bottom"
+            />
+          </StatLabel>
           <StatValue $isDark={isDark}>
             {stats.activeValidators}
           </StatValue>
@@ -328,7 +340,15 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
 
         <StatCard $isDark={isDark}>
           <StatIcon>👥</StatIcon>
-          <StatLabel $isDark={isDark}>Total Delegators</StatLabel>
+          <StatLabel $isDark={isDark}>
+            Total Delegators
+            <Tooltip
+              isDark={isDark}
+              title="Delegators"
+              content="Delegators are users who stake their CSPR tokens with validators. They earn staking rewards proportional to their stake, minus the validator's commission fee."
+              position="bottom"
+            />
+          </StatLabel>
           <StatValue $isDark={isDark}>
             {formatNumber(stats.totalDelegators)}
           </StatValue>
@@ -339,7 +359,15 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
 
         <StatCard $isDark={isDark}>
           <StatIcon>📈</StatIcon>
-          <StatLabel $isDark={isDark}>Staking Ratio</StatLabel>
+          <StatLabel $isDark={isDark}>
+            Staking Ratio
+            <Tooltip
+              isDark={isDark}
+              title="Staking Ratio"
+              content="The percentage of total circulating CSPR that is currently staked. A higher ratio indicates more network participation and generally better security for the blockchain."
+              position="bottom"
+            />
+          </StatLabel>
           <StatValue $isDark={isDark} $highlight>
             {stats.stakingRatio.toFixed(1)}%
           </StatValue>
