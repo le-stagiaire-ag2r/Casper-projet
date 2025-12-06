@@ -143,11 +143,50 @@ interface DataPoint {
 
 export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
-  const [currentTVL, setCurrentTVL] = useState(2450000);
+  const [currentTVL, setCurrentTVL] = useState(0);
   const [data, setData] = useState<DataPoint[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Generate mock historical data
+  // Fetch real TVL from Casper network
+  const fetchRealTVL = async () => {
+    try {
+      const response = await fetch(
+        'https://event-store-api-clarity-mainnet.make.services/validators?page=1&limit=100&order_direction=DESC&order_by=total_stake'
+      );
+      const data = await response.json();
+
+      let totalStaked = 0;
+      if (data.data) {
+        data.data.forEach((v: any) => {
+          totalStaked += parseFloat(v.total_stake || 0);
+        });
+      }
+
+      // Convert from motes to CSPR
+      const tvlInCSPR = totalStaked / 1e9;
+      setCurrentTVL(tvlInCSPR);
+      setLoading(false);
+      return tvlInCSPR;
+    } catch (error) {
+      console.error('Error fetching TVL:', error);
+      setCurrentTVL(8_500_000_000); // Fallback
+      setLoading(false);
+      return 8_500_000_000;
+    }
+  };
+
+  // Initial fetch
   useEffect(() => {
+    fetchRealTVL();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchRealTVL, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Generate simulated historical data based on real current TVL
+  useEffect(() => {
+    if (currentTVL === 0) return;
+
     const generateData = () => {
       const points: DataPoint[] = [];
       const now = new Date();
@@ -157,39 +196,40 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
       switch (timeRange) {
         case '24h':
           numPoints = 24;
-          interval = 60 * 60 * 1000; // 1 hour
+          interval = 60 * 60 * 1000;
           break;
         case '7d':
           numPoints = 7 * 4;
-          interval = 6 * 60 * 60 * 1000; // 6 hours
+          interval = 6 * 60 * 60 * 1000;
           break;
         case '30d':
           numPoints = 30;
-          interval = 24 * 60 * 60 * 1000; // 1 day
+          interval = 24 * 60 * 60 * 1000;
           break;
         case '90d':
           numPoints = 90;
-          interval = 24 * 60 * 60 * 1000; // 1 day
+          interval = 24 * 60 * 60 * 1000;
           break;
         case '1y':
           numPoints = 52;
-          interval = 7 * 24 * 60 * 60 * 1000; // 1 week
+          interval = 7 * 24 * 60 * 60 * 1000;
           break;
         default:
           numPoints = 30;
           interval = 24 * 60 * 60 * 1000;
       }
 
-      let tvl = currentTVL * 0.6; // Start from 60% of current
+      // Simulate historical trend (actual current point is real)
+      let tvl = currentTVL * 0.85; // Start from 85% of current
       for (let i = numPoints - 1; i >= 0; i--) {
         const timestamp = new Date(now.getTime() - i * interval);
         // Add some randomness but trend upward
-        const change = (Math.random() - 0.3) * 50000;
-        tvl = Math.max(500000, Math.min(currentTVL * 1.1, tvl + change));
+        const change = (Math.random() - 0.4) * (currentTVL * 0.005);
+        tvl = Math.max(currentTVL * 0.7, Math.min(currentTVL * 1.05, tvl + change));
         points.push({ timestamp, tvl });
       }
 
-      // Ensure last point is current TVL
+      // Last point is the real current TVL
       if (points.length > 0) {
         points[points.length - 1].tvl = currentTVL;
       }
@@ -199,18 +239,6 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
 
     generateData();
   }, [timeRange, currentTVL]);
-
-  // Simulate live updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTVL(prev => {
-        const change = (Math.random() - 0.45) * 10000;
-        return Math.max(2000000, prev + change);
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const chartPath = useMemo(() => {
     if (data.length === 0) return '';

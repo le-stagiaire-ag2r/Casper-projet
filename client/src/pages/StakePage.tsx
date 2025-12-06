@@ -12,10 +12,8 @@ import { PortfolioHistory } from '../components/PortfolioHistory';
 import { Leaderboard } from '../components/Leaderboard';
 import { TVLChart } from '../components/TVLChart';
 import { ExportCSV } from '../components/ExportCSV';
-import { SimulationMode } from '../components/SimulationMode';
 import { ValidatorComparator } from '../components/ValidatorComparator';
-import { NotificationSettings } from '../components/NotificationSettings';
-import { NFTBadges } from '../components/NFTBadges';
+import { SettingsPanel } from '../components/SettingsPanel';
 import { useBalanceContext } from '../context/BalanceContext';
 
 const Container = styled.div`
@@ -156,19 +154,12 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
         <ExportCSV isDark={isDark} />
       </ChartsSection>
 
-      <FullWidthSection>
-        <SimulationMode isDark={isDark} />
-      </FullWidthSection>
-
       <ChartsSection>
         <PortfolioHistory isDark={isDark} />
         <PriceAlertComponent isDark={isDark} />
       </ChartsSection>
 
-      <ChartsSection>
-        <NotificationSettings isDark={isDark} />
-        <NFTBadges isDark={isDark} />
-      </ChartsSection>
+      <SettingsPanel isDark={isDark} />
     </Container>
   );
 };

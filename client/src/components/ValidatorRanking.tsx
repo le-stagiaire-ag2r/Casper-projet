@@ -35,6 +35,15 @@ const Title = styled.h3<{ $isDark: boolean }>`
   margin: 0;
 `;
 
+const LiveBadge = styled.span`
+  font-size: 10px;
+  background: rgba(48, 209, 88, 0.15);
+  color: #30d158;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+`;
+
 const RefreshButton = styled.button<{ $isDark: boolean }>`
   background: ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.1)'
@@ -69,7 +78,7 @@ const Table = styled.div`
 
 const TableHeader = styled.div<{ $isDark: boolean }>`
   display: grid;
-  grid-template-columns: 40px 1fr 80px 80px 80px 80px;
+  grid-template-columns: 40px 1fr 90px 90px 90px 80px;
   gap: 12px;
   padding: 12px 16px;
   background: ${props => props.$isDark
@@ -83,11 +92,15 @@ const TableHeader = styled.div<{ $isDark: boolean }>`
     : 'rgba(0, 0, 0, 0.5)'};
   text-transform: uppercase;
   letter-spacing: 0.5px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 30px 1fr 70px 70px;
+  }
 `;
 
 const TableRow = styled.div<{ $isDark: boolean; $rank: number }>`
   display: grid;
-  grid-template-columns: 40px 1fr 80px 80px 80px 80px;
+  grid-template-columns: 40px 1fr 90px 90px 90px 80px;
   gap: 12px;
   padding: 14px 16px;
   background: ${props => {
@@ -116,6 +129,10 @@ const TableRow = styled.div<{ $isDark: boolean; $rank: number }>`
       ? 'rgba(255, 255, 255, 0.08)'
       : 'rgba(0, 0, 0, 0.05)'};
     transform: translateX(4px);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 30px 1fr 70px 70px;
   }
 `;
 
@@ -161,6 +178,12 @@ const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
     ? '#30d158'
     : props.$isDark ? '#fff' : '#1a1a2e'};
   text-align: right;
+
+  @media (max-width: 768px) {
+    &.hide-mobile {
+      display: none;
+    }
+  }
 `;
 
 const StatusBadge = styled.span<{ $active: boolean }>`
@@ -181,6 +204,10 @@ const StatusBadge = styled.span<{ $active: boolean }>`
     height: 6px;
     border-radius: 50%;
     background: currentColor;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
@@ -209,7 +236,7 @@ const ErrorMessage = styled.div<{ $isDark: boolean }>`
   font-size: 14px;
 `;
 
-const LastUpdated = styled.div<{ $isDark: boolean }>`
+const DataSource = styled.div<{ $isDark: boolean }>`
   text-align: center;
   margin-top: 16px;
   font-size: 11px;
@@ -223,26 +250,13 @@ interface Validator {
   name: string;
   stake: number;
   delegators: number;
-  commission: number;
-  apy: number;
+  fee: number;
   isActive: boolean;
 }
 
 interface ValidatorRankingProps {
   isDark: boolean;
 }
-
-// Simulated validators data (in production, fetch from CSPR.cloud API)
-const MOCK_VALIDATORS: Validator[] = [
-  { publicKey: '01a5c...8f2d', name: 'Casper Labs', stake: 125000000, delegators: 1250, commission: 5, apy: 17.8, isActive: true },
-  { publicKey: '01b7e...4a1c', name: 'BitCat', stake: 98000000, delegators: 890, commission: 8, apy: 17.2, isActive: true },
-  { publicKey: '01c9f...2b3e', name: 'HashQuark', stake: 87000000, delegators: 756, commission: 10, apy: 16.8, isActive: true },
-  { publicKey: '01d2a...5c4f', name: 'StakeVue Official', stake: 72000000, delegators: 623, commission: 3, apy: 18.2, isActive: true },
-  { publicKey: '01e4b...7d6a', name: 'CryptoStake', stake: 65000000, delegators: 542, commission: 12, apy: 16.1, isActive: true },
-  { publicKey: '01f6c...9e8b', name: 'ValidatorX', stake: 54000000, delegators: 421, commission: 15, apy: 15.5, isActive: true },
-  { publicKey: '01a8d...1f2c', name: 'NodeGuard', stake: 43000000, delegators: 356, commission: 7, apy: 17.4, isActive: true },
-  { publicKey: '01b9e...3a4d', name: 'StakePool Pro', stake: 32000000, delegators: 289, commission: 20, apy: 14.8, isActive: false },
-];
 
 export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) => {
   const [validators, setValidators] = useState<Validator[]>([]);
@@ -255,18 +269,31 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const response = await fetch(
+        'https://event-store-api-clarity-mainnet.make.services/validators?page=1&limit=10&order_direction=DESC&order_by=total_stake'
+      );
 
-      // In production, fetch from:
-      // const response = await fetch('https://api.testnet.cspr.cloud/validators?page=1&page_size=10');
+      if (!response.ok) {
+        throw new Error('Failed to fetch validators');
+      }
 
-      // Sort by APY (highest first)
-      const sorted = [...MOCK_VALIDATORS].sort((a, b) => b.apy - a.apy);
-      setValidators(sorted);
+      const data = await response.json();
+
+      const transformedValidators: Validator[] = data.data.map((v: any) => ({
+        publicKey: v.public_key,
+        name: v.account_info?.info?.owner?.name ||
+              `Validator ${v.public_key.substring(0, 8)}...`,
+        stake: parseFloat(v.total_stake) / 1e9,
+        delegators: v.delegators_number || 0,
+        fee: v.fee ? v.fee / 100 : 0,
+        isActive: v.is_active,
+      }));
+
+      setValidators(transformedValidators);
       setLastUpdated(new Date());
     } catch (err: any) {
-      setError(err.message || 'Failed to load validators');
+      console.error('Error fetching validators:', err);
+      setError('Failed to load validators. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -274,15 +301,16 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
 
   useEffect(() => {
     fetchValidators();
-
-    // Auto-refresh every 60 seconds
     const interval = setInterval(fetchValidators, 60000);
     return () => clearInterval(interval);
   }, []);
 
   const formatStake = (stake: number): string => {
-    if (stake >= 1000000) {
-      return `${(stake / 1000000).toFixed(1)}M`;
+    if (stake >= 1_000_000_000) {
+      return `${(stake / 1_000_000_000).toFixed(2)}B`;
+    }
+    if (stake >= 1_000_000) {
+      return `${(stake / 1_000_000).toFixed(1)}M`;
     }
     if (stake >= 1000) {
       return `${(stake / 1000).toFixed(0)}K`;
@@ -294,7 +322,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏆 Top Validators
+          🏆 Top Validators <LiveBadge>LIVE</LiveBadge>
         </Title>
         <RefreshButton
           $isDark={isDark}
@@ -315,10 +343,10 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
             <TableHeader $isDark={isDark}>
               <div>#</div>
               <div>Validator</div>
-              <div style={{ textAlign: 'right' }}>Stake</div>
-              <div style={{ textAlign: 'right' }}>APY</div>
-              <div style={{ textAlign: 'right' }}>Fee</div>
-              <div style={{ textAlign: 'right' }}>Status</div>
+              <div style={{ textAlign: 'right' }}>Total Stake</div>
+              <div style={{ textAlign: 'right' }}>Delegators</div>
+              <div style={{ textAlign: 'right' }} className="hide-mobile">Fee</div>
+              <div style={{ textAlign: 'right' }} className="hide-mobile">Status</div>
             </TableHeader>
 
             {isLoading ? (
@@ -328,25 +356,27 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
                 ))}
               </>
             ) : (
-              validators.slice(0, 8).map((validator, index) => (
+              validators.map((validator, index) => (
                 <TableRow key={validator.publicKey} $isDark={isDark} $rank={index + 1}>
                   <Rank $rank={index + 1}>
                     {index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : index + 1 === 3 ? '🥉' : index + 1}
                   </Rank>
                   <ValidatorInfo>
                     <ValidatorName $isDark={isDark}>{validator.name}</ValidatorName>
-                    <ValidatorAddress $isDark={isDark}>{validator.publicKey}</ValidatorAddress>
+                    <ValidatorAddress $isDark={isDark}>
+                      {validator.publicKey.substring(0, 12)}...
+                    </ValidatorAddress>
                   </ValidatorInfo>
                   <StatValue $isDark={isDark}>
                     {formatStake(validator.stake)}
                   </StatValue>
-                  <StatValue $isDark={isDark} $highlight>
-                    {validator.apy.toFixed(1)}%
-                  </StatValue>
                   <StatValue $isDark={isDark}>
-                    {validator.commission}%
+                    {validator.delegators.toLocaleString()}
                   </StatValue>
-                  <div>
+                  <StatValue $isDark={isDark} className="hide-mobile">
+                    {validator.fee}%
+                  </StatValue>
+                  <div className="hide-mobile">
                     <StatusBadge $active={validator.isActive}>
                       {validator.isActive ? 'Active' : 'Inactive'}
                     </StatusBadge>
@@ -356,11 +386,10 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
             )}
           </Table>
 
-          {lastUpdated && (
-            <LastUpdated $isDark={isDark}>
-              Last updated: {lastUpdated.toLocaleTimeString()}
-            </LastUpdated>
-          )}
+          <DataSource $isDark={isDark}>
+            📡 Live data from Casper Mainnet
+            {lastUpdated && ` • ${lastUpdated.toLocaleTimeString()}`}
+          </DataSource>
         </>
       )}
     </Container>
