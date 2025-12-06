@@ -200,8 +200,7 @@ export const useCsprPriceHistory = (days: number = 7) => {
 
     if (days === 0) {
       // Realistic CSPR price history pattern (May 2021 - present)
-      // May 2021: Started ~$0.02, peaked at ~$1.20 in May-June 2021
-      // Then crashed to ~$0.03, gradual decline to current ~$0.005
+      // Based on cspr.live data: Started HIGH at ~$1.20 in May 2021, then continuous decline
       const csprLaunch = new Date('2021-05-01').getTime();
       const totalDays = Math.floor((now - csprLaunch) / dayMs);
 
@@ -211,29 +210,26 @@ export const useCsprPriceHistory = (days: number = 7) => {
         let price: number;
 
         if (daysSinceLaunch < 30) {
-          // Initial launch: $0.02 -> $0.30
-          price = 0.02 + (daysSinceLaunch / 30) * 0.28;
-        } else if (daysSinceLaunch < 60) {
-          // Peak period: $0.30 -> $1.20 -> $0.80
-          const peakProgress = (daysSinceLaunch - 30) / 30;
-          price = peakProgress < 0.5
-            ? 0.30 + peakProgress * 2 * 0.90
-            : 1.20 - (peakProgress - 0.5) * 2 * 0.40;
-        } else if (daysSinceLaunch < 180) {
-          // Crash period: $0.80 -> $0.05
-          price = 0.80 - ((daysSinceLaunch - 60) / 120) * 0.75;
+          // May 2021: Peak around $1.10-1.20
+          price = 1.10 - (daysSinceLaunch / 30) * 0.30;
+        } else if (daysSinceLaunch < 120) {
+          // May-Sep 2021: Sharp crash $0.80 -> $0.15
+          price = 0.80 - ((daysSinceLaunch - 30) / 90) * 0.65;
+        } else if (daysSinceLaunch < 300) {
+          // Sep 2021 - Feb 2022: Continued decline $0.15 -> $0.05
+          price = 0.15 - ((daysSinceLaunch - 120) / 180) * 0.10;
         } else if (daysSinceLaunch < 700) {
-          // Bear market: $0.05 -> $0.02
-          price = 0.05 - ((daysSinceLaunch - 180) / 520) * 0.03;
+          // 2022-2023: Bear market $0.05 -> $0.02
+          price = 0.05 - ((daysSinceLaunch - 300) / 400) * 0.03;
           price = Math.max(0.015, price);
         } else {
-          // Recent: $0.02 -> current price with some variance
+          // 2024-present: Bottom around $0.005-0.01
           price = 0.02 - ((daysSinceLaunch - 700) / 700) * 0.015;
           price = Math.max(0.004, price);
         }
 
         // Add some noise
-        price = price * (1 + (Math.random() - 0.5) * 0.1);
+        price = price * (1 + (Math.random() - 0.5) * 0.08);
         price = Math.max(0.003, price);
 
         prices.push({
