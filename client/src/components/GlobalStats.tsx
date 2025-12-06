@@ -327,7 +327,6 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
               isDark={isDark}
               title="Validators"
               content="Validators are nodes that participate in the consensus mechanism. They validate transactions and create new blocks. More validators means better decentralization and security."
-              position="bottom"
             />
           </StatLabel>
           <StatValue $isDark={isDark}>
@@ -346,7 +345,6 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
               isDark={isDark}
               title="Delegators"
               content="Delegators are users who stake their CSPR tokens with validators. They earn staking rewards proportional to their stake, minus the validator's commission fee."
-              position="bottom"
             />
           </StatLabel>
           <StatValue $isDark={isDark}>
@@ -365,7 +363,6 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
               isDark={isDark}
               title="Staking Ratio"
               content="The percentage of total circulating CSPR that is currently staked. A higher ratio indicates more network participation and generally better security for the blockchain."
-              position="bottom"
             />
           </StatLabel>
           <StatValue $isDark={isDark} $highlight>

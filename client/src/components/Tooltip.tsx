@@ -1,16 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import styled, { keyframes } from 'styled-components';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
-`;
-
-const TooltipWrapper = styled.div`
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  z-index: 100;
 `;
 
 const TooltipTrigger = styled.span`
@@ -45,44 +39,25 @@ const InfoIcon = styled.span<{ $isDark: boolean }>`
   }
 `;
 
-const TooltipContent = styled.div<{ $isDark: boolean; $position: 'top' | 'bottom' }>`
-  position: absolute;
-  ${props => props.$position === 'top' ? 'bottom: 100%' : 'top: 100%'};
-  left: 50%;
+const TooltipContent = styled.div<{ $isDark: boolean; $x: number; $y: number }>`
+  position: fixed;
+  left: ${props => props.$x}px;
+  top: ${props => props.$y}px;
   transform: translateX(-50%);
-  ${props => props.$position === 'top' ? 'margin-bottom: 8px' : 'margin-top: 8px'};
   padding: 12px 16px;
   background: ${props => props.$isDark
-    ? 'rgba(30, 30, 46, 0.98)'
+    ? 'rgba(20, 20, 35, 0.98)'
     : 'rgba(255, 255, 255, 0.98)'};
   border: 1px solid ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.15)'
     : 'rgba(0, 0, 0, 0.1)'};
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  z-index: 99999;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 999999;
   min-width: 200px;
   max-width: 300px;
-  animation: ${fadeIn} 0.2s ease;
-
-  &::before {
-    content: '';
-    position: absolute;
-    ${props => props.$position === 'top' ? 'bottom: -6px' : 'top: -6px'};
-    left: 50%;
-    transform: translateX(-50%) ${props => props.$position === 'top' ? 'rotate(45deg)' : 'rotate(-135deg)'};
-    width: 12px;
-    height: 12px;
-    background: ${props => props.$isDark
-      ? 'rgba(30, 30, 46, 0.98)'
-      : 'rgba(255, 255, 255, 0.98)'};
-    border-right: 1px solid ${props => props.$isDark
-      ? 'rgba(255, 255, 255, 0.15)'
-      : 'rgba(0, 0, 0, 0.1)'};
-    border-bottom: 1px solid ${props => props.$isDark
-      ? 'rgba(255, 255, 255, 0.15)'
-      : 'rgba(0, 0, 0, 0.1)'};
-  }
+  animation: ${fadeIn} 0.15s ease;
+  pointer-events: none;
 `;
 
 const TooltipTitle = styled.div<{ $isDark: boolean }>`
@@ -104,7 +79,6 @@ interface TooltipProps {
   title?: string;
   content: string;
   isDark: boolean;
-  position?: 'top' | 'bottom';
   children?: React.ReactNode;
 }
 
@@ -112,28 +86,41 @@ export const Tooltip: React.FC<TooltipProps> = ({
   title,
   content,
   isDark,
-  position = 'top',
   children
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const triggerRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (isVisible && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top - 10
+      });
+    }
+  }, [isVisible]);
+
+  const tooltipPortal = isVisible ? ReactDOM.createPortal(
+    <TooltipContent $isDark={isDark} $x={position.x} $y={position.y}>
+      {title && <TooltipTitle $isDark={isDark}>{title}</TooltipTitle>}
+      <TooltipText $isDark={isDark}>{content}</TooltipText>
+    </TooltipContent>,
+    document.body
+  ) : null;
 
   return (
-    <TooltipWrapper
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
-      {children || (
-        <TooltipTrigger>
-          <InfoIcon $isDark={isDark}>?</InfoIcon>
-        </TooltipTrigger>
-      )}
-      {isVisible && (
-        <TooltipContent $isDark={isDark} $position={position}>
-          {title && <TooltipTitle $isDark={isDark}>{title}</TooltipTitle>}
-          <TooltipText $isDark={isDark}>{content}</TooltipText>
-        </TooltipContent>
-      )}
-    </TooltipWrapper>
+    <>
+      <TooltipTrigger
+        ref={triggerRef}
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+      >
+        {children || <InfoIcon $isDark={isDark}>?</InfoIcon>}
+      </TooltipTrigger>
+      {tooltipPortal}
+    </>
   );
 };
 
