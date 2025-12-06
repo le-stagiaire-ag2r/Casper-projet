@@ -274,8 +274,38 @@ const FALLBACK_VALIDATORS: Validator[] = [
 
 export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) => {
   const [validators, setValidators] = useState<Validator[]>(FALLBACK_VALIDATORS);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    const fetchValidators = async () => {
+      try {
+        const response = await fetch('/api/validators?limit=10');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.validators?.length > 0) {
+            setValidators(data.validators.slice(0, 10).map((v: any) => ({
+              publicKey: v.publicKey?.substring(0, 12) + '...' || 'unknown',
+              name: v.name,
+              stake: v.stake,
+              delegators: v.delegators,
+              fee: v.fee,
+              isActive: v.isActive,
+            })));
+            setIsLive(true);
+          }
+        }
+      } catch (error) {
+        console.log('Using fallback validator data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchValidators();
+    const interval = setInterval(fetchValidators, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const formatStake = (stake: number): string => {
     if (stake >= 1_000_000_000) {
@@ -294,7 +324,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏆 Top Validators <LiveBadge>MAINNET</LiveBadge>
+          🏆 Top Validators <LiveBadge>{isLive ? 'LIVE' : 'MAINNET'}</LiveBadge>
         </Title>
       </Header>
 

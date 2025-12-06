@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import styled, { keyframes, useTheme } from 'styled-components';
+import styled, { keyframes, useTheme, css } from 'styled-components';
 
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
@@ -311,7 +311,7 @@ const ResultCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   position: relative;
   overflow: hidden;
 
-  ${props => props.$highlight && `
+  ${props => props.$highlight && css`
     background: linear-gradient(135deg, rgba(48, 209, 88, 0.15), rgba(88, 86, 214, 0.1));
     border: 1px solid rgba(48, 209, 88, 0.3);
     animation: ${pulse} 2s ease-in-out infinite;
