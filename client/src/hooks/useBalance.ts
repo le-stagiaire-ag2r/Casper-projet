@@ -110,31 +110,53 @@ export const useBalance = (publicKey: string | null) => {
 };
 
 /**
- * Hook to get CSPR price (uses fallback data due to CORS issues with CoinGecko)
+ * Hook to get CSPR price via our API proxy (bypasses CORS)
  */
 export const useCsprPrice = () => {
   const [priceData, setPriceData] = useState<PriceData>({
-    usdPrice: 0.0055, // Real CSPR price from CoinGecko
-    usdChange24h: 2.3, // Approximate 24h change
-    isLoading: false,
+    usdPrice: 0.0055,
+    usdChange24h: 2.3,
+    isLoading: true,
     error: null,
-    lastUpdated: new Date(),
+    lastUpdated: null,
   });
 
-  // Using fallback data since CoinGecko has CORS issues from browser
-  useEffect(() => {
-    setPriceData({
-      usdPrice: 0.0055,
-      usdChange24h: 2.3,
-      isLoading: false,
-      error: null,
-      lastUpdated: new Date(),
-    });
+  const fetchPrice = useCallback(async () => {
+    try {
+      const response = await fetch('/api/price');
+      if (response.ok) {
+        const data = await response.json();
+        setPriceData({
+          usdPrice: data.price || 0.0055,
+          usdChange24h: data.change24h || 0,
+          isLoading: false,
+          error: null,
+          lastUpdated: new Date(),
+        });
+      } else {
+        throw new Error('API error');
+      }
+    } catch (error) {
+      // Fallback to static data
+      setPriceData({
+        usdPrice: 0.0055,
+        usdChange24h: 2.3,
+        isLoading: false,
+        error: null,
+        lastUpdated: new Date(),
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPrice();
+    const interval = setInterval(fetchPrice, 60000);
+    return () => clearInterval(interval);
+  }, [fetchPrice]);
 
   return {
     ...priceData,
-    refetch: () => {}, // No-op since using static data
+    refetch: fetchPrice,
   };
 };
 
@@ -164,58 +186,84 @@ export const useCsprPriceHistory = (days: number = 7) => {
     maxPrice: 0,
     priceChange: 0,
     priceChangePercent: 0,
-    isLoading: false,
+    isLoading: true,
     error: null,
   });
 
-  // Generate realistic price history (CoinGecko has CORS issues)
-  useEffect(() => {
+  const generateFallbackHistory = useCallback((basePrice: number) => {
     const now = Date.now();
-    const basePrice = 0.0055;
-    const numPoints = days;
     const dayMs = 24 * 60 * 60 * 1000;
-
     const prices: PriceHistoryPoint[] = [];
-    let price = basePrice * 0.95; // Start slightly lower
+    let price = basePrice * 0.95;
 
-    for (let i = numPoints; i >= 0; i--) {
+    for (let i = days; i >= 0; i--) {
       const timestamp = now - i * dayMs;
-      // Add realistic daily fluctuation
       price = price * (1 + (Math.random() - 0.48) * 0.03);
       price = Math.max(0.004, Math.min(0.007, price));
-
       prices.push({
         timestamp,
         price,
         date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       });
     }
-
-    // Last price is current price
     prices[prices.length - 1].price = basePrice;
-
-    const priceValues = prices.map(p => p.price);
-    const minPrice = Math.min(...priceValues);
-    const maxPrice = Math.max(...priceValues);
-    const firstPrice = prices[0]?.price || basePrice;
-    const lastPrice = prices[prices.length - 1]?.price || basePrice;
-    const priceChange = lastPrice - firstPrice;
-    const priceChangePercent = firstPrice > 0 ? (priceChange / firstPrice) * 100 : 0;
-
-    setHistoryData({
-      prices,
-      minPrice,
-      maxPrice,
-      priceChange,
-      priceChangePercent,
-      isLoading: false,
-      error: null,
-    });
+    return prices;
   }, [days]);
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      const response = await fetch('/api/price');
+      if (response.ok) {
+        const data = await response.json();
+        let prices = data.history || [];
+
+        // If no history from API, generate fallback
+        if (prices.length === 0) {
+          prices = generateFallbackHistory(data.price || 0.0055);
+        }
+
+        const priceValues = prices.map((p: PriceHistoryPoint) => p.price);
+        const minPrice = Math.min(...priceValues);
+        const maxPrice = Math.max(...priceValues);
+        const firstPrice = prices[0]?.price || 0.0055;
+        const lastPrice = prices[prices.length - 1]?.price || 0.0055;
+
+        setHistoryData({
+          prices,
+          minPrice,
+          maxPrice,
+          priceChange: lastPrice - firstPrice,
+          priceChangePercent: firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0,
+          isLoading: false,
+          error: null,
+        });
+      } else {
+        throw new Error('API error');
+      }
+    } catch (error) {
+      const prices = generateFallbackHistory(0.0055);
+      const priceValues = prices.map(p => p.price);
+      setHistoryData({
+        prices,
+        minPrice: Math.min(...priceValues),
+        maxPrice: Math.max(...priceValues),
+        priceChange: prices[prices.length - 1].price - prices[0].price,
+        priceChangePercent: ((prices[prices.length - 1].price - prices[0].price) / prices[0].price) * 100,
+        isLoading: false,
+        error: null,
+      });
+    }
+  }, [generateFallbackHistory]);
+
+  useEffect(() => {
+    fetchHistory();
+    const interval = setInterval(fetchHistory, 300000); // 5 min
+    return () => clearInterval(interval);
+  }, [fetchHistory]);
 
   return {
     ...historyData,
-    refetch: () => {},
+    refetch: fetchHistory,
   };
 };
 
