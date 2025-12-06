@@ -4,7 +4,6 @@ import { Dashboard } from '../components/Dashboard';
 import { StakingForm } from '../components/StakingForm';
 import { StakeHistory } from '../components/StakeHistory';
 import { StakingCalculator } from '../components/StakingCalculator';
-import { RewardsChart } from '../components/RewardsChart';
 import { ValidatorRanking } from '../components/ValidatorRanking';
 import { GlobalStats } from '../components/GlobalStats';
 import { PriceAlertComponent } from '../components/PriceAlert';
@@ -14,7 +13,6 @@ import { TVLChart } from '../components/TVLChart';
 import { ExportCSV } from '../components/ExportCSV';
 import { ValidatorComparator } from '../components/ValidatorComparator';
 import { SettingsPanel } from '../components/SettingsPanel';
-import { useBalanceContext } from '../context/BalanceContext';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -100,9 +98,6 @@ interface StakePageProps {
 }
 
 export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
-  // Get stCSPR balance from context (this is the staked amount)
-  const { stCsprBalance } = useBalanceContext();
-
   return (
     <Container>
       <Header>
@@ -128,10 +123,9 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
         <StakeHistory />
       </Grid>
 
-      <ChartsSection>
-        <RewardsChart isDark={isDark} stakedAmount={stCsprBalance} />
+      <FullWidthSection>
         <StakingCalculator />
-      </ChartsSection>
+      </FullWidthSection>
 
       <FullWidthSection>
         <ValidatorRanking isDark={isDark} />

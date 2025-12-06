@@ -195,25 +195,76 @@ export const useCsprPriceHistory = (days: number = 7) => {
     const dayMs = 24 * 60 * 60 * 1000;
     const prices: PriceHistoryPoint[] = [];
 
-    // For "max" (days=0), generate ~4 years of data since CSPR launch (March 2021)
+    // For "max" (days=0), generate realistic CSPR history since May 2021
     const daysToGenerate = days === 0 ? 1400 : days;
-    let price = basePrice * 0.3; // Start lower for historical simulation
 
-    for (let i = daysToGenerate; i >= 0; i--) {
-      const timestamp = now - i * dayMs;
-      price = price * (1 + (Math.random() - 0.48) * 0.05);
-      price = Math.max(0.002, Math.min(0.15, price)); // CSPR historical range
+    if (days === 0) {
+      // Realistic CSPR price history pattern (May 2021 - present)
+      // May 2021: Started ~$0.02, peaked at ~$1.20 in May-June 2021
+      // Then crashed to ~$0.03, gradual decline to current ~$0.005
+      const csprLaunch = new Date('2021-05-01').getTime();
+      const totalDays = Math.floor((now - csprLaunch) / dayMs);
 
-      // Only add one point per week for "all time" to keep data manageable
-      if (days === 0 && i % 7 !== 0 && i !== 0) continue;
+      for (let i = 0; i <= totalDays; i += 7) { // Weekly points
+        const timestamp = csprLaunch + i * dayMs;
+        const daysSinceLaunch = i;
+        let price: number;
 
-      prices.push({
-        timestamp,
-        price,
-        date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: days === 0 ? '2-digit' : undefined }),
-      });
+        if (daysSinceLaunch < 30) {
+          // Initial launch: $0.02 -> $0.30
+          price = 0.02 + (daysSinceLaunch / 30) * 0.28;
+        } else if (daysSinceLaunch < 60) {
+          // Peak period: $0.30 -> $1.20 -> $0.80
+          const peakProgress = (daysSinceLaunch - 30) / 30;
+          price = peakProgress < 0.5
+            ? 0.30 + peakProgress * 2 * 0.90
+            : 1.20 - (peakProgress - 0.5) * 2 * 0.40;
+        } else if (daysSinceLaunch < 180) {
+          // Crash period: $0.80 -> $0.05
+          price = 0.80 - ((daysSinceLaunch - 60) / 120) * 0.75;
+        } else if (daysSinceLaunch < 700) {
+          // Bear market: $0.05 -> $0.02
+          price = 0.05 - ((daysSinceLaunch - 180) / 520) * 0.03;
+          price = Math.max(0.015, price);
+        } else {
+          // Recent: $0.02 -> current price with some variance
+          price = 0.02 - ((daysSinceLaunch - 700) / 700) * 0.015;
+          price = Math.max(0.004, price);
+        }
+
+        // Add some noise
+        price = price * (1 + (Math.random() - 0.5) * 0.1);
+        price = Math.max(0.003, price);
+
+        prices.push({
+          timestamp,
+          price,
+          date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }),
+        });
+      }
+      // Ensure last point is current price
+      if (prices.length > 0) {
+        prices[prices.length - 1].price = basePrice;
+        prices[prices.length - 1].timestamp = now;
+        prices[prices.length - 1].date = new Date(now).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+      }
+    } else {
+      // For shorter periods, generate simple variance around current price
+      let price = basePrice * 0.95;
+      for (let i = daysToGenerate; i >= 0; i--) {
+        const timestamp = now - i * dayMs;
+        price = price * (1 + (Math.random() - 0.48) * 0.03);
+        price = Math.max(basePrice * 0.8, Math.min(basePrice * 1.2, price));
+
+        prices.push({
+          timestamp,
+          price,
+          date: new Date(timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        });
+      }
+      prices[prices.length - 1].price = basePrice;
     }
-    prices[prices.length - 1].price = basePrice;
+
     return prices;
   }, [days]);
 
