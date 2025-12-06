@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useCsprPriceHistory } from '../hooks/useBalance';
+import { useBalanceContext } from '../context/BalanceContext';
+import { useCsprClick } from '../hooks/useCsprClick';
+import { api } from '../services/api';
+import { StakeRecord } from '../types';
 
 const Container = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
@@ -181,19 +185,55 @@ interface ExportCSVProps {
 type ExportType = 'price_history' | 'transactions' | 'rewards' | 'portfolio';
 
 export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
-  const [selectedType, setSelectedType] = useState<ExportType>('price_history');
+  const [selectedType, setSelectedType] = useState<ExportType>('transactions');
   const [selectedDays, setSelectedDays] = useState<number>(365);
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [userStakes, setUserStakes] = useState<StakeRecord[]>([]);
+  const [isLoadingStakes, setIsLoadingStakes] = useState(false);
+
+  // Get wallet data
+  const { activeAccount } = useCsprClick();
+  const { csprBalance, stCsprBalance, isRealBalance } = useBalanceContext();
 
   // Fetch real price history data
   const { prices: priceHistory } = useCsprPriceHistory(selectedDays);
 
+  // Fetch user's real transactions when wallet is connected
+  useEffect(() => {
+    const fetchStakes = async () => {
+      if (!activeAccount?.publicKey) {
+        setUserStakes([]);
+        return;
+      }
+
+      setIsLoadingStakes(true);
+      try {
+        // Convert public key to account hash format if needed
+        const accountHash = activeAccount.publicKey.startsWith('account-hash-')
+          ? activeAccount.publicKey
+          : `account-hash-${activeAccount.publicKey}`;
+
+        const response = await api.getUserStakes(accountHash, 100, 0);
+        setUserStakes(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch user stakes:', error);
+        setUserStakes([]);
+      } finally {
+        setIsLoadingStakes(false);
+      }
+    };
+
+    fetchStakes();
+  }, [activeAccount?.publicKey]);
+
+  const isWalletConnected = !!activeAccount?.publicKey;
+
   const exportOptions = [
-    { type: 'price_history' as ExportType, icon: '📈', title: 'Price History', desc: 'Real CSPR price data from CoinGecko' },
-    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: 'Your stake/unstake transactions' },
-    { type: 'rewards' as ExportType, icon: '💰', title: 'Rewards', desc: 'Staking rewards history' },
-    { type: 'portfolio' as ExportType, icon: '📊', title: 'Portfolio', desc: 'Balance snapshots over time' },
+    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: isWalletConnected ? `${userStakes.length} real transactions` : 'Connect wallet' },
+    { type: 'portfolio' as ExportType, icon: '📊', title: 'Portfolio', desc: isWalletConnected ? 'Your real balances' : 'Connect wallet' },
+    { type: 'price_history' as ExportType, icon: '📈', title: 'Price History', desc: 'CSPR price data' },
+    { type: 'rewards' as ExportType, icon: '💰', title: 'Rewards', desc: 'Estimated rewards' },
   ];
 
   const daysOptions = [
@@ -225,32 +265,82 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
       return `${csvHeaders}\n${csvRows}`;
     }
 
-    // Other export types (demo data - would need real wallet connection)
-    const headers = {
-      transactions: ['Date', 'Type', 'Amount (CSPR)', 'stCSPR', 'TX Hash', 'Status'],
-      rewards: ['Date', 'Reward (CSPR)', 'APY (%)', 'Staked Amount', 'Cumulative'],
-      portfolio: ['Date', 'CSPR Balance', 'stCSPR Balance', 'Total Value (USD)', 'CSPR Price'],
-    };
+    // TRANSACTIONS - Use real wallet data
+    if (selectedType === 'transactions') {
+      const headers = ['Date', 'Time', 'Type', 'Amount (CSPR)', 'stCSPR', 'TX Hash', 'Block Height'];
 
-    const demoNote = '# Note: Connect wallet for real transaction data\n';
-    const mockData = {
-      transactions: [
-        ['2025-12-01', 'Stake', '1000', '1000', '0x1a2b...3c4d', 'Confirmed'],
-        ['2025-12-02', 'Stake', '500', '500', '0x2b3c...4d5e', 'Confirmed'],
-      ],
-      rewards: [
-        ['2025-12-01', '4.52', '17.2', '1000', '4.52'],
-        ['2025-12-02', '6.78', '17.1', '1500', '11.30'],
-      ],
-      portfolio: [
-        ['2025-12-01', '5000', '1000', '180.00', '0.030'],
-        ['2025-12-02', '4500', '1500', '180.00', '0.030'],
-      ],
-    };
+      if (!isWalletConnected) {
+        return '# Please connect your wallet to export real transaction data';
+      }
 
-    const csvHeaders = headers[selectedType].join(',');
-    const csvRows = mockData[selectedType].map(row => row.join(',')).join('\n');
-    return `${demoNote}${csvHeaders}\n${csvRows}`;
+      if (userStakes.length === 0) {
+        return '# No transactions found for this wallet';
+      }
+
+      const rows = userStakes.map(stake => {
+        const date = new Date(stake.timestamp);
+        return [
+          date.toISOString().split('T')[0],
+          date.toTimeString().split(' ')[0],
+          stake.actionType.toUpperCase(),
+          (parseFloat(stake.amount) / 1_000_000_000).toFixed(4),
+          stake.stCsprAmount ? (parseFloat(stake.stCsprAmount) / 1_000_000_000).toFixed(4) : '0',
+          stake.txHash,
+          stake.blockHeight.toString(),
+        ];
+      });
+
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `# Wallet: ${activeAccount?.publicKey}\n# Export Date: ${new Date().toISOString()}\n${csvHeaders}\n${csvRows}`;
+    }
+
+    // PORTFOLIO - Use real balance data
+    if (selectedType === 'portfolio') {
+      const headers = ['Date', 'CSPR Balance', 'stCSPR Balance', 'Data Source'];
+
+      if (!isWalletConnected) {
+        return '# Please connect your wallet to export portfolio data';
+      }
+
+      const rows = [[
+        new Date().toISOString().split('T')[0],
+        csprBalance.toFixed(4),
+        stCsprBalance.toFixed(4),
+        isRealBalance ? 'Blockchain' : 'Local',
+      ]];
+
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `# Wallet: ${activeAccount?.publicKey}\n# Export Date: ${new Date().toISOString()}\n${csvHeaders}\n${csvRows}`;
+    }
+
+    // REWARDS - Estimated based on staking
+    if (selectedType === 'rewards') {
+      const headers = ['Date', 'Estimated Daily Reward (CSPR)', 'APY (%)', 'Staked Amount (stCSPR)'];
+
+      if (!isWalletConnected || stCsprBalance === 0) {
+        return '# Please connect your wallet and have staked CSPR to see rewards';
+      }
+
+      // Calculate estimated rewards based on 17% APY
+      const apy = 0.17;
+      const dailyRate = apy / 365;
+      const dailyReward = stCsprBalance * dailyRate;
+
+      const rows = [[
+        new Date().toISOString().split('T')[0],
+        dailyReward.toFixed(6),
+        '17.0',
+        stCsprBalance.toFixed(4),
+      ]];
+
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `# Wallet: ${activeAccount?.publicKey}\n# Note: Rewards are estimated based on 17% APY\n${csvHeaders}\n${csvRows}`;
+    }
+
+    return '# Unknown export type';
   };
 
   const handleExport = async () => {
@@ -289,8 +379,11 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
       </Header>
 
       <Description $isDark={isDark}>
-        Export your staking data for tax reporting, portfolio tracking, or personal records.
-        Choose a data type and download as CSV.
+        {isWalletConnected ? (
+          <>Export your real staking data. Wallet: <strong>{activeAccount?.publicKey?.slice(0, 8)}...{activeAccount?.publicKey?.slice(-6)}</strong></>
+        ) : (
+          <>Connect your wallet to export real transaction data, or export price history without wallet.</>
+        )}
       </Description>
 
       <OptionsGrid>
