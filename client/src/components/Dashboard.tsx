@@ -309,7 +309,6 @@ export const Dashboard: React.FC = () => {
                   isDark={isDark}
                   title="stCSPR Token"
                   content="stCSPR is a liquid staking token. When you stake CSPR, you receive stCSPR at a 1:1 ratio. This token represents your staked position and can be traded or used in DeFi while earning rewards."
-                  position="bottom"
                 />
               </PortfolioLabel>
               <PortfolioValue $isDark={isDark} $highlight={stCsprBalance > 0}>
@@ -325,7 +324,6 @@ export const Dashboard: React.FC = () => {
                   isDark={isDark}
                   title="APY (Annual Percentage Yield)"
                   content="APY represents the annualized return on your staked tokens, including compound interest. Current Casper network APY is approximately 15-18% based on network conditions."
-                  position="bottom"
                 />
               </PortfolioLabel>
               <PortfolioValue $isDark={isDark} $highlight={estimatedYearlyRewards > 0}>
