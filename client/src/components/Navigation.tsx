@@ -1,12 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
-import { LanguageSwitcher } from './LanguageSwitcher';
 
 const Nav = styled.nav<{ $isDark: boolean }>`
   position: sticky;
   top: 0;
-  z-index: 10; /* Lower than CSPR.click (which is ~1000) */
+  z-index: 10;
   background: ${props => props.$isDark
     ? 'rgba(10, 10, 26, 0.98)'
     : 'rgba(255, 255, 255, 0.98)'};
@@ -22,7 +21,7 @@ const NavContainer = styled.div`
   margin: 0 auto;
   padding: 0 20px;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 `;
 
@@ -30,12 +29,6 @@ const NavLinks = styled.div`
   display: flex;
   justify-content: center;
   gap: 8px;
-  flex: 1;
-`;
-
-const NavRight = styled.div`
-  display: flex;
-  align-items: center;
 `;
 
 const NavItem = styled(NavLink)<{ $isDark: boolean }>`
@@ -102,9 +95,6 @@ export const Navigation: React.FC<NavigationProps> = ({ isDark }) => {
             Guide
           </NavItem>
         </NavLinks>
-        <NavRight>
-          <LanguageSwitcher isDark={isDark} />
-        </NavRight>
       </NavContainer>
     </Nav>
   );

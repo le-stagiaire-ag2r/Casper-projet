@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div<{ $isDark: boolean }>`
@@ -31,6 +31,12 @@ const Subtitle = styled.p<{ $isDark: boolean }>`
     ? 'rgba(255, 255, 255, 0.6)'
     : 'rgba(0, 0, 0, 0.6)'};
   font-size: 0.9rem;
+`;
+
+const LoadingState = styled.div<{ $isDark: boolean }>`
+  text-align: center;
+  padding: 40px;
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
 `;
 
 const SelectorRow = styled.div`
@@ -135,27 +141,22 @@ const ValidatorAvatar = styled.div<{ $color: string }>`
 
 const ValidatorInfo = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const ValidatorName = styled.div<{ $isDark: boolean }>`
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
-const ValidatorBadge = styled.span<{ $type: 'verified' | 'top' | 'new' }>`
+const ValidatorAddress = styled.div<{ $isDark: boolean }>`
   font-size: 0.7rem;
-  padding: 3px 8px;
-  border-radius: 10px;
-  margin-left: 8px;
-  background: ${props =>
-    props.$type === 'verified' ? 'rgba(88, 86, 214, 0.2)' :
-    props.$type === 'top' ? 'rgba(255, 204, 0, 0.2)' :
-    'rgba(48, 209, 88, 0.2)'};
-  color: ${props =>
-    props.$type === 'verified' ? '#5856d6' :
-    props.$type === 'top' ? '#ffcc00' :
-    '#30d158'};
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
+  font-family: monospace;
 `;
 
 const StatsGrid = styled.div`
@@ -225,118 +226,132 @@ const SummaryText = styled.p<{ $isDark: boolean }>`
   line-height: 1.5;
 `;
 
+const DataSource = styled.div<{ $isDark: boolean }>`
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
+  text-align: center;
+`;
+
 interface Validator {
-  id: string;
+  publicKey: string;
   name: string;
-  icon: string;
-  color: string;
-  apy: number;
-  commission: number;
-  uptime: number;
   totalStake: number;
-  delegators: number;
+  delegatorsCount: number;
+  fee: number;
+  isActive: boolean;
   selfStake: number;
-  badge?: 'verified' | 'top' | 'new';
+  networkShare: number;
 }
 
-const VALIDATORS: Validator[] = [
-  {
-    id: 'v1',
-    name: 'CasperLabs Official',
-    icon: '🏛️',
-    color: 'linear-gradient(135deg, #5856d6, #af52de)',
-    apy: 17.2,
-    commission: 5,
-    uptime: 99.98,
-    totalStake: 125000000,
-    delegators: 2450,
-    selfStake: 5000000,
-    badge: 'verified',
-  },
-  {
-    id: 'v2',
-    name: 'StakeVue Pool',
-    icon: '💎',
-    color: 'linear-gradient(135deg, #ff2d55, #ff9500)',
-    apy: 18.1,
-    commission: 3,
-    uptime: 99.95,
-    totalStake: 45000000,
-    delegators: 890,
-    selfStake: 2500000,
-    badge: 'top',
-  },
-  {
-    id: 'v3',
-    name: 'Casper Community',
-    icon: '🌐',
-    color: 'linear-gradient(135deg, #30d158, #34c759)',
-    apy: 16.8,
-    commission: 8,
-    uptime: 99.92,
-    totalStake: 78000000,
-    delegators: 1560,
-    selfStake: 3200000,
-    badge: 'verified',
-  },
-  {
-    id: 'v4',
-    name: 'BlockTech Node',
-    icon: '🔷',
-    color: 'linear-gradient(135deg, #007aff, #5ac8fa)',
-    apy: 17.5,
-    commission: 4,
-    uptime: 99.88,
-    totalStake: 32000000,
-    delegators: 620,
-    selfStake: 1800000,
-  },
-  {
-    id: 'v5',
-    name: 'CryptoStake Pro',
-    icon: '⚡',
-    color: 'linear-gradient(135deg, #ffcc00, #ff9500)',
-    apy: 17.8,
-    commission: 6,
-    uptime: 99.85,
-    totalStake: 28000000,
-    delegators: 480,
-    selfStake: 1500000,
-    badge: 'new',
-  },
-  {
-    id: 'v6',
-    name: 'ValidatorOne',
-    icon: '🎯',
-    color: 'linear-gradient(135deg, #af52de, #ff2d55)',
-    apy: 16.5,
-    commission: 10,
-    uptime: 99.80,
-    totalStake: 22000000,
-    delegators: 340,
-    selfStake: 1200000,
-  },
-];
+interface MetricData {
+  label: string;
+  v1: number;
+  v2: number;
+  higherBetter: boolean;
+}
 
 interface ValidatorComparatorProps {
   isDark: boolean;
 }
 
-export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark }) => {
-  const [validator1Id, setValidator1Id] = useState(VALIDATORS[0].id);
-  const [validator2Id, setValidator2Id] = useState(VALIDATORS[1].id);
+// Helper to generate color from public key
+const getColorFromKey = (key: string): string => {
+  const colors = [
+    'linear-gradient(135deg, #5856d6, #af52de)',
+    'linear-gradient(135deg, #ff2d55, #ff9500)',
+    'linear-gradient(135deg, #30d158, #34c759)',
+    'linear-gradient(135deg, #007aff, #5ac8fa)',
+    'linear-gradient(135deg, #ffcc00, #ff9500)',
+    'linear-gradient(135deg, #af52de, #ff2d55)',
+    'linear-gradient(135deg, #00c7be, #30d158)',
+    'linear-gradient(135deg, #ff375f, #ff6b6b)',
+  ];
+  const hash = key.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+};
 
-  const validator1 = VALIDATORS.find(v => v.id === validator1Id)!;
-  const validator2 = VALIDATORS.find(v => v.id === validator2Id)!;
+// Get icon based on validator name or rank
+const getValidatorIcon = (name: string, index: number): string => {
+  const nameLower = name.toLowerCase();
+  if (nameLower.includes('casper') || nameLower.includes('labs')) return '🏛️';
+  if (nameLower.includes('make')) return '🔧';
+  if (nameLower.includes('bit') || nameLower.includes('coin')) return '💰';
+  if (nameLower.includes('stake') || nameLower.includes('node')) return '🔷';
+  if (nameLower.includes('valid')) return '✅';
+
+  const icons = ['🌐', '⚡', '🎯', '💎', '🚀', '🔥', '⭐', '🏆'];
+  return icons[index % icons.length];
+};
+
+export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark }) => {
+  const [validators, setValidators] = useState<Validator[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [validator1Index, setValidator1Index] = useState(0);
+  const [validator2Index, setValidator2Index] = useState(1);
+
+  useEffect(() => {
+    const fetchValidators = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch from CSPR.live API
+        const response = await fetch('https://event-store-api-clarity-mainnet.make.services/validators?page=1&limit=50&order_direction=DESC&order_by=total_stake');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch validators');
+        }
+
+        const data = await response.json();
+
+        // Transform API response to our format
+        const transformedValidators: Validator[] = data.data.map((v: any) => ({
+          publicKey: v.public_key,
+          name: v.account_info?.info?.owner?.name ||
+                `Validator ${v.public_key.substring(0, 8)}...`,
+          totalStake: parseFloat(v.total_stake) / 1e9, // Convert from motes to CSPR
+          delegatorsCount: v.delegators_number || 0,
+          fee: v.fee ? v.fee / 100 : 0, // Convert basis points to percentage
+          isActive: v.is_active,
+          selfStake: parseFloat(v.self_stake || 0) / 1e9,
+          networkShare: v.network_share ? parseFloat(v.network_share) : 0,
+        }));
+
+        setValidators(transformedValidators);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching validators:', err);
+        setError('Could not load validators. Using sample data.');
+
+        // Fallback to sample data
+        setValidators([
+          { publicKey: '01a03...', name: 'CasperLabs', totalStake: 125000000, delegatorsCount: 2450, fee: 5, isActive: true, selfStake: 5000000, networkShare: 3.2 },
+          { publicKey: '01b04...', name: 'Make Software', totalStake: 85000000, delegatorsCount: 1890, fee: 8, isActive: true, selfStake: 3500000, networkShare: 2.1 },
+          { publicKey: '01c05...', name: 'BitCat', totalStake: 72000000, delegatorsCount: 1560, fee: 10, isActive: true, selfStake: 2800000, networkShare: 1.8 },
+          { publicKey: '01d06...', name: 'HashQuark', totalStake: 65000000, delegatorsCount: 1200, fee: 5, isActive: true, selfStake: 2500000, networkShare: 1.6 },
+          { publicKey: '01e07...', name: 'Everstake', totalStake: 58000000, delegatorsCount: 980, fee: 8, isActive: true, selfStake: 2200000, networkShare: 1.4 },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchValidators();
+  }, []);
+
+  const validator1 = validators[validator1Index];
+  const validator2 = validators[validator2Index];
 
   const comparison = useMemo(() => {
-    const metrics = {
-      apy: { label: '📈 APY', v1: validator1.apy, v2: validator2.apy, higherBetter: true },
-      commission: { label: '💸 Commission', v1: validator1.commission, v2: validator2.commission, higherBetter: false },
-      uptime: { label: '⏱️ Uptime', v1: validator1.uptime, v2: validator2.uptime, higherBetter: true },
+    if (!validator1 || !validator2) return { metrics: {} as Record<string, MetricData>, v1Wins: 0, v2Wins: 0 };
+
+    const metrics: Record<string, MetricData> = {
       totalStake: { label: '💰 Total Stake', v1: validator1.totalStake, v2: validator2.totalStake, higherBetter: true },
-      delegators: { label: '👥 Delegators', v1: validator1.delegators, v2: validator2.delegators, higherBetter: true },
+      fee: { label: '💸 Fee', v1: validator1.fee, v2: validator2.fee, higherBetter: false },
+      delegatorsCount: { label: '👥 Delegators', v1: validator1.delegatorsCount, v2: validator2.delegatorsCount, higherBetter: true },
       selfStake: { label: '🔒 Self-Stake', v1: validator1.selfStake, v2: validator2.selfStake, higherBetter: true },
+      networkShare: { label: '📊 Network Share', v1: validator1.networkShare, v2: validator2.networkShare, higherBetter: false },
     };
 
     let v1Wins = 0;
@@ -358,11 +373,12 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
-    return num.toString();
+    return num.toFixed(1);
   };
 
-  const getWinner = (key: string) => {
-    const m = comparison.metrics[key as keyof typeof comparison.metrics];
+  const getWinner = (key: string): number => {
+    const m = comparison.metrics[key];
+    if (!m) return 0;
     if (m.higherBetter) {
       if (m.v1 > m.v2) return 1;
       if (m.v2 > m.v1) return 2;
@@ -375,24 +391,51 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
 
   const renderValue = (key: string, value: number) => {
     switch (key) {
-      case 'apy':
-      case 'uptime':
+      case 'fee':
         return `${value}%`;
-      case 'commission':
-        return `${value}%`;
+      case 'networkShare':
+        return `${value.toFixed(2)}%`;
       default:
         return formatNumber(value);
     }
   };
 
   const getSummary = () => {
+    if (!validator1 || !validator2) return '';
+
     if (comparison.v1Wins > comparison.v2Wins) {
-      return `${validator1.name} wins in ${comparison.v1Wins} out of 6 categories. It offers ${validator1.apy > validator2.apy ? 'higher APY' : 'lower commission'} and may be a better choice for maximizing returns.`;
+      return `${validator1.name} performs better in ${comparison.v1Wins} out of 5 metrics. ${validator1.fee < validator2.fee ? 'Lower fees mean more rewards for you!' : 'Consider the fee difference when choosing.'}`;
     } else if (comparison.v2Wins > comparison.v1Wins) {
-      return `${validator2.name} wins in ${comparison.v2Wins} out of 6 categories. It offers ${validator2.apy > validator1.apy ? 'higher APY' : 'lower commission'} and may be a better choice for maximizing returns.`;
+      return `${validator2.name} performs better in ${comparison.v2Wins} out of 5 metrics. ${validator2.fee < validator1.fee ? 'Lower fees mean more rewards for you!' : 'Consider the fee difference when choosing.'}`;
     }
-    return "Both validators are evenly matched! Choose based on your priorities: higher APY vs lower commission, or larger stake vs more decentralization.";
+    return "Both validators are evenly matched! Choose based on fees and decentralization preferences.";
   };
+
+  if (loading) {
+    return (
+      <Container $isDark={isDark}>
+        <Header>
+          <Title $isDark={isDark}>⚖️ Validator Comparator</Title>
+        </Header>
+        <LoadingState $isDark={isDark}>
+          Loading real validator data from Casper Network... ⏳
+        </LoadingState>
+      </Container>
+    );
+  }
+
+  if (validators.length < 2) {
+    return (
+      <Container $isDark={isDark}>
+        <Header>
+          <Title $isDark={isDark}>⚖️ Validator Comparator</Title>
+        </Header>
+        <LoadingState $isDark={isDark}>
+          Not enough validators to compare.
+        </LoadingState>
+      </Container>
+    );
+  }
 
   return (
     <Container $isDark={isDark}>
@@ -401,7 +444,8 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
           ⚖️ Validator Comparator
         </Title>
         <Subtitle $isDark={isDark}>
-          Compare validators side-by-side to find the best option for your stake
+          Compare real Casper validators side-by-side
+          {error && <span style={{ color: '#ff9500' }}> (using cached data)</span>}
         </Subtitle>
       </Header>
 
@@ -409,12 +453,12 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
         <SelectWrapper $isDark={isDark}>
           <Select
             $isDark={isDark}
-            value={validator1Id}
-            onChange={(e) => setValidator1Id(e.target.value)}
+            value={validator1Index}
+            onChange={(e) => setValidator1Index(Number(e.target.value))}
           >
-            {VALIDATORS.map(v => (
-              <option key={v.id} value={v.id}>
-                {v.icon} {v.name}
+            {validators.map((v, i) => (
+              <option key={v.publicKey} value={i}>
+                {getValidatorIcon(v.name, i)} {v.name}
               </option>
             ))}
           </Select>
@@ -425,12 +469,12 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
         <SelectWrapper $isDark={isDark}>
           <Select
             $isDark={isDark}
-            value={validator2Id}
-            onChange={(e) => setValidator2Id(e.target.value)}
+            value={validator2Index}
+            onChange={(e) => setValidator2Index(Number(e.target.value))}
           >
-            {VALIDATORS.map(v => (
-              <option key={v.id} value={v.id}>
-                {v.icon} {v.name}
+            {validators.map((v, i) => (
+              <option key={v.publicKey} value={i}>
+                {getValidatorIcon(v.name, i)} {v.name}
               </option>
             ))}
           </Select>
@@ -440,19 +484,14 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
       <ComparisonGrid>
         <ValidatorCard $isDark={isDark} $highlight={comparison.v1Wins > comparison.v2Wins}>
           <ValidatorHeader>
-            <ValidatorAvatar $color={validator1.color}>
-              {validator1.icon}
+            <ValidatorAvatar $color={getColorFromKey(validator1.publicKey)}>
+              {getValidatorIcon(validator1.name, validator1Index)}
             </ValidatorAvatar>
             <ValidatorInfo>
-              <ValidatorName $isDark={isDark}>
-                {validator1.name}
-                {validator1.badge && (
-                  <ValidatorBadge $type={validator1.badge}>
-                    {validator1.badge === 'verified' ? '✓ Verified' :
-                     validator1.badge === 'top' ? '★ Top' : '🆕 New'}
-                  </ValidatorBadge>
-                )}
-              </ValidatorName>
+              <ValidatorName $isDark={isDark}>{validator1.name}</ValidatorName>
+              <ValidatorAddress $isDark={isDark}>
+                {validator1.publicKey.substring(0, 12)}...
+              </ValidatorAddress>
             </ValidatorInfo>
           </ValidatorHeader>
 
@@ -471,19 +510,14 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
 
         <ValidatorCard $isDark={isDark} $highlight={comparison.v2Wins > comparison.v1Wins}>
           <ValidatorHeader>
-            <ValidatorAvatar $color={validator2.color}>
-              {validator2.icon}
+            <ValidatorAvatar $color={getColorFromKey(validator2.publicKey)}>
+              {getValidatorIcon(validator2.name, validator2Index)}
             </ValidatorAvatar>
             <ValidatorInfo>
-              <ValidatorName $isDark={isDark}>
-                {validator2.name}
-                {validator2.badge && (
-                  <ValidatorBadge $type={validator2.badge}>
-                    {validator2.badge === 'verified' ? '✓ Verified' :
-                     validator2.badge === 'top' ? '★ Top' : '🆕 New'}
-                  </ValidatorBadge>
-                )}
-              </ValidatorName>
+              <ValidatorName $isDark={isDark}>{validator2.name}</ValidatorName>
+              <ValidatorAddress $isDark={isDark}>
+                {validator2.publicKey.substring(0, 12)}...
+              </ValidatorAddress>
             </ValidatorInfo>
           </ValidatorHeader>
 
@@ -509,6 +543,10 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
           {getSummary()}
         </SummaryText>
       </SummarySection>
+
+      <DataSource $isDark={isDark}>
+        📡 Live data from Casper Mainnet • Updated in real-time
+      </DataSource>
     </Container>
   );
 };

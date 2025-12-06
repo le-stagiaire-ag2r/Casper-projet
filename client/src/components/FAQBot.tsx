@@ -266,24 +266,83 @@ interface ChatMessage {
   isBot: boolean;
 }
 
-const FAQ_RESPONSES: Record<string, string> = {
-  'what is liquid staking': 'Liquid staking allows you to stake your CSPR while receiving stCSPR tokens in return. These tokens represent your stake and can be freely traded or used in DeFi, all while earning ~17% APY! 🚀',
-  'what is stcspr': 'stCSPR is a liquid staking token that represents your staked CSPR. When you stake 1000 CSPR, you receive 1000 stCSPR at a 1:1 ratio. Over time, as you earn rewards, your stCSPR becomes worth more CSPR! 💰',
-  'how much can i earn': 'Current APY is approximately 15-18% depending on network conditions. For example, staking 1000 CSPR would earn you about 170 CSPR per year in rewards! 📈',
-  'is it safe': 'Yes! StakeVue uses audited smart contracts and distributes your stake across multiple validators for security. Your funds are protected by multi-validator distribution. 🛡️',
-  'how to unstake': 'To unstake, simply go to the Stake page, switch to the "Unstake" tab, enter the amount of stCSPR you want to convert back to CSPR, and confirm the transaction. It\'s that easy! ⚡',
-  'minimum stake': 'You can stake as little as 1 CSPR. However, we recommend keeping about 5 CSPR for transaction fees. Start small and stake more as you get comfortable! 💪',
-  'what is apy': 'APY stands for Annual Percentage Yield. It represents your yearly earnings from staking. Our current APY is ~17%, meaning 1000 CSPR would earn about 170 CSPR per year! 📊',
-  'how to start': 'Getting started is easy! 1) Connect your Casper wallet, 2) Enter the amount you want to stake, 3) Click "Stake" and confirm the transaction. You\'ll receive stCSPR tokens instantly! 🎉',
-  'price alerts': 'You can set custom price alerts in the Stake page. Choose a target price for CSPR, select "above" or "below", and you\'ll get notified when the price reaches your target! 🔔',
-  'validators': 'StakeVue automatically distributes your stake across top-performing validators. This provides better security and decentralization compared to staking with a single validator. 🌐',
-};
+// Better structured FAQ with priority keywords
+const FAQ_DATA = [
+  {
+    keywords: ['hello', 'hi', 'hey', 'bonjour', 'salut', 'coucou'],
+    response: 'Hello! 👋 Welcome to StakeVue. I can help you with liquid staking on Casper. What would you like to know?'
+  },
+  {
+    keywords: ['liquid staking', 'what is liquid', 'liquid stake'],
+    response: 'Liquid staking lets you stake CSPR and receive stCSPR tokens in return. Unlike traditional staking, you can use stCSPR in DeFi while still earning ~17% APY rewards! 🚀'
+  },
+  {
+    keywords: ['stcspr', 'st cspr', 'staked cspr', 'token'],
+    response: 'stCSPR is your liquid staking token. When you stake 1000 CSPR, you get 1000 stCSPR. As rewards accumulate, your stCSPR becomes worth more CSPR over time! 💎'
+  },
+  {
+    keywords: ['apy', 'interest', 'rate', 'percentage', 'yield'],
+    response: 'Current APY on StakeVue is approximately 17%. This means staking 1000 CSPR earns you about 170 CSPR per year! Rates vary slightly based on network conditions. 📊'
+  },
+  {
+    keywords: ['earn', 'reward', 'profit', 'gain', 'money', 'much'],
+    response: 'With ~17% APY, here are examples:\n• 1,000 CSPR → ~170 CSPR/year\n• 10,000 CSPR → ~1,700 CSPR/year\n• 100,000 CSPR → ~17,000 CSPR/year\nRewards compound automatically! 💰'
+  },
+  {
+    keywords: ['safe', 'secure', 'risk', 'trust', 'audit'],
+    response: 'Security is our priority! StakeVue uses audited smart contracts, distributes stake across multiple validators, and your funds remain in your control. The protocol has been tested on testnet. 🛡️'
+  },
+  {
+    keywords: ['unstake', 'withdraw', 'remove', 'exit', 'get back'],
+    response: 'To unstake: Go to Stake page → Click "Unstake" tab → Enter stCSPR amount → Confirm transaction. There\'s a short unbonding period, then your CSPR is returned! ⚡'
+  },
+  {
+    keywords: ['start', 'begin', 'how to', 'getting started', 'first'],
+    response: 'Getting started is easy!\n1️⃣ Connect your Casper wallet\n2️⃣ Enter CSPR amount to stake\n3️⃣ Click "Stake" and confirm\n4️⃣ Receive stCSPR instantly!\n\nStart with any amount you\'re comfortable with! 🎉'
+  },
+  {
+    keywords: ['minimum', 'min', 'least', 'smallest'],
+    response: 'Minimum stake is just 1 CSPR! However, we recommend keeping ~5 CSPR in your wallet for transaction fees. Start small and increase as you get comfortable. 💪'
+  },
+  {
+    keywords: ['validator', 'node', 'delegate'],
+    response: 'StakeVue automatically distributes your stake across top-performing validators with 99%+ uptime. This provides better security and consistent rewards compared to picking a single validator. 🌐'
+  },
+  {
+    keywords: ['fee', 'cost', 'charge', 'commission'],
+    response: 'StakeVue charges a small protocol fee (included in displayed APY). Network transaction fees are minimal (~0.1 CSPR). What you see as APY is your net return! 💸'
+  },
+  {
+    keywords: ['casper', 'cspr', 'network', 'blockchain'],
+    response: 'Casper is a proof-of-stake blockchain known for its security and energy efficiency. CSPR is the native token. Staking helps secure the network while earning you rewards! 🔗'
+  },
+  {
+    keywords: ['time', 'long', 'duration', 'wait', 'period'],
+    response: 'Staking is instant! For unstaking, there\'s an unbonding period (typically 7-14 eras, about 14-28 hours) before CSPR returns to your wallet. This is a network security feature. ⏱️'
+  },
+  {
+    keywords: ['wallet', 'connect', 'casper wallet', 'signer'],
+    response: 'We support Casper Wallet and Casper Signer! Click the "Connect" button in the top bar, choose your wallet, and approve the connection. Make sure your wallet has CSPR to stake. 👛'
+  },
+  {
+    keywords: ['help', 'support', 'contact', 'problem', 'issue'],
+    response: 'Need help? Check our Guide page for detailed tutorials. For technical issues, visit our GitHub or join the Casper community Discord. We\'re here to help! 🤝'
+  },
+  {
+    keywords: ['thank', 'thanks', 'merci', 'thx'],
+    response: 'You\'re welcome! Happy staking! If you have more questions, just ask. 😊'
+  },
+  {
+    keywords: ['bye', 'goodbye', 'see you', 'later', 'aurevoir'],
+    response: 'Goodbye! Happy staking and may your rewards be plentiful! 🌟'
+  }
+];
 
 const QUICK_REPLIES = [
   'What is liquid staking?',
   'How much can I earn?',
-  'Is it safe?',
   'How to start?',
+  'Is it safe?',
   'What is stCSPR?',
 ];
 
@@ -292,7 +351,7 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: 'Hi there! 👋 I\'m the StakeVue assistant. Ask me anything about liquid staking, stCSPR, rewards, or how to get started!',
+      text: 'Hello! 👋 I\'m the StakeVue assistant. Ask me about liquid staking, rewards, stCSPR, or how to get started!',
       isBot: true,
     }
   ]);
@@ -309,28 +368,38 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
   }, [messages]);
 
   const findResponse = (query: string): string => {
-    const normalizedQuery = query.toLowerCase();
+    const normalizedQuery = query.toLowerCase().trim();
 
-    // Check for keyword matches
-    for (const [key, response] of Object.entries(FAQ_RESPONSES)) {
-      if (normalizedQuery.includes(key) || key.split(' ').some(word => normalizedQuery.includes(word))) {
-        return response;
+    // Find the best matching FAQ entry
+    let bestMatch: { score: number; response: string } = { score: 0, response: '' };
+
+    for (const faq of FAQ_DATA) {
+      let score = 0;
+
+      for (const keyword of faq.keywords) {
+        if (normalizedQuery.includes(keyword)) {
+          // Longer keyword matches are more specific
+          score += keyword.length;
+
+          // Exact match bonus
+          if (normalizedQuery === keyword) {
+            score += 10;
+          }
+        }
+      }
+
+      if (score > bestMatch.score) {
+        bestMatch = { score, response: faq.response };
       }
     }
 
-    // Check for specific keywords
-    if (normalizedQuery.includes('stake') && normalizedQuery.includes('how')) {
-      return FAQ_RESPONSES['how to start'];
-    }
-    if (normalizedQuery.includes('earn') || normalizedQuery.includes('reward') || normalizedQuery.includes('profit')) {
-      return FAQ_RESPONSES['how much can i earn'];
-    }
-    if (normalizedQuery.includes('safe') || normalizedQuery.includes('secure') || normalizedQuery.includes('risk')) {
-      return FAQ_RESPONSES['is it safe'];
+    // If we found a match
+    if (bestMatch.score > 0) {
+      return bestMatch.response;
     }
 
-    // Default response
-    return 'I\'m not sure about that specific question, but I\'d be happy to help with topics like liquid staking, stCSPR tokens, APY rewards, or how to get started. Try asking about one of these! 🤔';
+    // Default response with suggestions
+    return 'I\'m not sure I understand that question. 🤔 Try asking about:\n• Liquid staking basics\n• APY and rewards\n• How to stake/unstake\n• stCSPR tokens\n• Security';
   };
 
   const handleSend = () => {
@@ -343,12 +412,13 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsTyping(true);
 
     // Simulate bot thinking
     setTimeout(() => {
-      const response = findResponse(input);
+      const response = findResponse(userInput);
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         text: response,
@@ -356,12 +426,29 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
       };
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
-    }, 1000 + Math.random() * 500);
+    }, 800 + Math.random() * 400);
   };
 
   const handleQuickReply = (reply: string) => {
-    setInput(reply);
-    setTimeout(() => handleSend(), 100);
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text: reply,
+      isBot: false,
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const response = findResponse(reply);
+      const botMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        text: response,
+        isBot: true,
+      };
+      setMessages(prev => [...prev, botMessage]);
+      setIsTyping(false);
+    }, 800 + Math.random() * 400);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -373,7 +460,7 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
   return (
     <>
       <FloatingButton $isDark={isDark} onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? '✕' : '🤖'}
+        {isOpen ? '✕' : '💬'}
       </FloatingButton>
 
       <ChatWindow $isDark={isDark} $isOpen={isOpen}>
@@ -382,7 +469,7 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
             <BotAvatar>🤖</BotAvatar>
             <HeaderText>
               <h4>StakeVue Assistant</h4>
-              <span>Always here to help</span>
+              <span>Ask me anything!</span>
             </HeaderText>
           </HeaderTitle>
           <CloseButton onClick={() => setIsOpen(false)}>✕</CloseButton>
@@ -420,7 +507,7 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me anything..."
+            placeholder="Type your question..."
           />
           <SendButton onClick={handleSend} disabled={!input.trim()}>
             ➤
