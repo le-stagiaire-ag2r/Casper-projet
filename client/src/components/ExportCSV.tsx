@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useCsprPriceHistory } from '../hooks/useBalance';
+import { useBalanceContext } from '../context/BalanceContext';
+import { useCsprClick } from '../hooks/useCsprClick';
+import { api } from '../services/api';
+import { StakeRecord } from '../types';
 
 const Container = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
@@ -177,67 +182,165 @@ interface ExportCSVProps {
   isDark: boolean;
 }
 
-type ExportType = 'transactions' | 'rewards' | 'portfolio' | 'all';
+type ExportType = 'price_history' | 'transactions' | 'rewards' | 'portfolio';
 
 export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
-  const [selectedType, setSelectedType] = useState<ExportType>('rewards');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [selectedType, setSelectedType] = useState<ExportType>('transactions');
+  const [selectedDays, setSelectedDays] = useState<number>(365);
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [userStakes, setUserStakes] = useState<StakeRecord[]>([]);
+  const [isLoadingStakes, setIsLoadingStakes] = useState(false);
+
+  // Get wallet data
+  const { activeAccount } = useCsprClick();
+  const { csprBalance, stCsprBalance, isRealBalance } = useBalanceContext();
+
+  // Fetch real price history data
+  const { prices: priceHistory } = useCsprPriceHistory(selectedDays);
+
+  // Fetch user's real transactions when wallet is connected
+  useEffect(() => {
+    const fetchStakes = async () => {
+      if (!activeAccount?.publicKey) {
+        setUserStakes([]);
+        return;
+      }
+
+      setIsLoadingStakes(true);
+      try {
+        // Convert public key to account hash format if needed
+        const accountHash = activeAccount.publicKey.startsWith('account-hash-')
+          ? activeAccount.publicKey
+          : `account-hash-${activeAccount.publicKey}`;
+
+        const response = await api.getUserStakes(accountHash, 100, 0);
+        setUserStakes(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch user stakes:', error);
+        setUserStakes([]);
+      } finally {
+        setIsLoadingStakes(false);
+      }
+    };
+
+    fetchStakes();
+  }, [activeAccount?.publicKey]);
+
+  const isWalletConnected = !!activeAccount?.publicKey;
 
   const exportOptions = [
-    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: 'All stake/unstake transactions' },
-    { type: 'rewards' as ExportType, icon: '💰', title: 'Rewards', desc: 'Staking rewards history' },
-    { type: 'portfolio' as ExportType, icon: '📊', title: 'Portfolio', desc: 'Balance snapshots over time' },
-    { type: 'all' as ExportType, icon: '📦', title: 'Complete Export', desc: 'All data combined' },
+    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: isWalletConnected ? `${userStakes.length} real transactions` : 'Connect wallet' },
+    { type: 'portfolio' as ExportType, icon: '📊', title: 'Portfolio', desc: isWalletConnected ? 'Your real balances' : 'Connect wallet' },
+    { type: 'price_history' as ExportType, icon: '📈', title: 'Price History', desc: 'CSPR price data' },
+    { type: 'rewards' as ExportType, icon: '💰', title: 'Rewards', desc: 'Estimated rewards' },
+  ];
+
+  const daysOptions = [
+    { label: '7 Days', value: 7 },
+    { label: '30 Days', value: 30 },
+    { label: '90 Days', value: 90 },
+    { label: '1 Year', value: 365 },
+    { label: 'All Time', value: 0 },
   ];
 
   const generateCSV = () => {
-    // Generate mock data based on selected type
-    const headers = {
-      transactions: ['Date', 'Type', 'Amount (CSPR)', 'stCSPR', 'TX Hash', 'Status'],
-      rewards: ['Date', 'Reward (CSPR)', 'APY (%)', 'Staked Amount', 'Cumulative'],
-      portfolio: ['Date', 'CSPR Balance', 'stCSPR Balance', 'Total Value (USD)', 'CSPR Price'],
-      all: ['Date', 'Type', 'CSPR', 'stCSPR', 'USD Value', 'Details'],
-    };
+    if (selectedType === 'price_history') {
+      // Export real price history data
+      const headers = ['Date', 'Timestamp', 'Price (USD)', 'Price Change %'];
 
-    const mockData = {
-      transactions: [
-        ['2025-12-01', 'Stake', '1000', '1000', '0x1a2b...3c4d', 'Confirmed'],
-        ['2025-12-02', 'Stake', '500', '500', '0x2b3c...4d5e', 'Confirmed'],
-        ['2025-12-03', 'Unstake', '200', '200', '0x3c4d...5e6f', 'Confirmed'],
-        ['2025-12-04', 'Stake', '750', '750', '0x4d5e...6f7a', 'Confirmed'],
-        ['2025-12-05', 'Reward', '14.2', '0', 'Auto-compound', 'Applied'],
-      ],
-      rewards: [
-        ['2025-12-01', '4.52', '17.2', '1000', '4.52'],
-        ['2025-12-02', '6.78', '17.1', '1500', '11.30'],
-        ['2025-12-03', '5.43', '17.0', '1300', '16.73'],
-        ['2025-12-04', '8.67', '17.3', '2050', '25.40'],
-        ['2025-12-05', '8.75', '17.2', '2050', '34.15'],
-      ],
-      portfolio: [
-        ['2025-12-01', '5000', '1000', '180.00', '0.030'],
-        ['2025-12-02', '4500', '1500', '180.00', '0.030'],
-        ['2025-12-03', '4700', '1300', '183.60', '0.031'],
-        ['2025-12-04', '3950', '2050', '186.00', '0.031'],
-        ['2025-12-05', '3950', '2064', '189.44', '0.032'],
-      ],
-      all: [
-        ['2025-12-01', 'Stake', '1000', '1000', '$30.00', 'Initial stake'],
-        ['2025-12-02', 'Stake', '500', '500', '$15.00', 'Additional stake'],
-        ['2025-12-03', 'Unstake', '200', '200', '$6.20', 'Partial withdrawal'],
-        ['2025-12-04', 'Stake', '750', '750', '$23.25', 'Re-stake'],
-        ['2025-12-05', 'Reward', '14.2', '0', '$0.45', 'Daily reward'],
-      ],
-    };
+      if (priceHistory.length === 0) {
+        return 'No price data available. Please try again later.';
+      }
 
-    const csvHeaders = headers[selectedType].join(',');
-    const csvRows = mockData[selectedType].map(row => row.join(',')).join('\n');
-    const csvContent = `${csvHeaders}\n${csvRows}`;
+      const rows = priceHistory.map((p, i) => {
+        const prevPrice = i > 0 ? priceHistory[i - 1].price : p.price;
+        const changePercent = prevPrice > 0 ? ((p.price - prevPrice) / prevPrice * 100).toFixed(4) : '0';
+        const fullDate = new Date(p.timestamp).toISOString().split('T')[0];
+        return [fullDate, p.timestamp, p.price.toFixed(6), changePercent];
+      });
 
-    return csvContent;
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `${csvHeaders}\n${csvRows}`;
+    }
+
+    // TRANSACTIONS - Use real wallet data
+    if (selectedType === 'transactions') {
+      const headers = ['Date', 'Time', 'Type', 'Amount (CSPR)', 'stCSPR', 'TX Hash', 'Block Height'];
+
+      if (!isWalletConnected) {
+        return '# Please connect your wallet to export real transaction data';
+      }
+
+      if (userStakes.length === 0) {
+        return '# No transactions found for this wallet';
+      }
+
+      const rows = userStakes.map(stake => {
+        const date = new Date(stake.timestamp);
+        return [
+          date.toISOString().split('T')[0],
+          date.toTimeString().split(' ')[0],
+          stake.actionType.toUpperCase(),
+          (parseFloat(stake.amount) / 1_000_000_000).toFixed(4),
+          stake.stCsprAmount ? (parseFloat(stake.stCsprAmount) / 1_000_000_000).toFixed(4) : '0',
+          stake.txHash,
+          stake.blockHeight.toString(),
+        ];
+      });
+
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `# Wallet: ${activeAccount?.publicKey}\n# Export Date: ${new Date().toISOString()}\n${csvHeaders}\n${csvRows}`;
+    }
+
+    // PORTFOLIO - Use real balance data
+    if (selectedType === 'portfolio') {
+      const headers = ['Date', 'CSPR Balance', 'stCSPR Balance', 'Data Source'];
+
+      if (!isWalletConnected) {
+        return '# Please connect your wallet to export portfolio data';
+      }
+
+      const rows = [[
+        new Date().toISOString().split('T')[0],
+        csprBalance.toFixed(4),
+        stCsprBalance.toFixed(4),
+        isRealBalance ? 'Blockchain' : 'Local',
+      ]];
+
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `# Wallet: ${activeAccount?.publicKey}\n# Export Date: ${new Date().toISOString()}\n${csvHeaders}\n${csvRows}`;
+    }
+
+    // REWARDS - Estimated based on staking
+    if (selectedType === 'rewards') {
+      const headers = ['Date', 'Estimated Daily Reward (CSPR)', 'APY (%)', 'Staked Amount (stCSPR)'];
+
+      if (!isWalletConnected || stCsprBalance === 0) {
+        return '# Please connect your wallet and have staked CSPR to see rewards';
+      }
+
+      // Calculate estimated rewards based on 17% APY
+      const apy = 0.17;
+      const dailyRate = apy / 365;
+      const dailyReward = stCsprBalance * dailyRate;
+
+      const rows = [[
+        new Date().toISOString().split('T')[0],
+        dailyReward.toFixed(6),
+        '17.0',
+        stCsprBalance.toFixed(4),
+      ]];
+
+      const csvHeaders = headers.join(',');
+      const csvRows = rows.map(row => row.join(',')).join('\n');
+      return `# Wallet: ${activeAccount?.publicKey}\n# Note: Rewards are estimated based on 17% APY\n${csvHeaders}\n${csvRows}`;
+    }
+
+    return '# Unknown export type';
   };
 
   const handleExport = async () => {
@@ -276,8 +379,11 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
       </Header>
 
       <Description $isDark={isDark}>
-        Export your staking data for tax reporting, portfolio tracking, or personal records.
-        Choose a data type and download as CSV.
+        {isWalletConnected ? (
+          <>Export your real staking data. Wallet: <strong>{activeAccount?.publicKey?.slice(0, 8)}...{activeAccount?.publicKey?.slice(-6)}</strong></>
+        ) : (
+          <>Connect your wallet to export real transaction data, or export price history without wallet.</>
+        )}
       </Description>
 
       <OptionsGrid>
@@ -295,24 +401,42 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
         ))}
       </OptionsGrid>
 
-      <DateRange>
-        <DateInput $isDark={isDark}>
-          <label>Start Date (optional)</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </DateInput>
-        <DateInput $isDark={isDark}>
-          <label>End Date (optional)</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </DateInput>
-      </DateRange>
+      {selectedType === 'price_history' && (
+        <DateRange>
+          <DateInput $isDark={isDark}>
+            <label>Time Period</label>
+            <select
+              value={selectedDays}
+              onChange={(e) => setSelectedDays(Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
+                border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'}`,
+                background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                color: isDark ? '#fff' : '#1a1a2e',
+                fontSize: '0.9rem',
+              }}
+            >
+              {daysOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </DateInput>
+          <DateInput $isDark={isDark}>
+            <label>Data Points</label>
+            <div style={{
+              padding: '12px',
+              borderRadius: '8px',
+              background: isDark ? 'rgba(48, 209, 88, 0.1)' : 'rgba(48, 209, 88, 0.1)',
+              color: '#30d158',
+              fontWeight: 600,
+            }}>
+              {priceHistory.length} entries
+            </div>
+          </DateInput>
+        </DateRange>
+      )}
 
       <ExportButton
         $isDark={isDark}
