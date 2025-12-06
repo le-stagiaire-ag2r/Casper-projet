@@ -2,7 +2,7 @@
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-Demo-yellow)
-![Version](https://img.shields.io/badge/Version-6.3.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-7.0.0-brightgreen)
 ![Security](https://img.shields.io/badge/Security-A+-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -29,7 +29,70 @@ Stake CSPR → Get stCSPR → Earn ~17% APY → Stay Liquid
 
 ---
 
-## Features (V6.3)
+## What's New in V7.0 🚀
+
+### New Features
+
+| Feature | Description |
+|---------|-------------|
+| **APY Slider** | Choose any APY from 1% to 100% with a free slider (no more preset buttons) |
+| **All-Time Price Chart** | View CSPR price history since token creation (May 2021) |
+| **Interactive Tooltip** | Hover on chart to see exact date and price (like CoinMarketCap) |
+| **6 X-Axis Labels** | More date labels on price chart for better readability |
+| **Real CSV Export** | Export your actual wallet transactions, balances, and price history |
+
+### CSV Export Improvements
+
+| Export Type | Data Source |
+|-------------|-------------|
+| **Transactions** | Real blockchain data from your connected wallet |
+| **Portfolio** | Your actual CSPR and stCSPR balances |
+| **Rewards** | Estimated daily rewards based on your staked amount |
+| **Price History** | CoinGecko price data (7D, 30D, 90D, 1Y, All Time) |
+
+### Removed
+
+- RewardsChart component (redundant with StakingCalculator)
+
+---
+
+## ⚠️ Data Transparency: Real vs Demo
+
+### Real Data (from Blockchain/APIs)
+
+| Data | Source | Refresh |
+|------|--------|---------|
+| **Your CSPR Balance** | CSPR.click / CSPR.cloud API | Every 30s |
+| **Your Transactions** | Blockchain via API | On demand |
+| **Current CSPR Price** | CoinGecko API | Every 60s |
+| **Price History (7 days)** | CoinGecko API | On page load |
+
+### Demo/Fallback Data
+
+| Data | Reason | Note |
+|------|--------|------|
+| **Price History (long term)** | CoinGecko free API rate limiting | Fallback shows realistic pattern based on cspr.live |
+| **Validators List** | CORS restrictions on Casper RPC | Static mainnet data snapshot |
+| **TVL & Global Stats** | No public aggregator API | Realistic demo values |
+| **Leaderboard** | Demo feature | Showcase UI capability |
+
+### Why Some Data Isn't 100% Accurate?
+
+1. **CoinGecko Rate Limiting**: Free API has request limits. When exceeded, we show fallback data that follows the real CSPR price pattern (started high ~$1.20 in May 2021, then declined)
+
+2. **CORS Restrictions**: Browser security prevents direct calls to Casper RPC nodes. We use Vercel serverless functions as proxy, but some endpoints still fail
+
+3. **No Real stCSPR Token**: The demo contract tracks stakes internally but doesn't mint real tokens on mainnet
+
+### How to Know if Data is Real?
+
+- Look for the **LIVE** badge next to your balance
+- Real transactions show actual TX hashes you can verify on [cspr.live](https://cspr.live)
+- CSV exports include wallet address and data source in headers
+
+---
+
+## Features
 
 ### Core Staking
 | Feature | Description |
@@ -138,13 +201,14 @@ Casper-projet/
 │   │   │   ├── Dashboard.tsx        # Portfolio summary with live data
 │   │   │   ├── StakingForm.tsx      # Stake/unstake form + confetti
 │   │   │   ├── StakeHistory.tsx     # Transaction history
-│   │   │   ├── StakingCalculator.tsx # Earnings calculator
-│   │   │   ├── RewardsChart.tsx     # 12-month projection chart
+│   │   │   ├── StakingCalculator.tsx # APY slider calculator (V7)
+│   │   │   ├── PriceChart.tsx       # Interactive price chart with tooltip (V7)
 │   │   │   ├── ValidatorRanking.tsx # Top validators table
-│   │   │   ├── PortfolioHistory.tsx # Balance evolution chart (NEW)
-│   │   │   ├── PriceAlert.tsx       # Price alert system (NEW)
-│   │   │   ├── Confetti.tsx         # Celebration animation (NEW)
-│   │   │   ├── GlobalStats.tsx      # Protocol statistics (NEW)
+│   │   │   ├── ExportCSV.tsx        # Real wallet data export (V7)
+│   │   │   ├── PortfolioHistory.tsx # Balance evolution chart
+│   │   │   ├── PriceAlert.tsx       # Price alert system
+│   │   │   ├── Confetti.tsx         # Celebration animation
+│   │   │   ├── GlobalStats.tsx      # Protocol statistics
 │   │   │   ├── Toast.tsx            # Notification system
 │   │   │   └── Navigation.tsx       # Multi-page navigation
 │   │   ├── contexts/
@@ -291,6 +355,7 @@ npm run build
 
 | Version | Highlights |
 |---------|------------|
+| **V7.0** | APY slider, all-time price chart, interactive tooltip, real CSV export |
 | **V6.3** | Price alerts, portfolio history, confetti, redesigned UI |
 | **V6.2** | Live blockchain data, CSPR price, charts, sound notifications |
 | **V6.1** | Multi-page navigation, toast notifications, staking calculator |
@@ -298,39 +363,6 @@ npm run build
 | **V5.0** | Security hardening, A+ audit score |
 | **V4.0** | Multi-validator support |
 | **V3.0** | stCSPR liquid token |
-
----
-
-## What's New in V6.3
-
-### Price Alerts System
-- Set custom price targets for CSPR
-- Choose "above" or "below" threshold
-- Browser notifications when target is reached
-- Audio alert with sound notification
-- Persistent alerts saved in localStorage
-
-### Portfolio History
-- Interactive line chart showing balance evolution
-- Combines CSPR + stCSPR holdings
-- Tracks changes over time
-- localStorage persistence
-
-### Confetti Celebration
-- Animated confetti on successful stake
-- 100 colorful particles
-- Enhances user experience
-
-### UI/UX Redesign
-- **Home Page:** Gradient hero, animated icons, stats row, step cards, benefits grid
-- **Guide Page:** Comparison cards, interactive FAQ, step-by-step tutorial
-- **Stake Page:** Integrated portfolio history and price alerts
-
-### Technical Improvements
-- BalanceContext for shared state management
-- stCSPR balance persistence in localStorage
-- Fixed chart viewBox for proper label rendering
-- Improved dark/light mode support
 
 ---
 
