@@ -10,6 +10,7 @@ const TooltipWrapper = styled.div`
   position: relative;
   display: inline-flex;
   align-items: center;
+  z-index: 100;
 `;
 
 const TooltipTrigger = styled.span`
@@ -58,8 +59,8 @@ const TooltipContent = styled.div<{ $isDark: boolean; $position: 'top' | 'bottom
     ? 'rgba(255, 255, 255, 0.15)'
     : 'rgba(0, 0, 0, 0.1)'};
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 99999;
   min-width: 200px;
   max-width: 300px;
   animation: ${fadeIn} 0.2s ease;
