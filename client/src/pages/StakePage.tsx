@@ -9,6 +9,13 @@ import { ValidatorRanking } from '../components/ValidatorRanking';
 import { GlobalStats } from '../components/GlobalStats';
 import { PriceAlertComponent } from '../components/PriceAlert';
 import { PortfolioHistory } from '../components/PortfolioHistory';
+import { Leaderboard } from '../components/Leaderboard';
+import { TVLChart } from '../components/TVLChart';
+import { ExportCSV } from '../components/ExportCSV';
+import { SimulationMode } from '../components/SimulationMode';
+import { ValidatorComparator } from '../components/ValidatorComparator';
+import { NotificationSettings } from '../components/NotificationSettings';
+import { NFTBadges } from '../components/NFTBadges';
 import { useBalanceContext } from '../context/BalanceContext';
 
 const Container = styled.div`
@@ -133,12 +140,34 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
       </FullWidthSection>
 
       <FullWidthSection>
+        <ValidatorComparator isDark={isDark} />
+      </FullWidthSection>
+
+      <FullWidthSection>
         <GlobalStats isDark={isDark} />
+      </FullWidthSection>
+
+      <FullWidthSection>
+        <Leaderboard isDark={isDark} />
+      </FullWidthSection>
+
+      <ChartsSection>
+        <TVLChart isDark={isDark} />
+        <ExportCSV isDark={isDark} />
+      </ChartsSection>
+
+      <FullWidthSection>
+        <SimulationMode isDark={isDark} />
       </FullWidthSection>
 
       <ChartsSection>
         <PortfolioHistory isDark={isDark} />
         <PriceAlertComponent isDark={isDark} />
+      </ChartsSection>
+
+      <ChartsSection>
+        <NotificationSettings isDark={isDark} />
+        <NFTBadges isDark={isDark} />
       </ChartsSection>
     </Container>
   );
