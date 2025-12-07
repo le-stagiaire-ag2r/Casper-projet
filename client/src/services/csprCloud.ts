@@ -143,10 +143,12 @@ const proxyFetch = async <T>(endpoint: string): Promise<T> => {
   }
 
   try {
+    console.log(`[CSPR.cloud] Fetching: ${endpoint}`);
     const response = await proxy.fetch(endpoint);
+    console.log(`[CSPR.cloud] Success: ${endpoint}`, response);
     return response as T;
   } catch (error: any) {
-    console.error(`CSPR.cloud API error for ${endpoint}:`, error);
+    console.error(`[CSPR.cloud] Error for ${endpoint}:`, error);
     throw error;
   }
 };
