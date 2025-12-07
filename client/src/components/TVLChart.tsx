@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import styled from 'styled-components';
+import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 const Container = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
@@ -143,21 +144,58 @@ interface DataPoint {
   tvl: number;
 }
 
+// Fallback TVL when API fails (Dec 2024 mainnet data)
+const FALLBACK_TVL = 6_977_000_000;
+
 export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [currentTVL, setCurrentTVL] = useState(0);
   const [data, setData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
 
-  // Real TVL based on Casper mainnet data from cspr.live
-  // Total staked: ~7B CSPR across 100 validators
-  const MAINNET_TVL = 6_977_000_000; // ~7B CSPR staked on mainnet
+  // Fetch TVL from CSPR.cloud via proxy
+  const fetchTVLFromProxy = useCallback(async () => {
+    if (!isProxyAvailable()) {
+      return null;
+    }
 
-  // Initialize with real mainnet data
-  useEffect(() => {
-    setCurrentTVL(MAINNET_TVL);
-    setLoading(false);
+    try {
+      const metricsResponse = await csprCloudApi.getAuctionMetrics();
+      const totalStaked = motesToCSPR(metricsResponse.data.total_active_era_stake);
+      return totalStaked;
+    } catch (error) {
+      console.error('Failed to fetch TVL from CSPR.cloud:', error);
+      return null;
+    }
   }, []);
+
+  // Fetch TVL on mount
+  useEffect(() => {
+    const fetchTVL = async () => {
+      setLoading(true);
+
+      // Try CSPR.cloud via proxy first
+      const liveTVL = await fetchTVLFromProxy();
+      if (liveTVL && liveTVL > 0) {
+        setCurrentTVL(liveTVL);
+        setIsLive(true);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to static data
+      setCurrentTVL(FALLBACK_TVL);
+      setIsLive(false);
+      setLoading(false);
+    };
+
+    fetchTVL();
+
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchTVL, 60000);
+    return () => clearInterval(interval);
+  }, [fetchTVLFromProxy]);
 
   // Generate simulated historical data based on real current TVL
   useEffect(() => {
@@ -274,7 +312,7 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
         <TitleSection>
           <Title $isDark={isDark}>
             📈 Total Value Locked
-            <LiveBadge $isLive={false}>DEMO</LiveBadge>
+            <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
           </Title>
           <TVLValue $isDark={isDark}>
             {formatTVL(currentTVL)} CSPR
