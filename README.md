@@ -3,7 +3,7 @@
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-Demo-yellow)
 ![Version](https://img.shields.io/badge/Version-7.0.0-brightgreen)
-![Security](https://img.shields.io/badge/Security-A+-success)
+![Open Source](https://img.shields.io/badge/Open_Source-Yes-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 **Hackathon:** Casper Hackathon 2025 on DoraHacks
@@ -157,7 +157,7 @@ Stake CSPR → Get stCSPR → Earn ~17% APY → Stay Liquid
 
 ### Home Page
 - Hero section with animated gradient border
-- Protocol statistics (APY, Instant, No Lock, Audited)
+- Protocol statistics (APY, Instant, No Lock, Secure)
 - Step-by-step guide cards
 - Benefits grid
 
@@ -360,7 +360,7 @@ npm run build
 | **V6.2** | Live blockchain data, CSPR price, charts, sound notifications |
 | **V6.1** | Multi-page navigation, toast notifications, staking calculator |
 | **V6.0** | React frontend with CSPR.click, Vercel deployment |
-| **V5.0** | Security hardening, A+ audit score |
+| **V5.0** | Security hardening, best practices |
 | **V4.0** | Multi-validator support |
 | **V3.0** | stCSPR liquid token |
 

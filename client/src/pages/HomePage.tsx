@@ -643,8 +643,8 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
         </StatCard>
         <StatCard $isDark={isDark} $gradient="linear-gradient(90deg, #ff2d55, #ff6b8a)">
           <StatIcon>🛡️</StatIcon>
-          <StatValue $color="#ff2d55">Audited</StatValue>
-          <StatLabel $isDark={isDark}>Smart Contract</StatLabel>
+          <StatValue $color="#ff2d55">Secure</StatValue>
+          <StatLabel $isDark={isDark}>Open Source</StatLabel>
         </StatCard>
       </StatsRow>
 
@@ -787,10 +787,10 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
           <BenefitCard $isDark={isDark} $color="#ff2d55">
             <BenefitIconBox $bg="rgba(255, 45, 85, 0.15)">🛡️</BenefitIconBox>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>Secure & Audited</BenefitTitle>
+              <BenefitTitle $isDark={isDark}>Secure & Transparent</BenefitTitle>
               <BenefitDescription $isDark={isDark}>
-                Smart contract audited by CasperSecure with A+ rating.
-                Open source and fully verifiable.
+                Smart contract follows Casper security best practices.
+                Open source and fully verifiable on GitHub.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>

@@ -535,8 +535,8 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
         </StatCard>
         <StatCard $isDark={isDark}>
           <StatIcon>🛡️</StatIcon>
-          <StatValue $color="#5856d6">Audited</StatValue>
-          <StatLabel $isDark={isDark}>Smart Contract</StatLabel>
+          <StatValue $color="#5856d6">Secure</StatValue>
+          <StatLabel $isDark={isDark}>Open Source</StatLabel>
         </StatCard>
       </StatsRow>
 
