@@ -538,13 +538,15 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
               <ValidatorName $isDark={isDark}>{validator1.name}</ValidatorName>
               <ValidatorAddress $isDark={isDark}>
                 {formatPublicKey(validator1.publicKey)}
-                <CopyButton
-                  $isDark={isDark}
-                  onClick={() => copyToClipboard(validator1.publicKey)}
-                  title="Copy full address"
-                >
-                  {copiedKey === validator1.publicKey ? '✓' : '📋'}
-                </CopyButton>
+                {isLive && (
+                  <CopyButton
+                    $isDark={isDark}
+                    onClick={() => copyToClipboard(validator1.publicKey)}
+                    title="Copy full address"
+                  >
+                    {copiedKey === validator1.publicKey ? '✓' : '📋'}
+                  </CopyButton>
+                )}
               </ValidatorAddress>
             </ValidatorInfo>
           </ValidatorHeader>
@@ -571,13 +573,15 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
               <ValidatorName $isDark={isDark}>{validator2.name}</ValidatorName>
               <ValidatorAddress $isDark={isDark}>
                 {formatPublicKey(validator2.publicKey)}
-                <CopyButton
-                  $isDark={isDark}
-                  onClick={() => copyToClipboard(validator2.publicKey)}
-                  title="Copy full address"
-                >
-                  {copiedKey === validator2.publicKey ? '✓' : '📋'}
-                </CopyButton>
+                {isLive && (
+                  <CopyButton
+                    $isDark={isDark}
+                    onClick={() => copyToClipboard(validator2.publicKey)}
+                    title="Copy full address"
+                  >
+                    {copiedKey === validator2.publicKey ? '✓' : '📋'}
+                  </CopyButton>
+                )}
               </ValidatorAddress>
             </ValidatorInfo>
           </ValidatorHeader>
