@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
+import { useToast } from '../components/Toast';
 
 const float = keyframes`
   0%, 100% { transform: translateY(0px); }
@@ -594,6 +595,21 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
   const [stats, setStats] = useState<NetworkStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
+  const { info, ToastComponent } = useToast();
+
+  // Show data transparency notice once
+  useEffect(() => {
+    const hasSeenNotice = localStorage.getItem('stakevue_data_notice_v2');
+    if (!hasSeenNotice) {
+      setTimeout(() => {
+        info(
+          '📊 About the Data',
+          'Most stats come from real Casper APIs (LIVE badge). Due to API limits, some data may show estimates (DEMO badge). This is normal, not a bug!'
+        );
+        localStorage.setItem('stakevue_data_notice_v2', 'true');
+      }, 2000);
+    }
+  }, [info]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -864,6 +880,8 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
           🚀 Start Staking Now
         </CTAButton>
       </CTASection>
+
+      <ToastComponent />
     </Container>
   );
 };
