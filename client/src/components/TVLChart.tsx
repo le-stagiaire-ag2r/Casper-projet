@@ -32,9 +32,11 @@ const Title = styled.h3<{ $isDark: boolean }>`
   gap: 10px;
 `;
 
-const LiveBadge = styled.span`
-  background: linear-gradient(135deg, #30d158, #28a745);
-  color: white;
+const LiveBadge = styled.span<{ $isLive?: boolean }>`
+  background: ${props => props.$isLive
+    ? 'linear-gradient(135deg, #30d158, #28a745)'
+    : 'linear-gradient(135deg, #ff9f0a, #ffaa00)'};
+  color: ${props => props.$isLive ? 'white' : '#1a1a2e'};
   font-size: 0.65rem;
   padding: 3px 8px;
   border-radius: 10px;
@@ -272,7 +274,7 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
         <TitleSection>
           <Title $isDark={isDark}>
             📈 Total Value Locked
-            <LiveBadge>LIVE</LiveBadge>
+            <LiveBadge $isLive={false}>DEMO</LiveBadge>
           </Title>
           <TVLValue $isDark={isDark}>
             {formatTVL(currentTVL)} CSPR
