@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Tooltip } from './Tooltip';
+import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 const pulse = keyframes`
   0%, 100% { opacity: 1; }
@@ -194,53 +195,140 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
+  const fetchStatsFromProxy = useCallback(async () => {
+    // Try to use CSPR.click proxy for real CSPR.cloud data
+    if (!isProxyAvailable()) {
+      console.log('CSPR.click proxy not available, using fallback');
+      return null;
+    }
+
+    try {
+      // Fetch auction metrics (TVL, validator count, era)
+      const metricsResponse = await csprCloudApi.getAuctionMetrics();
+      const metrics = metricsResponse.data;
+
+      // Fetch supply data
+      const supplyResponse = await csprCloudApi.getSupply();
+      const supply = supplyResponse.data;
+
+      // Fetch current CSPR price
+      let csprPrice = FALLBACK_STATS.csprPrice;
+      try {
+        const rateResponse = await csprCloudApi.getCurrentRate(1); // USD
+        csprPrice = rateResponse.data.amount;
+      } catch (e) {
+        console.log('Price fetch failed, using fallback');
+      }
+
+      // Get validators to count total delegators
+      let totalDelegators = FALLBACK_STATS.totalDelegators;
+      try {
+        const validatorsResponse = await csprCloudApi.getValidators(metrics.current_era_id, 100);
+        totalDelegators = validatorsResponse.data.reduce(
+          (sum, v) => sum + (v.delegators_number || 0),
+          0
+        );
+      } catch (e) {
+        console.log('Validators fetch failed, using fallback delegators count');
+      }
+
+      const totalStaked = motesToCSPR(metrics.total_active_era_stake);
+      const circulatingSupply = supply.circulating;
+      const stakingRatio = (totalStaked / circulatingSupply) * 100;
+
+      return {
+        totalStaked,
+        activeValidators: metrics.active_validator_number,
+        totalDelegators,
+        currentEra: metrics.current_era_id,
+        csprPrice,
+        circulatingSupply,
+        stakingRatio,
+      };
+    } catch (error) {
+      console.error('Failed to fetch from CSPR.cloud:', error);
+      return null;
+    }
+  }, []);
+
+  const fetchStatsFromAPI = useCallback(async () => {
+    // Fallback: try our own API proxy
+    try {
+      const validatorsRes = await fetch('/api/validators?limit=100');
+      const priceRes = await fetch('/api/price?days=1');
+
+      let validatorStats = null;
+      let priceData = null;
+
+      if (validatorsRes.ok) {
+        const data = await validatorsRes.json();
+        if (data.stats) {
+          validatorStats = data.stats;
+        }
+      }
+
+      if (priceRes.ok) {
+        const data = await priceRes.json();
+        if (data.prices?.length > 0) {
+          priceData = data.prices[data.prices.length - 1][1];
+        } else if (data.price) {
+          priceData = data.price;
+        }
+      }
+
+      if (validatorStats) {
+        const totalStaked = validatorStats.totalStaked;
+        const circulatingSupply = FALLBACK_STATS.circulatingSupply;
+        return {
+          totalStaked,
+          activeValidators: validatorStats.activeValidators,
+          totalDelegators: validatorStats.totalDelegators,
+          currentEra: FALLBACK_STATS.currentEra,
+          csprPrice: priceData || FALLBACK_STATS.csprPrice,
+          circulatingSupply,
+          stakingRatio: (totalStaked / circulatingSupply) * 100,
+        };
+      }
+    } catch (error) {
+      console.log('API fallback failed');
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     const fetchStats = async () => {
-      try {
-        // Fetch validator stats from our proxy
-        const validatorsRes = await fetch('/api/validators?limit=100');
-        const priceRes = await fetch('/api/price?days=1');
+      setLoading(true);
 
-        let validatorStats = null;
-        let priceData = null;
-
-        if (validatorsRes.ok) {
-          const data = await validatorsRes.json();
-          if (data.stats) {
-            validatorStats = data.stats;
-          }
-        }
-
-        if (priceRes.ok) {
-          const data = await priceRes.json();
-          if (data.prices?.length > 0) {
-            priceData = data.prices[data.prices.length - 1][1];
-          }
-        }
-
-        if (validatorStats) {
-          const totalStaked = validatorStats.totalStaked;
-          const circulatingSupply = FALLBACK_STATS.circulatingSupply;
-          setStats({
-            totalStaked,
-            activeValidators: validatorStats.activeValidators,
-            totalDelegators: validatorStats.totalDelegators,
-            currentEra: FALLBACK_STATS.currentEra,
-            csprPrice: priceData || FALLBACK_STATS.csprPrice,
-            circulatingSupply,
-            stakingRatio: (totalStaked / circulatingSupply) * 100,
-          });
-          setIsLive(true);
-        }
-      } catch (error) {
-        console.log('Using fallback network stats');
-      } finally {
+      // First try CSPR.cloud via proxy (real live data)
+      const proxyStats = await fetchStatsFromProxy();
+      if (proxyStats) {
+        setStats(proxyStats);
+        setIsLive(true);
         setLoading(false);
+        return;
       }
+
+      // Fallback to our API proxy
+      const apiStats = await fetchStatsFromAPI();
+      if (apiStats) {
+        setStats(apiStats);
+        setIsLive(true);
+        setLoading(false);
+        return;
+      }
+
+      // Use fallback data
+      setStats(FALLBACK_STATS);
+      setIsLive(false);
+      setLoading(false);
     };
 
     fetchStats();
-  }, []);
+
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
+  }, [fetchStatsFromProxy, fetchStatsFromAPI]);
 
   const formatNumber = (num: number, decimals: number = 0) => {
     if (num >= 1_000_000_000) {
