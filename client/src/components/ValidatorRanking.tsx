@@ -358,7 +358,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏆 Top Validators <LiveBadge>{isLive ? 'LIVE' : 'MAINNET'}</LiveBadge>
+          🏆 Top Validators <LiveBadge>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
         </Title>
       </Header>
 
