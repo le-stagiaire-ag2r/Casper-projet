@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
+import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 const Container = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
@@ -351,15 +352,57 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
     { publicKey: '01b82a3d...', name: 'Stake.Fish', totalStake: 195_000_000, delegatorsCount: 540, fee: 10, isActive: true, selfStake: 10_000_000, networkShare: 2.4 },
   ];
 
+  // Fetch validators from CSPR.cloud via proxy
+  const fetchFromCsprCloud = useCallback(async () => {
+    if (!isProxyAvailable()) {
+      return null;
+    }
+
+    try {
+      // First get current era from auction metrics
+      const metricsResponse = await csprCloudApi.getAuctionMetrics();
+      const currentEra = metricsResponse.data.current_era_id;
+
+      // Fetch validators for current era
+      const validatorsResponse = await csprCloudApi.getValidators(currentEra, 50);
+
+      if (validatorsResponse.data && validatorsResponse.data.length > 0) {
+        return validatorsResponse.data.map(v => ({
+          publicKey: v.public_key,
+          name: v.account_info?.info?.owner?.name || `Validator ${v.public_key.slice(0, 8)}...`,
+          totalStake: motesToCSPR(v.total_stake),
+          delegatorsCount: v.delegators_number || 0,
+          fee: v.fee,
+          isActive: v.is_active,
+          selfStake: motesToCSPR(v.self_stake),
+          networkShare: v.network_share * 100,
+        }));
+      }
+    } catch (error) {
+      console.error('CSPR.cloud validators fetch failed:', error);
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     const fetchValidators = async () => {
+      // First try CSPR.cloud via proxy
+      const cloudValidators = await fetchFromCsprCloud();
+      if (cloudValidators && cloudValidators.length > 0) {
+        setValidators(cloudValidators);
+        setIsLive(true);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to local API proxy
       try {
         const response = await fetch('/api/validators?limit=50');
         if (response.ok) {
           const data = await response.json();
           if (data.validators?.length > 0) {
             setValidators(data.validators.map((v: any) => ({
-              publicKey: v.publicKey || 'unknown', // Keep full key for copy
+              publicKey: v.publicKey || 'unknown',
               name: v.name,
               totalStake: v.stake,
               delegatorsCount: v.delegators,
@@ -384,7 +427,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
     };
 
     fetchValidators();
-  }, []);
+  }, [fetchFromCsprCloud]);
 
   const validator1 = validators[validator1Index];
   const validator2 = validators[validator2Index];
