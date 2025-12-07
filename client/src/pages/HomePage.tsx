@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { useToast } from '../components/Toast';
+import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 const float = keyframes`
   0%, 100% { transform: translateY(0px); }
@@ -611,12 +612,66 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
     }
   }, [info]);
 
+  // Fetch stats from CSPR.cloud via proxy
+  const fetchFromCsprCloud = useCallback(async () => {
+    if (!isProxyAvailable()) {
+      return null;
+    }
+
+    try {
+      // Fetch auction metrics (TVL, validator count)
+      const metricsResponse = await csprCloudApi.getAuctionMetrics();
+      const metrics = metricsResponse.data;
+
+      // Fetch price
+      let csprPrice = FALLBACK_STATS.csprPrice;
+      try {
+        const rateResponse = await csprCloudApi.getCurrentRate(1);
+        csprPrice = rateResponse.data.amount;
+      } catch (e) {
+        console.log('Price fetch failed, using fallback');
+      }
+
+      // Get validators to count delegators
+      let totalDelegators = FALLBACK_STATS.totalDelegators;
+      try {
+        const validatorsResponse = await csprCloudApi.getValidators(metrics.current_era_id, 100);
+        totalDelegators = validatorsResponse.data.reduce(
+          (sum, v) => sum + (v.delegators_number || 0),
+          0
+        );
+      } catch (e) {
+        console.log('Validators fetch failed for delegators count');
+      }
+
+      const totalStaked = motesToCSPR(metrics.total_active_era_stake);
+
+      return {
+        totalStaked,
+        activeValidators: metrics.active_validator_number,
+        totalDelegators,
+        csprPrice,
+      };
+    } catch (error) {
+      console.error('CSPR.cloud fetch failed:', error);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     const fetchStats = async () => {
+      // First try CSPR.cloud via proxy (real live data)
+      const cloudData = await fetchFromCsprCloud();
+      if (cloudData) {
+        setStats(cloudData);
+        setIsLive(true);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback to local API proxy
       try {
-        // Fetch validator stats
         const validatorsRes = await fetch('/api/validators?limit=100');
-        // Fetch price
         const priceRes = await fetch('/api/price?days=1');
 
         let validatorStats = null;
@@ -656,7 +711,7 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
     };
 
     fetchStats();
-  }, []);
+  }, [fetchFromCsprCloud]);
 
   const formatNumber = (num: number) => {
     if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(2) + 'B';
