@@ -33,9 +33,11 @@ const Title = styled.h3<{ $isDark: boolean }>`
   gap: 10px;
 `;
 
-const Badge = styled.span`
-  background: linear-gradient(135deg, #ffd700, #ffaa00);
-  color: #1a1a2e;
+const Badge = styled.span<{ $isLive?: boolean }>`
+  background: ${props => props.$isLive
+    ? 'linear-gradient(135deg, #30d158, #28a745)'
+    : 'linear-gradient(135deg, #ff9f0a, #ffaa00)'};
+  color: ${props => props.$isLive ? '#fff' : '#1a1a2e'};
   font-size: 0.7rem;
   padding: 4px 8px;
   border-radius: 12px;
@@ -284,7 +286,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ isDark, currentUserAdd
       <Header>
         <Title $isDark={isDark}>
           🏆 Top Stakers
-          <Badge>LIVE</Badge>
+          <Badge $isLive={false}>DEMO</Badge>
         </Title>
         <RefreshButton $isDark={isDark} onClick={fetchLeaderboard}>
           🔄 Refresh

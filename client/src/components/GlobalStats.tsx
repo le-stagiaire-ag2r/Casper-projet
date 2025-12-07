@@ -41,12 +41,14 @@ const Title = styled.h2<{ $isDark: boolean }>`
   gap: 10px;
 `;
 
-const LiveBadge = styled.span`
+const LiveBadge = styled.span<{ $isLive?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(48, 209, 88, 0.15);
-  color: #30d158;
+  background: ${props => props.$isLive !== false
+    ? 'rgba(48, 209, 88, 0.15)'
+    : 'rgba(255, 159, 10, 0.15)'};
+  color: ${props => props.$isLive !== false ? '#30d158' : '#ff9f0a'};
   font-size: 11px;
   font-weight: 700;
   padding: 4px 10px;
@@ -57,7 +59,7 @@ const LiveBadge = styled.span`
     content: '';
     width: 6px;
     height: 6px;
-    background: #30d158;
+    background: ${props => props.$isLive !== false ? '#30d158' : '#ff9f0a'};
     border-radius: 50%;
     animation: ${pulse} 1.5s infinite;
   }
@@ -239,7 +241,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
       <Title $isDark={isDark}>
         <span>📊</span>
         Casper Network Statistics
-        <LiveBadge>Live</LiveBadge>
+        <LiveBadge $isLive={false}>DEMO</LiveBadge>
       </Title>
 
       <StatsGrid>
