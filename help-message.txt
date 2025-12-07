@@ -1,0 +1,57 @@
+🆘 Need Help: Casper APIs & CORS Issues
+
+Hey everyone! 👋
+
+I'm building StakeVue, a liquid staking dApp for the Casper 2025 Hackathon. I'm running into some technical issues with data access and would really appreciate your advice.
+
+🔴 Problem 1: CORS Blocked
+
+My frontend can't directly call Casper APIs due to CORS restrictions. I get this error:
+
+Access to fetch at 'https://event-store-api-clarity-mainnet.make.services/...' from origin 'https://stakevue.vercel.app' has been blocked by CORS policy
+
+Current workaround: I'm using Vercel serverless functions as a proxy:
+Frontend → /api/validators (Vercel) → make.services API
+
+It works but it's not ideal. Is there an official API with CORS enabled?
+
+🔴 Problem 2: Inconsistent Data
+
+The make.services API returns data that doesn't match cspr.live:
+
+| Data                | make.services API | cspr.live  |
+|---------------------|-------------------|------------|
+| Active Validators   | 100               | 88         |
+| Rankings            | Different         | Correct    |
+| Self-stake values   | Approximate       | Accurate   |
+
+Questions:
+1. Which API is the most reliable/up-to-date for validator data?
+2. Does cspr.live have a public API we can use?
+3. Is there a recommended RPC endpoint for accurate network stats?
+
+🔴 Problem 3: Missing Data
+
+I couldn't find any API for:
+- Top delegators list (individual stakers)
+- TVL historical data
+- Historical staking data
+
+Do we need a custom indexer for this?
+
+🛠️ What I'm Currently Using
+
+- Validators: https://event-store-api-clarity-mainnet.make.services/validators
+- CSPR Price: https://api.coingecko.com/api/v3/coins/casper-network/market_chart
+
+🙏 What I Need
+
+1. API with CORS to call directly from frontend
+2. Accurate validator data (count, rankings, self-stake)
+3. Delegators endpoint if it exists
+4. Advice on the best approach for a hackathon project
+
+Thanks in advance for your help!
+
+GitHub: https://github.com/le-stagiaire-ag2r/Casper-projet
+Demo: https://stakevue.vercel.app
