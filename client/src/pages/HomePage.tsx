@@ -216,12 +216,14 @@ const LiveStatsTitle = styled.h3<{ $isDark: boolean }>`
   margin: 0;
 `;
 
-const LiveBadge = styled.span`
+const LiveBadge = styled.span<{ $isLive?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(48, 209, 88, 0.2);
-  color: #30d158;
+  background: ${props => props.$isLive !== false
+    ? 'rgba(48, 209, 88, 0.2)'
+    : 'rgba(255, 159, 10, 0.2)'};
+  color: ${props => props.$isLive !== false ? '#30d158' : '#ff9f0a'};
   font-size: 11px;
   font-weight: 700;
   padding: 4px 10px;
@@ -579,21 +581,65 @@ interface NetworkStats {
   csprPrice: number;
 }
 
+// Fallback stats when API fails
+const FALLBACK_STATS: NetworkStats = {
+  totalStaked: 8_200_000_000, // ~8.2B CSPR staked
+  activeValidators: 100,
+  totalDelegators: 27000,
+  csprPrice: 0.012,
+};
+
 export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<NetworkStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
 
-  // Real mainnet stats from cspr.live (API calls fail due to CORS)
   useEffect(() => {
-    // Using real Casper mainnet data
-    setStats({
-      totalStaked: 6_977_000_000, // ~7B CSPR staked
-      activeValidators: 100,
-      totalDelegators: 18773, // Real delegator count from cspr.live
-      csprPrice: 0.0055, // Current CSPR price
-    });
-    setLoading(false);
+    const fetchStats = async () => {
+      try {
+        // Fetch validator stats
+        const validatorsRes = await fetch('/api/validators?limit=100');
+        // Fetch price
+        const priceRes = await fetch('/api/price?days=1');
+
+        let validatorStats = null;
+        let priceData = null;
+
+        if (validatorsRes.ok) {
+          const data = await validatorsRes.json();
+          if (data.stats) {
+            validatorStats = data.stats;
+          }
+        }
+
+        if (priceRes.ok) {
+          const data = await priceRes.json();
+          if (data.prices?.length > 0) {
+            priceData = data.prices[data.prices.length - 1][1];
+          }
+        }
+
+        if (validatorStats) {
+          setStats({
+            totalStaked: validatorStats.totalStaked,
+            activeValidators: validatorStats.activeValidators,
+            totalDelegators: validatorStats.totalDelegators,
+            csprPrice: priceData || FALLBACK_STATS.csprPrice,
+          });
+          setIsLive(true);
+        } else {
+          setStats(FALLBACK_STATS);
+        }
+      } catch (error) {
+        console.log('Using fallback network stats');
+        setStats(FALLBACK_STATS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, []);
 
   const formatNumber = (num: number) => {
@@ -652,7 +698,7 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
       <LiveStatsSection $isDark={isDark}>
         <LiveStatsHeader>
           <LiveStatsTitle $isDark={isDark}>Casper Network Stats</LiveStatsTitle>
-          <LiveBadge>LIVE</LiveBadge>
+          <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
         </LiveStatsHeader>
         <LiveStatsGrid>
           <LiveStatCard $isDark={isDark}>
