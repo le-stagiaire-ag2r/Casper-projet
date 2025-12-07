@@ -178,20 +178,69 @@ interface NetworkStats {
   stakingRatio: number;
 }
 
-// Realistic data based on actual Casper mainnet (from cspr.live)
-const MAINNET_STATS: NetworkStats = {
-  totalStaked: 6_977_000_000, // ~7B CSPR staked
-  activeValidators: 100,
+// Fallback data based on cspr.live (Dec 2024)
+const FALLBACK_STATS: NetworkStats = {
+  totalStaked: 6_971_726_448,
+  activeValidators: 88,
   totalDelegators: 18773,
   currentEra: 15234,
-  csprPrice: 0.0055,
+  csprPrice: 0.0057,
   circulatingSupply: 12_000_000_000,
   stakingRatio: 58.1,
 };
 
 export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
-  const [stats] = useState<NetworkStats>(MAINNET_STATS);
-  const loading = false;
+  const [stats, setStats] = useState<NetworkStats>(FALLBACK_STATS);
+  const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Fetch validator stats from our proxy
+        const validatorsRes = await fetch('/api/validators?limit=100');
+        const priceRes = await fetch('/api/price?days=1');
+
+        let validatorStats = null;
+        let priceData = null;
+
+        if (validatorsRes.ok) {
+          const data = await validatorsRes.json();
+          if (data.stats) {
+            validatorStats = data.stats;
+          }
+        }
+
+        if (priceRes.ok) {
+          const data = await priceRes.json();
+          if (data.prices?.length > 0) {
+            priceData = data.prices[data.prices.length - 1][1];
+          }
+        }
+
+        if (validatorStats) {
+          const totalStaked = validatorStats.totalStaked;
+          const circulatingSupply = FALLBACK_STATS.circulatingSupply;
+          setStats({
+            totalStaked,
+            activeValidators: validatorStats.activeValidators,
+            totalDelegators: validatorStats.totalDelegators,
+            currentEra: FALLBACK_STATS.currentEra,
+            csprPrice: priceData || FALLBACK_STATS.csprPrice,
+            circulatingSupply,
+            stakingRatio: (totalStaked / circulatingSupply) * 100,
+          });
+          setIsLive(true);
+        }
+      } catch (error) {
+        console.log('Using fallback network stats');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const formatNumber = (num: number, decimals: number = 0) => {
     if (num >= 1_000_000_000) {
@@ -241,7 +290,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
       <Title $isDark={isDark}>
         <span>📊</span>
         Casper Network Statistics
-        <LiveBadge $isLive={false}>DEMO</LiveBadge>
+        <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
       </Title>
 
       <StatsGrid>
@@ -335,7 +384,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
       </NetworkInfo>
 
       <DataSource $isDark={isDark}>
-        📡 Data from Casper Mainnet (cspr.live)
+        📡 {isLive ? 'Live data from Casper API' : 'Fallback data from cspr.live'}
       </DataSource>
     </Container>
   );
