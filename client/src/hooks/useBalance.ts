@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
+import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
-const CSPR_CLOUD_API = 'https://api.testnet.cspr.cloud';
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
 interface BalanceData {
   csprBalance: number;
   csprBalanceMotes: string;
-  stCsprBalance: number;
+  stakedBalance: number;
+  delegatedBalance: number;
+  undelegatingBalance: number;
+  totalBalance: number;
   isLoading: boolean;
   error: string | null;
   lastUpdated: Date | null;
+  isLive: boolean;
 }
 
 interface PriceData {
@@ -18,77 +22,159 @@ interface PriceData {
   isLoading: boolean;
   error: string | null;
   lastUpdated: Date | null;
+  isLive: boolean;
 }
 
 /**
  * Hook to fetch real CSPR balance from the blockchain
+ * Uses CSPR.click proxy to access CSPR.cloud API (bypasses CORS)
  */
 export const useBalance = (publicKey: string | null) => {
   const [balanceData, setBalanceData] = useState<BalanceData>({
     csprBalance: 0,
     csprBalanceMotes: '0',
-    stCsprBalance: 0,
+    stakedBalance: 0,
+    delegatedBalance: 0,
+    undelegatingBalance: 0,
+    totalBalance: 0,
     isLoading: false,
     error: null,
     lastUpdated: null,
+    isLive: false,
   });
+
+  const fetchBalanceFromProxy = useCallback(async (pk: string) => {
+    // Try to use CSPR.click proxy for real CSPR.cloud data
+    if (!isProxyAvailable()) {
+      return null;
+    }
+
+    try {
+      const response = await csprCloudApi.getAccount(pk);
+      const account = response.data;
+
+      const csprBalance = motesToCSPR(account.balance);
+      const stakedBalance = account.staked_balance ? motesToCSPR(account.staked_balance) : 0;
+      const delegatedBalance = account.delegated_balance ? motesToCSPR(account.delegated_balance) : 0;
+      const undelegatingBalance = account.undelegating_balance ? motesToCSPR(account.undelegating_balance) : 0;
+
+      return {
+        csprBalance,
+        csprBalanceMotes: account.balance,
+        stakedBalance,
+        delegatedBalance,
+        undelegatingBalance,
+        totalBalance: csprBalance + stakedBalance + delegatedBalance,
+      };
+    } catch (error: any) {
+      // Account might not exist
+      if (error?.message?.includes('404') || error?.status === 404) {
+        return {
+          csprBalance: 0,
+          csprBalanceMotes: '0',
+          stakedBalance: 0,
+          delegatedBalance: 0,
+          undelegatingBalance: 0,
+          totalBalance: 0,
+        };
+      }
+      console.error('CSPR.cloud proxy error:', error);
+      return null;
+    }
+  }, []);
+
+  const fetchBalanceFromAPI = useCallback(async (pk: string) => {
+    // Fallback: try our own API proxy
+    try {
+      const response = await fetch(`/api/accounts/${pk}`);
+      if (response.ok) {
+        const data = await response.json();
+        const balanceMotes = data.balance || '0';
+        const csprBalance = parseInt(balanceMotes) / 1_000_000_000;
+        return {
+          csprBalance,
+          csprBalanceMotes: balanceMotes,
+          stakedBalance: 0,
+          delegatedBalance: 0,
+          undelegatingBalance: 0,
+          totalBalance: csprBalance,
+        };
+      }
+      if (response.status === 404) {
+        return {
+          csprBalance: 0,
+          csprBalanceMotes: '0',
+          stakedBalance: 0,
+          delegatedBalance: 0,
+          undelegatingBalance: 0,
+          totalBalance: 0,
+        };
+      }
+    } catch (error) {
+      console.log('API fallback failed');
+    }
+    return null;
+  }, []);
 
   const fetchBalance = useCallback(async () => {
     if (!publicKey) {
-      setBalanceData(prev => ({ ...prev, csprBalance: 0, stCsprBalance: 0, isLoading: false }));
+      setBalanceData(prev => ({
+        ...prev,
+        csprBalance: 0,
+        csprBalanceMotes: '0',
+        stakedBalance: 0,
+        delegatedBalance: 0,
+        undelegatingBalance: 0,
+        totalBalance: 0,
+        isLoading: false,
+        isLive: false,
+      }));
       return;
     }
 
     setBalanceData(prev => ({ ...prev, isLoading: true, error: null }));
 
-    try {
-      // Fetch account info from CSPR.cloud API
-      const response = await fetch(`${CSPR_CLOUD_API}/accounts/${publicKey}`, {
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        // Account might not exist yet on testnet
-        if (response.status === 404) {
-          setBalanceData(prev => ({
-            ...prev,
-            csprBalance: 0,
-            csprBalanceMotes: '0',
-            stCsprBalance: 0,
-            isLoading: false,
-            lastUpdated: new Date(),
-            error: null,
-          }));
-          return;
-        }
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Balance is in motes (1 CSPR = 1,000,000,000 motes)
-      const balanceMotes = data.data?.balance || data.balance || '0';
-      const balanceCSPR = parseInt(balanceMotes) / 1_000_000_000;
-
+    // First try CSPR.cloud via proxy (real live data)
+    const proxyData = await fetchBalanceFromProxy(publicKey);
+    if (proxyData) {
       setBalanceData({
-        csprBalance: balanceCSPR,
-        csprBalanceMotes: balanceMotes,
-        stCsprBalance: 0, // TODO: Fetch from stCSPR contract
+        ...proxyData,
         isLoading: false,
         error: null,
         lastUpdated: new Date(),
+        isLive: true,
       });
-    } catch (err: any) {
-      console.error('Failed to fetch balance:', err);
-      setBalanceData(prev => ({
-        ...prev,
-        isLoading: false,
-        error: err.message || 'Failed to fetch balance',
-      }));
+      return;
     }
-  }, [publicKey]);
+
+    // Fallback to our API proxy
+    const apiData = await fetchBalanceFromAPI(publicKey);
+    if (apiData) {
+      setBalanceData({
+        ...apiData,
+        isLoading: false,
+        error: null,
+        lastUpdated: new Date(),
+        isLive: true,
+      });
+      return;
+    }
+
+    // No data available - new account or error
+    setBalanceData(prev => ({
+      ...prev,
+      csprBalance: 0,
+      csprBalanceMotes: '0',
+      stakedBalance: 0,
+      delegatedBalance: 0,
+      undelegatingBalance: 0,
+      totalBalance: 0,
+      isLoading: false,
+      error: 'Could not fetch balance. Connect wallet to enable live data.',
+      lastUpdated: new Date(),
+      isLive: false,
+    }));
+  }, [publicKey, fetchBalanceFromProxy, fetchBalanceFromAPI]);
 
   // Fetch on mount and when publicKey changes
   useEffect(() => {
@@ -109,44 +195,89 @@ export const useBalance = (publicKey: string | null) => {
   };
 };
 
+// Fallback price (Dec 2024 data)
+const FALLBACK_PRICE = 0.0057;
+
 /**
- * Hook to get CSPR price via our API proxy (bypasses CORS)
+ * Hook to get CSPR price via CSPR.cloud API
+ * Uses CSPR.click proxy to bypass CORS
  */
 export const useCsprPrice = () => {
   const [priceData, setPriceData] = useState<PriceData>({
-    usdPrice: 0.0055,
-    usdChange24h: 2.3,
+    usdPrice: FALLBACK_PRICE,
+    usdChange24h: 0,
     isLoading: true,
     error: null,
     lastUpdated: null,
+    isLive: false,
   });
 
-  const fetchPrice = useCallback(async () => {
+  const fetchPriceFromProxy = useCallback(async () => {
+    if (!isProxyAvailable()) {
+      return null;
+    }
+
+    try {
+      const response = await csprCloudApi.getCurrentRate(1); // USD currency
+      return response.data.amount;
+    } catch (error) {
+      console.log('CSPR.cloud price fetch failed');
+      return null;
+    }
+  }, []);
+
+  const fetchPriceFromAPI = useCallback(async () => {
     try {
       const response = await fetch('/api/price');
       if (response.ok) {
         const data = await response.json();
-        setPriceData({
-          usdPrice: data.price || 0.0055,
-          usdChange24h: data.change24h || 0,
-          isLoading: false,
-          error: null,
-          lastUpdated: new Date(),
-        });
-      } else {
-        throw new Error('API error');
+        return data.price || null;
       }
     } catch (error) {
-      // Fallback to static data
+      console.log('API price fetch failed');
+    }
+    return null;
+  }, []);
+
+  const fetchPrice = useCallback(async () => {
+    // First try CSPR.cloud via proxy
+    const proxyPrice = await fetchPriceFromProxy();
+    if (proxyPrice) {
       setPriceData({
-        usdPrice: 0.0055,
-        usdChange24h: 2.3,
+        usdPrice: proxyPrice,
+        usdChange24h: 0, // Could calculate from historical rates
         isLoading: false,
         error: null,
         lastUpdated: new Date(),
+        isLive: true,
       });
+      return;
     }
-  }, []);
+
+    // Fallback to our API proxy
+    const apiPrice = await fetchPriceFromAPI();
+    if (apiPrice) {
+      setPriceData({
+        usdPrice: apiPrice,
+        usdChange24h: 0,
+        isLoading: false,
+        error: null,
+        lastUpdated: new Date(),
+        isLive: true,
+      });
+      return;
+    }
+
+    // Use fallback data
+    setPriceData({
+      usdPrice: FALLBACK_PRICE,
+      usdChange24h: 0,
+      isLoading: false,
+      error: null,
+      lastUpdated: new Date(),
+      isLive: false,
+    });
+  }, [fetchPriceFromProxy, fetchPriceFromAPI]);
 
   useEffect(() => {
     fetchPrice();
@@ -161,7 +292,8 @@ export const useCsprPrice = () => {
 };
 
 /**
- * Hook to fetch CSPR price history from CoinGecko (7 days)
+ * Hook to fetch CSPR price history
+ * Uses CSPR.cloud historical rates API via proxy
  */
 interface PriceHistoryPoint {
   timestamp: number;
@@ -177,6 +309,7 @@ interface PriceHistoryData {
   priceChangePercent: number;
   isLoading: boolean;
   error: string | null;
+  isLive: boolean;
 }
 
 export const useCsprPriceHistory = (days: number = 7) => {
@@ -188,6 +321,7 @@ export const useCsprPriceHistory = (days: number = 7) => {
     priceChangePercent: 0,
     isLoading: true,
     error: null,
+    isLive: false,
   });
 
   const generateFallbackHistory = useCallback((basePrice: number) => {
@@ -264,8 +398,58 @@ export const useCsprPriceHistory = (days: number = 7) => {
     return prices;
   }, [days]);
 
+  const fetchHistoryFromProxy = useCallback(async () => {
+    if (!isProxyAvailable()) {
+      return null;
+    }
+
+    try {
+      // Calculate date range
+      const now = new Date();
+      const to = now.toISOString();
+      const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+
+      const response = await csprCloudApi.getHistoricalRates(1, from, to);
+      if (response.data && response.data.length > 0) {
+        const prices: PriceHistoryPoint[] = response.data.map(rate => ({
+          timestamp: new Date(rate.created).getTime(),
+          price: rate.amount,
+          date: new Date(rate.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        }));
+        return prices;
+      }
+    } catch (error) {
+      console.log('CSPR.cloud historical rates fetch failed');
+    }
+    return null;
+  }, [days]);
+
   const fetchHistory = useCallback(async () => {
     setHistoryData(prev => ({ ...prev, isLoading: true }));
+
+    // First try CSPR.cloud via proxy
+    const proxyPrices = await fetchHistoryFromProxy();
+    if (proxyPrices && proxyPrices.length > 0) {
+      const priceValues = proxyPrices.map(p => p.price);
+      const minPrice = Math.min(...priceValues);
+      const maxPrice = Math.max(...priceValues);
+      const firstPrice = proxyPrices[0].price;
+      const lastPrice = proxyPrices[proxyPrices.length - 1].price;
+
+      setHistoryData({
+        prices: proxyPrices,
+        minPrice,
+        maxPrice,
+        priceChange: lastPrice - firstPrice,
+        priceChangePercent: firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0,
+        isLoading: false,
+        error: null,
+        isLive: true,
+      });
+      return;
+    }
+
+    // Fallback to our API proxy
     try {
       // days=0 means "max" (all time since CSPR creation)
       const daysParam = days === 0 ? 'max' : days;
@@ -273,17 +457,19 @@ export const useCsprPriceHistory = (days: number = 7) => {
       if (response.ok) {
         const data = await response.json();
         let prices = data.history || [];
+        let isLive = prices.length > 0;
 
         // If no history from API, generate fallback
         if (prices.length === 0) {
-          prices = generateFallbackHistory(data.price || 0.0055);
+          prices = generateFallbackHistory(data.price || FALLBACK_PRICE);
+          isLive = false;
         }
 
         const priceValues = prices.map((p: PriceHistoryPoint) => p.price);
         const minPrice = Math.min(...priceValues);
         const maxPrice = Math.max(...priceValues);
-        const firstPrice = prices[0]?.price || 0.0055;
-        const lastPrice = prices[prices.length - 1]?.price || 0.0055;
+        const firstPrice = prices[0]?.price || FALLBACK_PRICE;
+        const lastPrice = prices[prices.length - 1]?.price || FALLBACK_PRICE;
 
         setHistoryData({
           prices,
@@ -293,12 +479,13 @@ export const useCsprPriceHistory = (days: number = 7) => {
           priceChangePercent: firstPrice > 0 ? ((lastPrice - firstPrice) / firstPrice) * 100 : 0,
           isLoading: false,
           error: null,
+          isLive,
         });
       } else {
         throw new Error('API error');
       }
     } catch (error) {
-      const prices = generateFallbackHistory(0.0055);
+      const prices = generateFallbackHistory(FALLBACK_PRICE);
       const priceValues = prices.map(p => p.price);
       setHistoryData({
         prices,
@@ -308,9 +495,10 @@ export const useCsprPriceHistory = (days: number = 7) => {
         priceChangePercent: ((prices[prices.length - 1].price - prices[0].price) / prices[0].price) * 100,
         isLoading: false,
         error: null,
+        isLive: false,
       });
     }
-  }, [days, generateFallbackHistory]);
+  }, [days, generateFallbackHistory, fetchHistoryFromProxy]);
 
   useEffect(() => {
     fetchHistory();

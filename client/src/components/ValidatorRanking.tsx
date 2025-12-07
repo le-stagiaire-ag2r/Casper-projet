@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -311,35 +312,94 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
     }
   };
 
+  const fetchFromCsprCloud = useCallback(async (): Promise<Validator[] | null> => {
+    if (!isProxyAvailable()) {
+      console.log('CSPR.click proxy not available for validators');
+      return null;
+    }
+
+    try {
+      // First get current era from auction metrics
+      const metricsResponse = await csprCloudApi.getAuctionMetrics();
+      const currentEraId = metricsResponse.data.current_era_id;
+
+      // Fetch validators for current era
+      const validatorsResponse = await csprCloudApi.getValidators(currentEraId, 10);
+
+      return validatorsResponse.data.map((v) => {
+        // Extract name from account_info if available
+        const name = v.account_info?.info?.owner?.name ||
+                     `Validator ${v.public_key.substring(0, 8)}...`;
+
+        return {
+          publicKey: v.public_key,
+          name,
+          stake: motesToCSPR(v.total_stake),
+          delegators: v.delegators_number,
+          fee: v.fee,
+          isActive: v.is_active,
+        };
+      });
+    } catch (error) {
+      console.error('Failed to fetch validators from CSPR.cloud:', error);
+      return null;
+    }
+  }, []);
+
+  const fetchFromAPI = useCallback(async (): Promise<Validator[] | null> => {
+    try {
+      const response = await fetch('/api/validators?limit=10');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.validators?.length > 0) {
+          return data.validators.slice(0, 10).map((v: any) => ({
+            publicKey: v.publicKey || 'unknown',
+            name: v.name,
+            stake: v.stake,
+            delegators: v.delegators,
+            fee: v.fee,
+            isActive: v.isActive,
+          }));
+        }
+      }
+    } catch (error) {
+      console.log('API fallback failed for validators');
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     const fetchValidators = async () => {
-      try {
-        const response = await fetch('/api/validators?limit=10');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.validators?.length > 0) {
-            setValidators(data.validators.slice(0, 10).map((v: any) => ({
-              publicKey: v.publicKey || 'unknown', // Keep full key for copy
-              name: v.name,
-              stake: v.stake,
-              delegators: v.delegators,
-              fee: v.fee,
-              isActive: v.isActive,
-            })));
-            setIsLive(true);
-          }
-        }
-      } catch (error) {
-        console.log('Using fallback validator data');
-      } finally {
+      setIsLoading(true);
+
+      // First try CSPR.cloud via proxy (real live data)
+      const proxyValidators = await fetchFromCsprCloud();
+      if (proxyValidators && proxyValidators.length > 0) {
+        setValidators(proxyValidators);
+        setIsLive(true);
         setIsLoading(false);
+        return;
       }
+
+      // Fallback to our API proxy
+      const apiValidators = await fetchFromAPI();
+      if (apiValidators && apiValidators.length > 0) {
+        setValidators(apiValidators);
+        setIsLive(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // Use fallback data
+      setValidators(FALLBACK_VALIDATORS);
+      setIsLive(false);
+      setIsLoading(false);
     };
 
     fetchValidators();
     const interval = setInterval(fetchValidators, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchFromCsprCloud, fetchFromAPI]);
 
   const formatStake = (stake: number): string => {
     if (stake >= 1_000_000_000) {
