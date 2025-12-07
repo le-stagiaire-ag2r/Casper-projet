@@ -582,12 +582,12 @@ interface NetworkStats {
   csprPrice: number;
 }
 
-// Fallback stats when API fails
+// Fallback stats when API fails - Updated from cspr.live Dec 2024
 const FALLBACK_STATS: NetworkStats = {
-  totalStaked: 8_200_000_000, // ~8.2B CSPR staked
-  activeValidators: 100,
-  totalDelegators: 27000,
-  csprPrice: 0.012,
+  totalStaked: 6_971_726_448, // From cspr.live
+  activeValidators: 88, // Current active validators
+  totalDelegators: 27000, // Approximate
+  csprPrice: 0.0057, // From cspr.live
 };
 
 export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
