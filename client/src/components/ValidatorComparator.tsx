@@ -157,7 +157,32 @@ const ValidatorAddress = styled.div<{ $isDark: boolean }>`
   font-size: 0.7rem;
   color: ${props => props.$isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
   font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 `;
+
+const CopyButton = styled.button<{ $isDark: boolean }>`
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-size: 0.65rem;
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'};
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.$isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+    color: ${props => props.$isDark ? '#fff' : '#000'};
+  }
+`;
+
+// Standardized public key format: 01ab...cdef (6 + 4)
+const formatPublicKey = (key: string): string => {
+  if (!key || key.length < 12) return key;
+  return `${key.substring(0, 6)}...${key.substring(key.length - 4)}`;
+};
 
 const StatsGrid = styled.div`
   display: flex;
@@ -302,6 +327,17 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
   const [isLive, setIsLive] = useState(false);
   const [validator1Index, setValidator1Index] = useState(0);
   const [validator2Index, setValidator2Index] = useState(1);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyToClipboard = async (key: string) => {
+    try {
+      await navigator.clipboard.writeText(key);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   // Fallback data when API fails - updated Dec 2024
   const FALLBACK_VALIDATORS: Validator[] = [
@@ -323,7 +359,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
           const data = await response.json();
           if (data.validators?.length > 0) {
             setValidators(data.validators.map((v: any) => ({
-              publicKey: v.publicKey?.substring(0, 10) + '...' || 'unknown',
+              publicKey: v.publicKey || 'unknown', // Keep full key for copy
               name: v.name,
               totalStake: v.stake,
               delegatorsCount: v.delegators,
@@ -501,7 +537,14 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
             <ValidatorInfo>
               <ValidatorName $isDark={isDark}>{validator1.name}</ValidatorName>
               <ValidatorAddress $isDark={isDark}>
-                {validator1.publicKey.substring(0, 12)}...
+                {formatPublicKey(validator1.publicKey)}
+                <CopyButton
+                  $isDark={isDark}
+                  onClick={() => copyToClipboard(validator1.publicKey)}
+                  title="Copy full address"
+                >
+                  {copiedKey === validator1.publicKey ? '✓' : '📋'}
+                </CopyButton>
               </ValidatorAddress>
             </ValidatorInfo>
           </ValidatorHeader>
@@ -527,7 +570,14 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
             <ValidatorInfo>
               <ValidatorName $isDark={isDark}>{validator2.name}</ValidatorName>
               <ValidatorAddress $isDark={isDark}>
-                {validator2.publicKey.substring(0, 12)}...
+                {formatPublicKey(validator2.publicKey)}
+                <CopyButton
+                  $isDark={isDark}
+                  onClick={() => copyToClipboard(validator2.publicKey)}
+                  title="Copy full address"
+                >
+                  {copiedKey === validator2.publicKey ? '✓' : '📋'}
+                </CopyButton>
               </ValidatorAddress>
             </ValidatorInfo>
           </ValidatorHeader>
