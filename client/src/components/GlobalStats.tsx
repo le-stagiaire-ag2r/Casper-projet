@@ -207,9 +207,16 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
       const metricsResponse = await csprCloudApi.getAuctionMetrics();
       const metrics = metricsResponse.data;
 
-      // Fetch supply data
-      const supplyResponse = await csprCloudApi.getSupply();
-      const supply = supplyResponse.data;
+      // Fetch supply data (may fail on some networks)
+      let circulatingSupply = FALLBACK_STATS.circulatingSupply;
+      try {
+        const supplyResponse = await csprCloudApi.getSupply();
+        if (supplyResponse?.data?.circulating) {
+          circulatingSupply = supplyResponse.data.circulating;
+        }
+      } catch (e) {
+        console.log('Supply fetch failed, using fallback');
+      }
 
       // Fetch current CSPR price
       let csprPrice = FALLBACK_STATS.csprPrice;
@@ -233,7 +240,6 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
       }
 
       const totalStaked = motesToCSPR(metrics.total_active_era_stake);
-      const circulatingSupply = supply.circulating;
       const stakingRatio = (totalStaked / circulatingSupply) * 100;
 
       return {
