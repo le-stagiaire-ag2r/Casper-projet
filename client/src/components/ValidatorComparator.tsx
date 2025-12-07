@@ -233,6 +233,18 @@ const DataSource = styled.div<{ $isDark: boolean }>`
   text-align: center;
 `;
 
+const LiveBadge = styled.span<{ $isLive: boolean }>`
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: 600;
+  background: ${props => props.$isLive
+    ? 'rgba(48, 209, 88, 0.15)'
+    : 'rgba(255, 159, 10, 0.15)'};
+  color: ${props => props.$isLive ? '#30d158' : '#ff9f0a'};
+`;
+
 interface Validator {
   publicKey: string;
   name: string;
@@ -287,24 +299,55 @@ const getValidatorIcon = (name: string, index: number): string => {
 export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark }) => {
   const [validators, setValidators] = useState<Validator[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLive, setIsLive] = useState(false);
   const [validator1Index, setValidator1Index] = useState(0);
   const [validator2Index, setValidator2Index] = useState(1);
 
-  // Real validator data from cspr.live (API calls fail due to CORS)
+  // Fallback data when API fails - updated Dec 2024
+  const FALLBACK_VALIDATORS: Validator[] = [
+    { publicKey: '01c377da...', name: 'Casper Association', totalStake: 1_100_000_000, delegatorsCount: 1200, fee: 3, isActive: true, selfStake: 125_000_000, networkShare: 13.5 },
+    { publicKey: '01922d7c...', name: 'Casper Staking', totalStake: 760_000_000, delegatorsCount: 1200, fee: 0, isActive: true, selfStake: 35_000_000, networkShare: 9.2 },
+    { publicKey: '01bf4c7d...', name: 'Everstake', totalStake: 450_000_000, delegatorsCount: 960, fee: 10, isActive: true, selfStake: 25_000_000, networkShare: 5.5 },
+    { publicKey: '017d96b9...', name: 'HashQuark', totalStake: 312_000_000, delegatorsCount: 850, fee: 5, isActive: true, selfStake: 20_000_000, networkShare: 3.8 },
+    { publicKey: '01a6901e...', name: 'BitCat', totalStake: 285_000_000, delegatorsCount: 720, fee: 8, isActive: true, selfStake: 18_000_000, networkShare: 3.5 },
+    { publicKey: '01d63a92...', name: 'Make Software', totalStake: 250_000_000, delegatorsCount: 680, fee: 5, isActive: true, selfStake: 15_000_000, networkShare: 3.0 },
+    { publicKey: '01f35e7c...', name: 'CasperLabs', totalStake: 230_000_000, delegatorsCount: 620, fee: 5, isActive: true, selfStake: 12_000_000, networkShare: 2.8 },
+    { publicKey: '01b82a3d...', name: 'Stake.Fish', totalStake: 195_000_000, delegatorsCount: 540, fee: 10, isActive: true, selfStake: 10_000_000, networkShare: 2.4 },
+  ];
+
   useEffect(() => {
-    // Using real Casper mainnet validator data
-    setValidators([
-      { publicKey: '01c377da...', name: 'Casper Delegation', totalStake: 1_083_531_006, delegatorsCount: 1199, fee: 3, isActive: true, selfStake: 50_000_000, networkShare: 15.5 },
-      { publicKey: '01922d7c...', name: 'Casper Staking', totalStake: 759_525_017, delegatorsCount: 1200, fee: 0, isActive: true, selfStake: 35_000_000, networkShare: 10.9 },
-      { publicKey: '01bf4c7d...', name: 'Everstake', totalStake: 450_051_366, delegatorsCount: 960, fee: 10, isActive: true, selfStake: 25_000_000, networkShare: 6.4 },
-      { publicKey: '017d96b9...', name: 'HashQuark', totalStake: 312_000_000, delegatorsCount: 850, fee: 5, isActive: true, selfStake: 20_000_000, networkShare: 4.5 },
-      { publicKey: '01a6901e...', name: 'BitCat', totalStake: 285_000_000, delegatorsCount: 720, fee: 8, isActive: true, selfStake: 18_000_000, networkShare: 4.1 },
-      { publicKey: '01d63a92...', name: 'Make Software', totalStake: 250_000_000, delegatorsCount: 680, fee: 5, isActive: true, selfStake: 15_000_000, networkShare: 3.6 },
-      { publicKey: '01f35e7c...', name: 'CasperLabs', totalStake: 230_000_000, delegatorsCount: 620, fee: 5, isActive: true, selfStake: 12_000_000, networkShare: 3.3 },
-      { publicKey: '01b82a3d...', name: 'Stake.Fish', totalStake: 195_000_000, delegatorsCount: 540, fee: 10, isActive: true, selfStake: 10_000_000, networkShare: 2.8 },
-    ]);
-    setLoading(false);
+    const fetchValidators = async () => {
+      try {
+        const response = await fetch('/api/validators?limit=50');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.validators?.length > 0) {
+            setValidators(data.validators.map((v: any) => ({
+              publicKey: v.publicKey?.substring(0, 10) + '...' || 'unknown',
+              name: v.name,
+              totalStake: v.stake,
+              delegatorsCount: v.delegators,
+              fee: v.fee,
+              isActive: v.isActive,
+              selfStake: v.selfStake || 0,
+              networkShare: v.networkShare || 0,
+            })));
+            setIsLive(true);
+          } else {
+            setValidators(FALLBACK_VALIDATORS);
+          }
+        } else {
+          setValidators(FALLBACK_VALIDATORS);
+        }
+      } catch (error) {
+        console.log('Using fallback validator data');
+        setValidators(FALLBACK_VALIDATORS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchValidators();
   }, []);
 
   const validator1 = validators[validator1Index];
@@ -409,10 +452,11 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
       <Header>
         <Title $isDark={isDark}>
           ⚖️ Validator Comparator
+          <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
         </Title>
         <Subtitle $isDark={isDark}>
-          Compare real Casper validators side-by-side
-          {error && <span style={{ color: '#ff9500' }}> (using cached data)</span>}
+          Compare Casper validators side-by-side
+          {!isLive && <span style={{ color: '#ff9f0a' }}> (fallback data)</span>}
         </Subtitle>
       </Header>
 
@@ -424,7 +468,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
             onChange={(e) => setValidator1Index(Number(e.target.value))}
           >
             {validators.map((v, i) => (
-              <option key={v.publicKey} value={i}>
+              <option key={v.publicKey} value={i} disabled={i === validator2Index}>
                 {getValidatorIcon(v.name, i)} {v.name}
               </option>
             ))}
@@ -440,7 +484,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
             onChange={(e) => setValidator2Index(Number(e.target.value))}
           >
             {validators.map((v, i) => (
-              <option key={v.publicKey} value={i}>
+              <option key={v.publicKey} value={i} disabled={i === validator1Index}>
                 {getValidatorIcon(v.name, i)} {v.name}
               </option>
             ))}
@@ -512,7 +556,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
       </SummarySection>
 
       <DataSource $isDark={isDark}>
-        📡 Data from Casper Mainnet (cspr.live)
+        {isLive ? '📡 Live data from Casper Mainnet' : '⚠️ Demo data - API unavailable'}
       </DataSource>
     </Container>
   );
