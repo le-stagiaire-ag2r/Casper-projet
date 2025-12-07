@@ -169,7 +169,30 @@ const ValidatorAddress = styled.div<{ $isDark: boolean }>`
     ? 'rgba(255, 255, 255, 0.4)'
     : 'rgba(0, 0, 0, 0.4)'};
   font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
+
+const CopyButton = styled.button<{ $isDark: boolean }>`
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  font-size: 10px;
+  color: ${props => props.$isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: ${props => props.$isDark ? '#fff' : '#000'};
+  }
+`;
+
+// Standardized public key format: 01ab...cdef (6 + 4)
+const formatPublicKey = (key: string): string => {
+  if (!key || key.length < 12) return key;
+  return `${key.substring(0, 6)}...${key.substring(key.length - 4)}`;
+};
 
 const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   font-size: 13px;
@@ -276,6 +299,17 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
   const [validators, setValidators] = useState<Validator[]>(FALLBACK_VALIDATORS);
   const [isLoading, setIsLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const copyToClipboard = async (key: string) => {
+    try {
+      await navigator.clipboard.writeText(key);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchValidators = async () => {
@@ -285,7 +319,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
           const data = await response.json();
           if (data.validators?.length > 0) {
             setValidators(data.validators.slice(0, 10).map((v: any) => ({
-              publicKey: v.publicKey?.substring(0, 12) + '...' || 'unknown',
+              publicKey: v.publicKey || 'unknown', // Keep full key for copy
               name: v.name,
               stake: v.stake,
               delegators: v.delegators,
@@ -346,7 +380,16 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
             <ValidatorInfo>
               <ValidatorName $isDark={isDark}>{validator.name}</ValidatorName>
               <ValidatorAddress $isDark={isDark}>
-                {validator.publicKey}
+                {formatPublicKey(validator.publicKey)}
+                {isLive && (
+                  <CopyButton
+                    $isDark={isDark}
+                    onClick={() => copyToClipboard(validator.publicKey)}
+                    title="Copy full address"
+                  >
+                    {copiedKey === validator.publicKey ? '✓' : '📋'}
+                  </CopyButton>
+                )}
               </ValidatorAddress>
             </ValidatorInfo>
             <StatValue $isDark={isDark}>
