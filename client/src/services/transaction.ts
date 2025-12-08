@@ -16,6 +16,7 @@ import {
   ExecutableDeployItem,
   StoredContractByHash,
   ContractHash,
+  URef,
 } from 'casper-js-sdk';
 
 // Get runtime config
@@ -50,16 +51,48 @@ const getContractHashHex = (): string => {
 };
 
 /**
+ * Parse URef string from CSPR.cloud format
+ * Format: uref-{64 hex chars}-{3 digit access rights}
+ * Example: uref-bb9f47c30ddbe192438fad10b7db8200247529d6592af7159d92c5f3aa7716a1-007
+ */
+export const parseURefString = (urefStr: string): URef | null => {
+  try {
+    // Parse format: uref-{64 hex chars}-{access rights}
+    const parts = urefStr.split('-');
+    if (parts.length !== 3 || parts[0] !== 'uref') {
+      console.error('Invalid URef format:', urefStr);
+      return null;
+    }
+
+    const hexBytes = parts[1];
+    const accessRights = parseInt(parts[2], 8); // Access rights are in octal
+
+    // Convert hex string to Uint8Array
+    const bytes = new Uint8Array(hexBytes.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+
+    // Create URef with bytes and access rights
+    return new URef(bytes, accessRights);
+  } catch (error) {
+    console.error('Failed to parse URef:', error);
+    return null;
+  }
+};
+
+/**
  * Build a Stake Transaction using Deploy.makeDeploy pattern
  *
  * This pattern is from the official V2→V5 migration guide:
  * - Uses ExecutableDeployItem and StoredContractByHash
  * - Compatible with Casper Network (both 1.x and 2.x)
  * - Serializes deploy with toJSON() for CSPR.click compatibility
+ *
+ * V6.1: If sourcePurse is provided and use_real_transfers is enabled,
+ * real CSPR will be transferred from the user's purse to the contract.
  */
 export const buildStakeTransaction = (
   senderPublicKeyHex: string,
-  amountCspr: string
+  amountCspr: string,
+  sourcePurse?: string // Optional: user's main_purse_uref for real transfers
 ): { deploy: any } => {
   // Validate inputs
   if (!senderPublicKeyHex) {
@@ -75,9 +108,22 @@ export const buildStakeTransaction = (
   const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR default
 
   // Build runtime arguments for 'stake' entry point
-  const args = Args.fromMap({
+  const argsMap: Record<string, CLValue> = {
     amount: CLValue.newCLUInt512(amountMotes),
-  });
+  };
+
+  // V6.1: Add source_purse if real transfers are enabled
+  if (config.use_real_transfers && sourcePurse) {
+    const parsedURef = parseURefString(sourcePurse);
+    if (parsedURef) {
+      argsMap.source_purse = CLValue.newCLUref(parsedURef);
+      console.log('Building stake transaction with real transfer from purse:', sourcePurse);
+    } else {
+      console.warn('Failed to parse source purse, falling back to demo mode');
+    }
+  }
+
+  const args = Args.fromMap(argsMap);
 
   // Build session using StoredContractByHash (V5 pattern)
   const session = new ExecutableDeployItem();
@@ -106,10 +152,14 @@ export const buildStakeTransaction = (
 /**
  * Build an Unstake Transaction
  * Serializes deploy with toJSON() for CSPR.click compatibility
+ *
+ * V6.1: If destPurse is provided and use_real_transfers is enabled,
+ * real CSPR will be transferred from the contract to the user's purse.
  */
 export const buildUnstakeTransaction = (
   senderPublicKeyHex: string,
-  amountCspr: string
+  amountCspr: string,
+  destPurse?: string // Optional: user's main_purse_uref for real transfers
 ): { deploy: any } => {
   // Validate inputs
   if (!senderPublicKeyHex) {
@@ -125,9 +175,22 @@ export const buildUnstakeTransaction = (
   const paymentMotes = config.transaction_payment || '5000000000';
 
   // Build runtime arguments for 'unstake' entry point
-  const args = Args.fromMap({
+  const argsMap: Record<string, CLValue> = {
     amount: CLValue.newCLUInt512(amountMotes),
-  });
+  };
+
+  // V6.1: Add dest_purse if real transfers are enabled
+  if (config.use_real_transfers && destPurse) {
+    const parsedURef = parseURefString(destPurse);
+    if (parsedURef) {
+      argsMap.dest_purse = CLValue.newCLUref(parsedURef);
+      console.log('Building unstake transaction with real transfer to purse:', destPurse);
+    } else {
+      console.warn('Failed to parse dest purse, falling back to demo mode');
+    }
+  }
+
+  const args = Args.fromMap(argsMap);
 
   // Build session
   const session = new ExecutableDeployItem();
