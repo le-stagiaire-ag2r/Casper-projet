@@ -6,7 +6,6 @@ import {
   csprToMotes,
   motesToCspr,
 } from '../services/transaction';
-import { csprCloudApi, isProxyAvailable } from '../services/csprCloud';
 
 export interface StakingResult {
   success: boolean;
@@ -117,27 +116,10 @@ export const useStaking = () => {
     });
 
     try {
-      // V6.1: Fetch user's purse for real transfers
-      let userPurse: string | undefined;
-      if (window.config?.use_real_transfers && isProxyAvailable()) {
-        try {
-          setTransactionState((prev) => ({
-            ...prev,
-            status: 'Fetching wallet purse...',
-          }));
-          const accountInfo = await csprCloudApi.getAccount(activeAccount.publicKey);
-          userPurse = accountInfo.data.main_purse_uref;
-          console.log('User purse fetched:', userPurse);
-        } catch (purseError) {
-          console.warn('Failed to fetch purse, falling back to demo mode:', purseError);
-        }
-      }
-
-      // Build the stake transaction (with purse for V6.1 real transfers)
+      // Build the stake transaction
       const transaction = buildStakeTransaction(
         activeAccount.publicKey,
-        amountCspr,
-        userPurse
+        amountCspr
       );
 
       setTransactionState((prev) => ({
@@ -243,27 +225,10 @@ export const useStaking = () => {
     });
 
     try {
-      // V6.1: Fetch user's purse for real transfers
-      let userPurse: string | undefined;
-      if (window.config?.use_real_transfers && isProxyAvailable()) {
-        try {
-          setTransactionState((prev) => ({
-            ...prev,
-            status: 'Fetching wallet purse...',
-          }));
-          const accountInfo = await csprCloudApi.getAccount(activeAccount.publicKey);
-          userPurse = accountInfo.data.main_purse_uref;
-          console.log('User purse fetched for unstake:', userPurse);
-        } catch (purseError) {
-          console.warn('Failed to fetch purse, falling back to demo mode:', purseError);
-        }
-      }
-
-      // Build the unstake transaction (with purse for V6.1 real transfers)
+      // Build the unstake transaction
       const transaction = buildUnstakeTransaction(
         activeAccount.publicKey,
-        amountCspr,
-        userPurse
+        amountCspr
       );
 
       setTransactionState((prev) => ({
