@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { useCsprPrice } from '../hooks/useBalance';
 import { useBalanceContext } from '../context/BalanceContext';
 import { PriceChart } from './PriceChart';
 import { Tooltip } from './Tooltip';
-import { csprCloudApi, isProxyAvailable } from '../services/csprCloud';
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -247,45 +246,25 @@ const PriceChartWrapper = styled.div`
   margin-top: 24px;
 `;
 
-const FALLBACK_APY = 0.12; // 12% fallback
+const FIXED_APY = 0.17; // Fixed 17% APY (network average)
 
 export const Dashboard: React.FC = () => {
   const { activeAccount } = useCsprClick();
   const theme = useTheme() as any;
   const isDark = theme?.mode === 'dark';
   const [loading, setLoading] = useState(true);
-  const [networkAPY, setNetworkAPY] = useState(FALLBACK_APY);
-  const [isAPYLive, setIsAPYLive] = useState(false);
 
   // Use shared balance context
   const { csprBalance, stCsprBalance, isLoading: balanceLoading, isRealBalance } = useBalanceContext();
   const { usdPrice, usdChange24h, isLoading: priceLoading } = useCsprPrice();
 
-  // Fetch real APY from CSPR.cloud
-  const fetchAPY = useCallback(async () => {
-    if (!isProxyAvailable()) {
-      return;
-    }
-
-    try {
-      const apy = await csprCloudApi.calculateNetworkAPY();
-      if (apy > 0) {
-        setNetworkAPY(apy / 100); // Convert percentage to decimal
-        setIsAPYLive(true);
-      }
-    } catch (error) {
-      console.log('Failed to fetch APY, using fallback');
-    }
-  }, []);
-
   useEffect(() => {
-    fetchAPY();
     const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
-  }, [fetchAPY]);
+  }, []);
 
-  // Calculate estimated rewards
-  const estimatedYearlyRewards = stCsprBalance * networkAPY;
+  // Calculate estimated rewards with fixed APY
+  const estimatedYearlyRewards = stCsprBalance * FIXED_APY;
 
   return (
     <>
@@ -350,7 +329,7 @@ export const Dashboard: React.FC = () => {
                 +{estimatedYearlyRewards.toFixed(1)} CSPR
               </PortfolioValue>
               <PortfolioSubtext $isDark={isDark}>
-                At ~{(networkAPY * 100).toFixed(1)}% APY {isAPYLive && <span style={{ color: '#30d158', fontSize: '9px' }}>LIVE</span>}
+                At ~{(FIXED_APY * 100).toFixed(0)}% APY
               </PortfolioSubtext>
             </PortfolioCard>
 
@@ -414,15 +393,11 @@ export const Dashboard: React.FC = () => {
         <CardIcon>📈</CardIcon>
         <CardTitle $isDark={isDark}>
           Staking APY
-          <DemoTag $isDark={isDark} style={isAPYLive ? { background: 'rgba(48, 209, 88, 0.15)', color: '#30d158' } : {}}>
-            {isAPYLive ? 'Live' : 'Demo'}
-          </DemoTag>
         </CardTitle>
         <CardValue $isDark={isDark}>
-          ~{(networkAPY * 100).toFixed(1)}%
-          {!isAPYLive && <APYBadge>EST.</APYBadge>}
+          ~{(FIXED_APY * 100).toFixed(0)}%
         </CardValue>
-        <CardSubtext $isDark={isDark}>Casper Network {isAPYLive ? 'Current' : 'Average'}</CardSubtext>
+        <CardSubtext $isDark={isDark}>Casper Network Average</CardSubtext>
       </Card>
 
       <Card $isDark={isDark}>
