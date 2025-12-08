@@ -1,6 +1,5 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import styled, { keyframes, useTheme, css } from 'styled-components';
-import { csprCloudApi, isProxyAvailable } from '../services/csprCloud';
 
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
@@ -435,27 +434,7 @@ export const StakingCalculator: React.FC = () => {
 
   const [stakeAmount, setStakeAmount] = useState<string>('1000');
   const [stakingPeriod, setStakingPeriod] = useState<number>(12); // months
-  const [selectedAPY, setSelectedAPY] = useState<number>(12); // Default, will be updated
-  const [isAPYLive, setIsAPYLive] = useState(false);
-
-  // Fetch real APY from CSPR.cloud
-  const fetchAPY = useCallback(async () => {
-    if (!isProxyAvailable()) return;
-
-    try {
-      const apy = await csprCloudApi.calculateNetworkAPY();
-      if (apy > 0) {
-        setSelectedAPY(Math.round(apy));
-        setIsAPYLive(true);
-      }
-    } catch (error) {
-      console.log('Failed to fetch APY for calculator');
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAPY();
-  }, [fetchAPY]);
+  const [selectedAPY, setSelectedAPY] = useState<number>(17); // Fixed 17% network average
 
   const apySliderPercent = ((selectedAPY - 1) / 99) * 100;
 
@@ -522,7 +501,6 @@ export const StakingCalculator: React.FC = () => {
         <SliderHeader>
           <Label $isDark={isDark}>
             Expected APY: <strong>{selectedAPY}%</strong>
-            {isAPYLive && <span style={{ marginLeft: '8px', fontSize: '10px', color: '#30d158', fontWeight: 600 }}>LIVE</span>}
           </Label>
         </SliderHeader>
         <SliderTrack $isDark={isDark}>
@@ -538,7 +516,7 @@ export const StakingCalculator: React.FC = () => {
         </SliderTrack>
         <SliderLabels>
           <SliderLabel $isDark={isDark}>1%</SliderLabel>
-          <SliderLabel $isDark={isDark}>{isAPYLive ? `~${selectedAPY}% live` : '~12% avg'}</SliderLabel>
+          <SliderLabel $isDark={isDark}>~17% avg</SliderLabel>
           <SliderLabel $isDark={isDark}>100%</SliderLabel>
         </SliderLabels>
       </SliderContainer>
@@ -663,7 +641,7 @@ export const StakingCalculator: React.FC = () => {
       <Disclaimer $isDark={isDark}>
         <DisclaimerIcon>💡</DisclaimerIcon>
         <span>
-          Calculation based on {selectedAPY}% APY{isAPYLive ? ' (live network rate)' : ''}. Rewards compound automatically.
+          Calculation based on {selectedAPY}% APY. Rewards compound automatically.
           Actual returns may vary based on validator choice and network conditions.
         </span>
       </Disclaimer>
