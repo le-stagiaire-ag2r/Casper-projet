@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useCsprClick } from '../hooks/useCsprClick';
+import { csprCloudApi, isProxyAvailable } from '../services/csprCloud';
 
 interface BalanceContextType {
   csprBalance: number;
@@ -99,24 +100,27 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAccount?.publicKey, clickRef]);
 
-  // Fallback: Fetch from CSPR.cloud API
+  // Fallback: Fetch from CSPR.cloud API via proxy
   const fetchFromCsprCloud = async () => {
     if (!activeAccount?.publicKey) return;
 
-    try {
-      const response = await fetch(
-        `https://api.testnet.cspr.cloud/accounts/${activeAccount.publicKey}`,
-        { headers: { 'Accept': 'application/json' } }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const balanceMotes = data.data?.balance || data.balance || '0';
-        const balanceCSPR = parseInt(balanceMotes) / 1_000_000_000;
-        setCsprBalance(balanceCSPR);
-        setIsRealBalance(true);
-        console.log('CSPR.cloud balance fetched:', balanceCSPR, 'CSPR');
+    // Check if proxy is available
+    if (!isProxyAvailable()) {
+      console.log('CSPR.click proxy not available, using demo balance');
+      if (csprBalance === 0) {
+        setCsprBalance(1000); // Demo fallback
+        setIsRealBalance(false);
       }
+      return;
+    }
+
+    try {
+      const response = await csprCloudApi.getAccount(activeAccount.publicKey);
+      const balanceMotes = response.data?.balance || '0';
+      const balanceCSPR = parseInt(balanceMotes) / 1_000_000_000;
+      setCsprBalance(balanceCSPR);
+      setIsRealBalance(true);
+      console.log('CSPR.cloud balance fetched via proxy:', balanceCSPR, 'CSPR');
     } catch (error) {
       console.error('Failed to fetch from CSPR.cloud:', error);
       // Keep existing balance or set demo

@@ -46,6 +46,17 @@ const Title = styled.h3<{ $isDark: boolean }>`
   margin: 0 0 4px 0;
 `;
 
+const Badge = styled.span<{ $isLive?: boolean }>`
+  background: ${props => props.$isLive
+    ? 'linear-gradient(135deg, #30d158, #28a745)'
+    : 'linear-gradient(135deg, #ff9f0a, #ffaa00)'};
+  color: ${props => props.$isLive ? '#fff' : '#1a1a2e'};
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+`;
+
 const Subtitle = styled.span<{ $isDark: boolean }>`
   font-size: 12px;
   color: ${props => props.$isDark
@@ -272,7 +283,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
   const [selectedDays, setSelectedDays] = useState(7);
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; price: number; date: string } | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
-  const { prices, minPrice, maxPrice, priceChangePercent, isLoading, error } = useCsprPriceHistory(selectedDays);
+  const { prices, minPrice, maxPrice, priceChangePercent, isLoading, error, isLive } = useCsprPriceHistory(selectedDays);
   const { usdPrice } = useCsprPrice();
 
   const isPositive = priceChangePercent >= 0;
@@ -357,6 +368,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
         <TitleSection>
           <Title $isDark={isDark}>
             📈 CSPR Price
+            <Badge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</Badge>
           </Title>
           <TimeframeButtons>
             {TIMEFRAMES.map(tf => (
