@@ -15,7 +15,7 @@ use alloc::{
 };
 
 use casper_contract::{
-    contract_api::{runtime, storage},
+    contract_api::{runtime, storage, system},
     unwrap_or_revert::UnwrapOrRevert,
 };
 
@@ -58,6 +58,10 @@ const NEXT_VALIDATOR_INDEX_KEY: &str = "next_validator_index"; // Round-robin in
 const MAX_VALIDATORS: u32 = 10;                         // Maximum validators allowed
 const MIN_STAKE_AMOUNT: u64 = 500_000_000_000;          // 500 CSPR minimum stake
 
+// V6.1: Real CSPR Transfers
+// Contract purse to hold staked CSPR
+const CONTRACT_PURSE_KEY: &str = "contract_purse";
+
 /// Helper function to get user stake key
 fn get_user_stake_key(account: &AccountHash) -> String {
     format!("user_stake_{}", account)
@@ -78,6 +82,13 @@ fn get_validator_stake_key(validator: &PublicKey) -> String {
     format!("validator_stake_{}", validator.to_hex())
 }
 
+/// V6.1: Get the contract purse for holding staked CSPR
+fn get_contract_purse() -> URef {
+    runtime::get_key(CONTRACT_PURSE_KEY)
+        .unwrap_or_revert_with(ApiError::MissingKey)
+        .into_uref()
+        .unwrap_or_revert_with(ApiError::UnexpectedKeyVariant)
+}
 
 /// V4.0: Get the admin account
 fn get_admin() -> AccountHash {
@@ -182,13 +193,27 @@ fn untrack_validator_stake(validator: PublicKey, amount: U512) {
 }
 
 /// Entry point to stake CSPR
+/// V6.1: Accepts optional source_purse for real CSPR transfers
 #[no_mangle]
 pub extern "C" fn stake() {
     // Get the amount parameter
     let amount: U512 = runtime::get_named_arg(STAKED_AMOUNT_KEY);
 
+    // V6.1: Get optional source_purse for real transfers
+    // If provided, real CSPR will be transferred from user's purse to contract
+    let source_purse: Option<URef> = runtime::get_named_arg("source_purse");
+
     // Get caller address
     let caller = runtime::get_caller();
+
+    // V6.1: If source_purse is provided, transfer real CSPR
+    if let Some(user_purse) = source_purse {
+        let contract_purse = get_contract_purse();
+
+        // Transfer CSPR from user's purse to contract purse
+        system::transfer_from_purse_to_purse(user_purse, contract_purse, amount, None)
+            .unwrap_or_revert_with(ApiError::User(220)); // Transfer failed
+    }
 
     // For v2, we track when users staked (block number for simplicity)
     // In production, this would be more sophisticated
@@ -254,10 +279,15 @@ pub extern "C" fn stake() {
 }
 
 /// Entry point to unstake CSPR
+/// V6.1: Accepts optional dest_purse for real CSPR transfers
 #[no_mangle]
 pub extern "C" fn unstake() {
     // Get the amount parameter
     let amount: U512 = runtime::get_named_arg(STAKED_AMOUNT_KEY);
+
+    // V6.1: Get optional dest_purse for real transfers
+    // If provided, real CSPR will be transferred from contract to user's purse
+    let dest_purse: Option<URef> = runtime::get_named_arg("dest_purse");
 
     // Get caller address
     let caller = runtime::get_caller();
@@ -359,6 +389,15 @@ pub extern "C" fn unstake() {
 
         // Update internal tracking for the validator with most stake
         untrack_validator_stake(max_validator, amount);
+    }
+
+    // V6.1: If dest_purse is provided, transfer real CSPR back to user
+    if let Some(user_purse) = dest_purse {
+        let contract_purse = get_contract_purse();
+
+        // Transfer CSPR from contract purse to user's purse
+        system::transfer_from_purse_to_purse(contract_purse, user_purse, amount, None)
+            .unwrap_or_revert_with(ApiError::User(221)); // Unstake transfer failed
     }
 }
 
@@ -649,6 +688,18 @@ pub extern "C" fn get_validator_stake() {
     runtime::ret(typed_result);
 }
 
+/// V6.1: Get the contract's CSPR balance
+/// Returns the amount of real CSPR held in the contract purse
+#[no_mangle]
+pub extern "C" fn get_contract_balance() {
+    let contract_purse = get_contract_purse();
+    let balance = system::get_purse_balance(contract_purse)
+        .unwrap_or_revert_with(ApiError::User(222)); // Failed to get balance
+
+    let typed_result = CLValue::from_t(balance).unwrap_or_revert();
+    runtime::ret(typed_result);
+}
+
 /// Contract installation entry point
 #[no_mangle]
 pub extern "C" fn call() {
@@ -666,6 +717,9 @@ pub extern "C" fn call() {
     let total_validators_start = storage::new_uref(0u32);
     let next_validator_index_start = storage::new_uref(0u32);
 
+    // V6.1: Create contract purse to hold staked CSPR
+    let contract_purse = system::create_purse();
+
     // Setup named keys
     let mut contract_named_keys = NamedKeys::new();
     contract_named_keys.insert(String::from(TOTAL_STAKED_KEY), total_staked_start.into());
@@ -677,23 +731,34 @@ pub extern "C" fn call() {
     contract_named_keys.insert(String::from(TOTAL_VALIDATORS_KEY), total_validators_start.into());
     contract_named_keys.insert(String::from(NEXT_VALIDATOR_INDEX_KEY), next_validator_index_start.into());
 
+    // V6.1: Add contract purse for real CSPR transfers
+    contract_named_keys.insert(String::from(CONTRACT_PURSE_KEY), contract_purse.into());
+
     // Create entry points
     let mut entry_points = EntryPoints::new();
 
-    // stake(amount: U512)
+    // stake(amount: U512, source_purse: Option<URef>)
+    // V6.1: Added optional source_purse for real CSPR transfers
     entry_points.add_entry_point(EntryPoint::new(
         "stake",
-        vec![Parameter::new(STAKED_AMOUNT_KEY, CLType::U512)],
+        vec![
+            Parameter::new(STAKED_AMOUNT_KEY, CLType::U512),
+            Parameter::new("source_purse", CLType::Option(Box::new(CLType::URef))),
+        ],
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
         EntryPointPayment::Caller,
     ));
 
-    // unstake(amount: U512)
+    // unstake(amount: U512, dest_purse: Option<URef>)
+    // V6.1: Added optional dest_purse for real CSPR transfers
     entry_points.add_entry_point(EntryPoint::new(
         "unstake",
-        vec![Parameter::new(STAKED_AMOUNT_KEY, CLType::U512)],
+        vec![
+            Parameter::new(STAKED_AMOUNT_KEY, CLType::U512),
+            Parameter::new("dest_purse", CLType::Option(Box::new(CLType::URef))),
+        ],
         CLType::Unit,
         EntryPointAccess::Public,
         EntryPointType::Called,
@@ -847,6 +912,17 @@ pub extern "C" fn call() {
     entry_points.add_entry_point(EntryPoint::new(
         "get_validator_stake",
         vec![Parameter::new("validator", CLType::PublicKey)],
+        CLType::U512,
+        EntryPointAccess::Public,
+        EntryPointType::Called,
+        EntryPointPayment::Caller,
+    ));
+
+    // V6.1: get_contract_balance() -> U512
+    // Returns the real CSPR balance held in the contract
+    entry_points.add_entry_point(EntryPoint::new(
+        "get_contract_balance",
+        Vec::new(),
         CLType::U512,
         EntryPointAccess::Public,
         EntryPointType::Called,
