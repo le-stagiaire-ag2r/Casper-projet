@@ -5,13 +5,13 @@ window.config = {
   // Smart Contract Configuration
   // V5.0 (demo): Internal tracking only, no real CSPR transfers
   // V6.1 (real): Real CSPR transfers via source_purse parameter
-  contract_hash: "hash-3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80", // V5.0 (stable)
-  contract_hash_v61: "hash-d59ba3b52cbf5678f4a3e926e40758316b1119abd3cf8dbdd07300f601e42499", // V6.1 (needs debugging)
-  contract_package_hash: "da7ec3951ab01e272bd340cbd69344814755da63f0b60016f56ebd90ae10e82a",
+  contract_hash: "hash-3c013f440de37d956467017c71ccf264bb12f657929b07f21c89bea3dd768996", // V6.1 (real transfers)
+  contract_hash_v50: "hash-3a209b27d48b8e288a52f1c4973bf4be290366214de728a65d4e2d3fb5f65d80", // V5.0 (demo backup)
+  contract_package_hash: "25e98bf8a22d00b479d0331e9a2ad9d9ebf2ccb4c40dec560e9d6ffdc17d47af",
 
   // Enable real CSPR transfers (V6.1 contract with source_purse)
   // Set to false to use demo mode (V5.0 behavior)
-  use_real_transfers: false,
+  use_real_transfers: true,
 
   // CSPR.click Configuration (from console.cspr.build)
   cspr_click_app_name: "Casper stake",
