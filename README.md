@@ -2,7 +2,7 @@
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-Demo-yellow)
-![Version](https://img.shields.io/badge/Version-7.0.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-7.1.0-brightgreen)
 ![Open Source](https://img.shields.io/badge/Open_Source-Yes-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -29,19 +29,37 @@ Stake CSPR → Get stCSPR → Earn ~17% APY → Stay Liquid
 
 ---
 
-## What's New in V7.0 🚀
+## What's New in V7.1 🚀
 
-### New Features
+### Improvements
 
 | Feature | Description |
 |---------|-------------|
-| **APY Slider** | Choose any APY from 1% to 100% with a free slider (no more preset buttons) |
-| **All-Time Price Chart** | View CSPR price history since token creation (May 2021) |
-| **Interactive Tooltip** | Hover on chart to see exact date and price (like CoinMarketCap) |
-| **6 X-Axis Labels** | More date labels on price chart for better readability |
-| **Real CSV Export** | Export your actual wallet transactions, balances, and price history |
+| **LIVE Data Everywhere** | All components now properly show LIVE/DEMO badges |
+| **CORS Fix** | BalanceContext now uses CSPR.click proxy (no more CORS errors) |
+| **Stable APY** | Fixed 17% APY display (removed buggy live calculation that showed 74%) |
+| **PriceChart Badge** | Added LIVE/DEMO badge to price chart component |
 
-### CSV Export Improvements
+### Bug Fixes
+
+- Fixed PriceChart not showing data source status
+- Fixed BalanceContext direct API call causing CORS issues
+- Fixed APY calculation returning unrealistic values (74.9% → 17%)
+
+---
+
+## What's New in V7.0
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **APY Slider** | Choose any APY from 1% to 100% with a free slider |
+| **All-Time Price Chart** | View CSPR price history since token creation (May 2021) |
+| **Interactive Tooltip** | Hover on chart to see exact date and price |
+| **Real CSV Export** | Export your actual wallet transactions and balances |
+
+### CSV Export
 
 | Export Type | Data Source |
 |-------------|-------------|
@@ -49,10 +67,6 @@ Stake CSPR → Get stCSPR → Earn ~17% APY → Stay Liquid
 | **Portfolio** | Your actual CSPR and stCSPR balances |
 | **Rewards** | Estimated daily rewards based on your staked amount |
 | **Price History** | CoinGecko price data (7D, 30D, 90D, 1Y, All Time) |
-
-### Removed
-
-- RewardsChart component (redundant with StakingCalculator)
 
 ---
 
@@ -355,6 +369,7 @@ npm run build
 
 | Version | Highlights |
 |---------|------------|
+| **V7.1** | LIVE badges everywhere, CORS fix, stable 17% APY |
 | **V7.0** | APY slider, all-time price chart, interactive tooltip, real CSV export |
 | **V6.3** | Price alerts, portfolio history, confetti, redesigned UI |
 | **V6.2** | Live blockchain data, CSPR price, charts, sound notifications |
