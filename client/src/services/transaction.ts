@@ -1,10 +1,12 @@
 /**
- * Transaction Service for StakeVue
+ * Transaction Service for StakeVue V8.1
  *
- * Based on official Casper documentation patterns:
- * - V2 to V5 Migration Guide
- * - Building and Signing Transactions Guide
- * - Donation Demo patterns
+ * Uses proxy_caller.wasm for payable functions (stake)
+ * Uses StoredContractByHash for non-payable functions (unstake)
+ *
+ * Based on:
+ * - Odra Framework proxy_caller pattern
+ * - Casper SDK V5 patterns
  */
 
 import {
@@ -20,6 +22,27 @@ import {
 
 // Get runtime config
 const config = window.config;
+
+// Cache for proxy_caller.wasm bytes
+let proxyCallerWasmCache: Uint8Array | null = null;
+
+/**
+ * Load proxy_caller.wasm from public folder
+ */
+const loadProxyCallerWasm = async (): Promise<Uint8Array> => {
+  if (proxyCallerWasmCache) {
+    return proxyCallerWasmCache;
+  }
+
+  const response = await fetch('/proxy_caller.wasm');
+  if (!response.ok) {
+    throw new Error('Failed to load proxy_caller.wasm');
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  proxyCallerWasmCache = new Uint8Array(arrayBuffer);
+  return proxyCallerWasmCache;
+};
 
 /**
  * Convert CSPR to motes (smallest unit)
@@ -50,100 +73,145 @@ const getContractHashHex = (): string => {
 };
 
 /**
- * Build a Stake Transaction using Deploy.makeDeploy pattern
- *
- * This pattern is from the official V2→V5 migration guide:
- * - Uses ExecutableDeployItem and StoredContractByHash
- * - Compatible with Casper Network (both 1.x and 2.x)
- * - Serializes deploy with toJSON() for CSPR.click compatibility
+ * Get package hash without 'hash-' prefix (for V8 Odra contracts)
  */
-export const buildStakeTransaction = (
+const getPackageHashHex = (): string => {
+  const hash = config.contract_package_hash || '';
+  return hash.startsWith('hash-') ? hash.substring(5) : hash;
+};
+
+/**
+ * Convert hex string to Uint8Array
+ */
+const hexToBytes = (hex: string): Uint8Array => {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+};
+
+/**
+ * Build a Stake Transaction using proxy_caller.wasm for V8 Odra contracts
+ *
+ * The stake() function in V8 is payable (#[odra(payable)]), which means
+ * it receives CSPR via attached_value. We use proxy_caller.wasm to:
+ * 1. Transfer CSPR from user's purse to a cargo purse
+ * 2. Call the contract's stake() entry point
+ * 3. The contract uses self.env().attached_value() to get the amount
+ */
+export const buildStakeTransaction = async (
   senderPublicKeyHex: string,
   amountCspr: string
-): { deploy: any } => {
+): Promise<{ deploy: any }> => {
   // Validate inputs
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
   }
 
-  if (!config.contract_hash) {
-    throw new Error('Contract hash not configured');
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
   }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
 
   // Convert amounts
   const amountMotes = csprToMotes(amountCspr);
-  const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR default
+  // Payment = gas cost + attached value (CSPR being staked)
+  const gasMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
+  const totalPayment = (BigInt(gasMotes) + BigInt(amountMotes)).toString();
 
-  // Build runtime arguments for 'stake' entry point
-  const args = Args.fromMap({
-    amount: CLValue.newCLUInt512(amountMotes),
+  // Build empty RuntimeArgs for stake() - it uses attached_value instead
+  const stakeArgs = Args.fromMap({});
+  const serializedArgs = stakeArgs.toBytes();
+
+  // Build proxy_caller arguments
+  // See: odra-casper/proxy-caller/src/lib.rs
+  const proxyArgs = Args.fromMap({
+    // Package hash of the StakeVue contract (32 bytes)
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    // Entry point to call
+    entry_point: CLValue.newCLString('stake'),
+    // Serialized RuntimeArgs (Bytes type - empty for stake since it uses attached_value)
+    args: CLValue.newCLByteArray(serializedArgs),
+    // Amount of CSPR to attach (this is what stake() will receive)
+    attached_value: CLValue.newCLUInt512(amountMotes),
   });
 
-  // Build session using StoredContractByHash (V5 pattern)
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    ContractHash.newContract(getContractHashHex()),
-    'stake',
-    args
-  );
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
 
-  // Build deploy header (default() provides standard TTL of 30 minutes)
+  // Build deploy header
   const deployHeader = DeployHeader.default();
   deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
   deployHeader.chainName = config.chain_name || 'casper-test';
   deployHeader.gasPrice = 1;
 
-  // Build payment (standardPayment expects string or BigNumber)
-  const payment = ExecutableDeployItem.standardPayment(paymentMotes);
+  // Build payment (includes both gas and attached value)
+  const payment = ExecutableDeployItem.standardPayment(totalPayment);
 
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  // Serialize deploy for CSPR.click (like lottery demo does with transaction.toJSON())
+  // Serialize deploy for CSPR.click
   return { deploy: Deploy.toJSON(deploy) };
 };
 
 /**
- * Build an Unstake Transaction
- * Serializes deploy with toJSON() for CSPR.click compatibility
+ * Build an Unstake Transaction using proxy_caller.wasm for V8 Odra contracts
+ *
+ * The unstake() function takes an amount parameter and returns CSPR to the caller.
+ * We use proxy_caller.wasm to call versioned contracts properly.
  */
-export const buildUnstakeTransaction = (
+export const buildUnstakeTransaction = async (
   senderPublicKeyHex: string,
   amountCspr: string
-): { deploy: any } => {
+): Promise<{ deploy: any }> => {
   // Validate inputs
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
   }
 
-  if (!config.contract_hash) {
-    throw new Error('Contract hash not configured');
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
   }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
 
   // Convert amounts
   const amountMotes = csprToMotes(amountCspr);
   const paymentMotes = config.transaction_payment || '5000000000';
 
-  // Build runtime arguments for 'unstake' entry point
-  const args = Args.fromMap({
+  // Build RuntimeArgs for unstake(amount: U512)
+  const unstakeArgs = Args.fromMap({
     amount: CLValue.newCLUInt512(amountMotes),
   });
+  const serializedArgs = unstakeArgs.toBytes();
 
-  // Build session
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    ContractHash.newContract(getContractHashHex()),
-    'unstake',
-    args
-  );
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    // Package hash of the StakeVue contract (32 bytes)
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    // Entry point to call
+    entry_point: CLValue.newCLString('unstake'),
+    // Serialized RuntimeArgs with amount
+    args: CLValue.newCLByteArray(serializedArgs),
+    // No attached value for unstake
+    attached_value: CLValue.newCLUInt512('0'),
+  });
 
-  // Build deploy header (default() provides standard TTL of 30 minutes)
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+
+  // Build deploy header
   const deployHeader = DeployHeader.default();
   deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
   deployHeader.chainName = config.chain_name || 'casper-test';
   deployHeader.gasPrice = 1;
 
-  // Build payment (standardPayment expects string or BigNumber)
+  // Build payment
   const payment = ExecutableDeployItem.standardPayment(paymentMotes);
 
   // Create deploy
