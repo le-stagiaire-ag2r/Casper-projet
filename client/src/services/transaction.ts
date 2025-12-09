@@ -18,6 +18,9 @@ import {
   ExecutableDeployItem,
   StoredContractByHash,
   ContractHash,
+  CLTypeList,
+  CLTypeUInt8,
+  CLValueList,
 } from 'casper-js-sdk';
 
 // Get runtime config
@@ -92,6 +95,27 @@ const hexToBytes = (hex: string): Uint8Array => {
 };
 
 /**
+ * Convert Uint8Array to CLValue List<U8> (Bytes type in Casper)
+ * This is needed because proxy_caller expects Bytes type, not ByteArray
+ */
+const bytesToCLList = (bytes: Uint8Array): CLValue => {
+  // Create the List<U8> type
+  const listType = new CLTypeList(CLTypeUInt8);
+
+  // Create elements as CLValue U8s
+  const elements = Array.from(bytes).map(b => CLValue.newCLUint8(b));
+
+  // Create CLValueList with proper type
+  const listValue = new CLValueList(listType, elements);
+
+  // Create CLValue with List type
+  const clValue = new CLValue(listType);
+  clValue.list = listValue;
+
+  return clValue;
+};
+
+/**
  * Build a Stake Transaction using proxy_caller.wasm for V8 Odra contracts
  *
  * The stake() function in V8 is payable (#[odra(payable)]), which means
@@ -128,13 +152,14 @@ export const buildStakeTransaction = async (
 
   // Build proxy_caller arguments
   // See: odra-casper/proxy-caller/src/lib.rs
+  // Note: args must be passed as List<U8> (Bytes type in Casper)
   const proxyArgs = Args.fromMap({
-    // Package hash of the StakeVue contract (32 bytes)
+    // Package hash of the StakeVue contract (32 bytes as ByteArray)
     package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
     // Entry point to call
     entry_point: CLValue.newCLString('stake'),
-    // Serialized RuntimeArgs (Bytes type - empty for stake since it uses attached_value)
-    args: CLValue.newCLByteArray(serializedArgs),
+    // Serialized RuntimeArgs as Bytes (List<U8>)
+    args: bytesToCLList(serializedArgs),
     // Amount of CSPR to attach (this is what stake() will receive)
     attached_value: CLValue.newCLUInt512(amountMotes),
   });
@@ -196,8 +221,8 @@ export const buildUnstakeTransaction = async (
     package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
     // Entry point to call
     entry_point: CLValue.newCLString('unstake'),
-    // Serialized RuntimeArgs with amount
-    args: CLValue.newCLByteArray(serializedArgs),
+    // Serialized RuntimeArgs as Bytes (List<U8>)
+    args: bytesToCLList(serializedArgs),
     // No attached value for unstake
     attached_value: CLValue.newCLUInt512('0'),
   });
