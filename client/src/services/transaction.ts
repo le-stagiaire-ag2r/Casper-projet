@@ -18,6 +18,9 @@ import {
   ExecutableDeployItem,
   StoredContractByHash,
   ContractHash,
+  CLTypeList,
+  CLTypeUInt8,
+  CLValueList,
 } from 'casper-js-sdk';
 
 // Get runtime config
@@ -96,8 +99,20 @@ const hexToBytes = (hex: string): Uint8Array => {
  * This is needed because proxy_caller expects Bytes type, not ByteArray
  */
 const bytesToCLList = (bytes: Uint8Array): CLValue => {
+  // Create the List<U8> type
+  const listType = new CLTypeList(CLTypeUInt8);
+
+  // Create elements as CLValue U8s
   const elements = Array.from(bytes).map(b => CLValue.newCLUint8(b));
-  return CLValue.newCLList(CLValue.newCLUint8(0).type, elements);
+
+  // Create CLValueList with proper type
+  const listValue = new CLValueList(listType, elements);
+
+  // Create CLValue with List type
+  const clValue = new CLValue(listType);
+  clValue.list = listValue;
+
+  return clValue;
 };
 
 /**
