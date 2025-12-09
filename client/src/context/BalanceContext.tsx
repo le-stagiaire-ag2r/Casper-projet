@@ -60,10 +60,12 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   }, [activeAccount?.publicKey]);
 
   // Fetch balance from CSPR.click
+  // IMPORTANT: This only fetches CSPR balance from blockchain
+  // stCsprBalance is managed separately (localStorage) and should NOT be touched here
   const fetchBalance = useCallback(async () => {
     if (!activeAccount?.publicKey || !clickRef) {
       setCsprBalance(0);
-      setStCsprBalance(0);
+      // DO NOT reset stCsprBalance here - it's stored locally, not on blockchain
       setIsRealBalance(false);
       return;
     }
@@ -151,8 +153,14 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   }, [activeAccount?.publicKey, fetchBalance]);
 
   // Update balances after staking
+  // IMPORTANT: We do NOT refetch immediately because the API cache might return
+  // the old balance, which would overwrite our correct local calculation.
+  // The auto-refresh every 30 seconds will eventually sync with the blockchain.
   const updateAfterStake = useCallback((amount: number) => {
+    // Update CSPR balance (deduct staked amount + gas fee)
     setCsprBalance(prev => Math.max(0, prev - amount - GAS_FEE_CSPR));
+
+    // Update stCSPR balance (add staked amount - this is stored locally, not on blockchain)
     setStCsprBalance(prev => {
       const newBalance = prev + amount;
       // Save to localStorage
@@ -160,23 +168,27 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
       return newBalance;
     });
 
-    // Refetch real balance after a delay
-    setTimeout(fetchBalance, 5000);
-  }, [fetchBalance, activeAccount?.publicKey]);
+    // DO NOT refetch immediately - API cache might return stale data
+    // The 30-second auto-refresh will sync eventually
+  }, [activeAccount?.publicKey]);
 
   // Update balances after unstaking
+  // Same logic as staking - no immediate refetch to avoid API cache issues
   const updateAfterUnstake = useCallback((amount: number) => {
+    // Update stCSPR balance (burn the unstaked amount)
     setStCsprBalance(prev => {
       const newBalance = Math.max(0, prev - amount);
       // Save to localStorage
       saveStCsprBalance(activeAccount?.publicKey, newBalance);
       return newBalance;
     });
+
+    // Update CSPR balance (add unstaked amount minus gas fee)
     setCsprBalance(prev => prev + amount - GAS_FEE_CSPR);
 
-    // Refetch real balance after a delay
-    setTimeout(fetchBalance, 5000);
-  }, [fetchBalance, activeAccount?.publicKey]);
+    // DO NOT refetch immediately - API cache might return stale data
+    // The 30-second auto-refresh will sync eventually
+  }, [activeAccount?.publicKey]);
 
   const value: BalanceContextType = {
     csprBalance,
