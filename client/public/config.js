@@ -20,7 +20,7 @@ window.config = {
   cspr_live_url: "https://testnet.cspr.live",
 
   // Transaction Configuration
-  transaction_payment: "50000000000", // 50 CSPR in motes for gas (proxy_caller needs more)
+  transaction_payment: "5000000000", // 5 CSPR in motes for gas
 
   // Staking Configuration
   min_stake_amount: "1000000000", // 1 CSPR minimum
