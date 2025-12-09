@@ -1,0 +1,23 @@
+[package]
+name = "stakevue"
+version = "8.0.0"
+edition = "2021"
+
+[dependencies]
+odra = { version = "2.2.0", default-features = false }
+
+[dev-dependencies]
+odra-test = "2.2.0"
+
+[features]
+default = []
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "z"
+
+[[bin]]
+name = "stakevue_build"
+path = "bin/build.rs"
+test = false
