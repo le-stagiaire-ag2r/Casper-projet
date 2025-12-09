@@ -8,9 +8,6 @@
 use odra::prelude::*;
 use odra::casper_types::U512;
 
-// Re-export for CLI
-pub use odra::host::{Deployer, HostRef, NoArgs};
-
 /// Errors that may occur during contract execution
 #[odra::odra_error]
 pub enum Error {
@@ -143,7 +140,7 @@ impl StakeVue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use odra::host::{Deployer, HostRef};
+    use odra::host::Deployer;
 
     #[test]
     fn test_stake_and_unstake() {
