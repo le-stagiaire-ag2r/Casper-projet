@@ -5,4 +5,4 @@ authors = ["StakeVue Team"]
 
 [[contracts]]
 name = "StakeVue"
-path = "src/lib.rs"
+fqn = "stakevue::StakeVue"
