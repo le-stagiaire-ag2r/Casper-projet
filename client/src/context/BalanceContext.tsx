@@ -100,14 +100,6 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
       return;
     }
 
-    // Check if we're in cooldown period after a recent transaction
-    // During cooldown, we skip refetching to avoid stale API cache overwriting local balance
-    const timeSinceLastTransaction = Date.now() - lastTransactionTimeRef.current;
-    if (lastTransactionTimeRef.current > 0 && timeSinceLastTransaction < REFETCH_COOLDOWN_MS) {
-      console.log(`Skipping balance refetch - in cooldown (${Math.round((REFETCH_COOLDOWN_MS - timeSinceLastTransaction) / 1000)}s remaining)`);
-      return;
-    }
-
     setIsLoading(true);
 
     try {
