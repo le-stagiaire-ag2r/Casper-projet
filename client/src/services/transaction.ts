@@ -162,6 +162,8 @@ export const buildStakeTransaction = async (
     args: bytesToCLList(serializedArgs),
     // Amount of CSPR to attach (this is what stake() will receive)
     attached_value: CLValue.newCLUInt512(amountMotes),
+    // Special Casper argument to allow access to main purse (must equal attached_value)
+    amount: CLValue.newCLUInt512(amountMotes),
   });
 
   // Build session using ModuleBytes with proxy_caller.wasm
@@ -225,6 +227,8 @@ export const buildUnstakeTransaction = async (
     args: bytesToCLList(serializedArgs),
     // No attached value for unstake
     attached_value: CLValue.newCLUInt512('0'),
+    // Special Casper argument (0 for non-payable calls)
+    amount: CLValue.newCLUInt512('0'),
   });
 
   // Build session using ModuleBytes with proxy_caller.wasm
