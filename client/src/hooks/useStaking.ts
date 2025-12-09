@@ -116,8 +116,8 @@ export const useStaking = () => {
     });
 
     try {
-      // Build the stake transaction
-      const transaction = buildStakeTransaction(
+      // Build the stake transaction (async for V8.1 proxy_caller)
+      const transaction = await buildStakeTransaction(
         activeAccount.publicKey,
         amountCspr
       );
@@ -225,8 +225,8 @@ export const useStaking = () => {
     });
 
     try {
-      // Build the unstake transaction
-      const transaction = buildUnstakeTransaction(
+      // Build the unstake transaction (async for V8.1 proxy_caller)
+      const transaction = await buildUnstakeTransaction(
         activeAccount.publicKey,
         amountCspr
       );
