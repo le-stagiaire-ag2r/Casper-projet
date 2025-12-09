@@ -15,7 +15,7 @@ interface BalanceContextType {
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
 
 const GAS_FEE_CSPR = 5; // Gas fee in CSPR
-const REFETCH_COOLDOWN_MS = 120000; // 2 minutes cooldown after stake/unstake
+const STALE_PROTECTION_MS = 120000; // 2 minutes - during this time, we check for stale values
 
 interface BalanceProviderProps {
   children: ReactNode;
@@ -52,8 +52,12 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRealBalance, setIsRealBalance] = useState<boolean>(false);
 
-  // Track when the last local transaction happened to avoid stale API cache issues
-  const lastTransactionTimeRef = useRef<number>(0);
+  // Track transaction info to detect stale API values
+  const lastTransactionRef = useRef<{
+    time: number;
+    type: 'stake' | 'unstake' | null;
+    expectedBalance: number;
+  }>({ time: 0, type: null, expectedBalance: 0 });
 
   // Load stCSPR from localStorage when wallet connects
   useEffect(() => {
@@ -63,13 +67,35 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
     }
   }, [activeAccount?.publicKey]);
 
+  // Helper to check if a fetched balance seems stale
+  const isStaleValue = (fetchedBalance: number): boolean => {
+    const { time, type, expectedBalance } = lastTransactionRef.current;
+    const timeSinceTransaction = Date.now() - time;
+
+    // If no recent transaction or protection period expired, accept any value
+    if (time === 0 || timeSinceTransaction > STALE_PROTECTION_MS) {
+      return false;
+    }
+
+    // After a STAKE: balance should be LOWER. If API returns higher, it's stale.
+    if (type === 'stake' && fetchedBalance > expectedBalance + 1) {
+      console.log(`Stale value detected: API returned ${fetchedBalance} but expected ~${expectedBalance} after stake`);
+      return true;
+    }
+
+    // After an UNSTAKE: balance should be HIGHER. If API returns lower, it's stale.
+    if (type === 'unstake' && fetchedBalance < expectedBalance - 1) {
+      console.log(`Stale value detected: API returned ${fetchedBalance} but expected ~${expectedBalance} after unstake`);
+      return true;
+    }
+
+    return false;
+  };
+
   // Fetch balance from CSPR.click
-  // IMPORTANT: This only fetches CSPR balance from blockchain
-  // stCsprBalance is managed separately (localStorage) and should NOT be touched here
   const fetchBalance = useCallback(async () => {
     if (!activeAccount?.publicKey || !clickRef) {
       setCsprBalance(0);
-      // DO NOT reset stCsprBalance here - it's stored locally, not on blockchain
       setIsRealBalance(false);
       return;
     }
@@ -85,28 +111,34 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
     setIsLoading(true);
 
     try {
-      // Use CSPR.click's getActiveAccountAsync with balance
       const accountWithBalance = await clickRef.getActiveAccountAsync?.({ withBalance: true });
 
       if (accountWithBalance?.liquid_balance) {
-        // Balance is in motes, convert to CSPR
         const balanceInCspr = parseInt(accountWithBalance.liquid_balance) / 1_000_000_000;
-        setCsprBalance(balanceInCspr);
-        setIsRealBalance(true);
-        console.log('CSPR.click balance fetched:', balanceInCspr, 'CSPR');
+
+        // Check if this value seems stale
+        if (!isStaleValue(balanceInCspr)) {
+          setCsprBalance(balanceInCspr);
+          setIsRealBalance(true);
+          console.log('CSPR.click balance fetched:', balanceInCspr, 'CSPR');
+        } else {
+          console.log('Ignoring stale balance from API, keeping local value');
+        }
       } else if (accountWithBalance?.balance) {
-        // Fallback to total balance
         const balanceInCspr = parseInt(accountWithBalance.balance) / 1_000_000_000;
-        setCsprBalance(balanceInCspr);
-        setIsRealBalance(true);
-        console.log('CSPR.click total balance fetched:', balanceInCspr, 'CSPR');
+
+        if (!isStaleValue(balanceInCspr)) {
+          setCsprBalance(balanceInCspr);
+          setIsRealBalance(true);
+          console.log('CSPR.click total balance fetched:', balanceInCspr, 'CSPR');
+        } else {
+          console.log('Ignoring stale balance from API, keeping local value');
+        }
       } else {
-        // If CSPR.click doesn't return balance, try CSPR.cloud API
         await fetchFromCsprCloud();
       }
     } catch (error) {
       console.error('Failed to fetch balance from CSPR.click:', error);
-      // Fallback to CSPR.cloud API
       await fetchFromCsprCloud();
     } finally {
       setIsLoading(false);
@@ -118,11 +150,10 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   const fetchFromCsprCloud = async () => {
     if (!activeAccount?.publicKey) return;
 
-    // Check if proxy is available
     if (!isProxyAvailable()) {
       console.log('CSPR.click proxy not available, using demo balance');
       if (csprBalance === 0) {
-        setCsprBalance(1000); // Demo fallback
+        setCsprBalance(1000);
         setIsRealBalance(false);
       }
       return;
@@ -132,14 +163,19 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
       const response = await csprCloudApi.getAccount(activeAccount.publicKey);
       const balanceMotes = response.data?.balance || '0';
       const balanceCSPR = parseInt(balanceMotes) / 1_000_000_000;
-      setCsprBalance(balanceCSPR);
-      setIsRealBalance(true);
-      console.log('CSPR.cloud balance fetched via proxy:', balanceCSPR, 'CSPR');
+
+      // Check if this value seems stale
+      if (!isStaleValue(balanceCSPR)) {
+        setCsprBalance(balanceCSPR);
+        setIsRealBalance(true);
+        console.log('CSPR.cloud balance fetched via proxy:', balanceCSPR, 'CSPR');
+      } else {
+        console.log('Ignoring stale balance from CSPR.cloud, keeping local value');
+      }
     } catch (error) {
       console.error('Failed to fetch from CSPR.cloud:', error);
-      // Keep existing balance or set demo
       if (csprBalance === 0) {
-        setCsprBalance(1000); // Demo fallback
+        setCsprBalance(1000);
         setIsRealBalance(false);
       }
     }
@@ -165,44 +201,52 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   }, [activeAccount?.publicKey, fetchBalance]);
 
   // Update balances after staking
-  // IMPORTANT: We set a cooldown to prevent stale API cache from overwriting our local balance
   const updateAfterStake = useCallback((amount: number) => {
-    // Mark that a transaction just happened - this starts the cooldown period
-    lastTransactionTimeRef.current = Date.now();
+    const newBalance = Math.max(0, csprBalance - amount - GAS_FEE_CSPR);
 
-    // Update CSPR balance (deduct staked amount + gas fee)
-    setCsprBalance(prev => Math.max(0, prev - amount - GAS_FEE_CSPR));
+    // Store transaction info to detect stale API values
+    lastTransactionRef.current = {
+      time: Date.now(),
+      type: 'stake',
+      expectedBalance: newBalance,
+    };
 
-    // Update stCSPR balance (add staked amount - this is stored locally, not on blockchain)
+    // Update CSPR balance
+    setCsprBalance(newBalance);
+
+    // Update stCSPR balance
     setStCsprBalance(prev => {
-      const newBalance = prev + amount;
-      // Save to localStorage
-      saveStCsprBalance(activeAccount?.publicKey, newBalance);
-      return newBalance;
+      const newStBalance = prev + amount;
+      saveStCsprBalance(activeAccount?.publicKey, newStBalance);
+      return newStBalance;
     });
 
-    console.log(`Stake completed - cooldown active for ${REFETCH_COOLDOWN_MS / 1000}s`);
-  }, [activeAccount?.publicKey]);
+    console.log(`Stake completed: ${csprBalance} -> ${newBalance} CSPR`);
+  }, [activeAccount?.publicKey, csprBalance]);
 
   // Update balances after unstaking
-  // IMPORTANT: We set a cooldown to prevent stale API cache from overwriting our local balance
   const updateAfterUnstake = useCallback((amount: number) => {
-    // Mark that a transaction just happened - this starts the cooldown period
-    lastTransactionTimeRef.current = Date.now();
+    const newBalance = csprBalance + amount - GAS_FEE_CSPR;
 
-    // Update stCSPR balance (burn the unstaked amount)
+    // Store transaction info to detect stale API values
+    lastTransactionRef.current = {
+      time: Date.now(),
+      type: 'unstake',
+      expectedBalance: newBalance,
+    };
+
+    // Update stCSPR balance
     setStCsprBalance(prev => {
-      const newBalance = Math.max(0, prev - amount);
-      // Save to localStorage
-      saveStCsprBalance(activeAccount?.publicKey, newBalance);
-      return newBalance;
+      const newStBalance = Math.max(0, prev - amount);
+      saveStCsprBalance(activeAccount?.publicKey, newStBalance);
+      return newStBalance;
     });
 
-    // Update CSPR balance (add unstaked amount minus gas fee)
-    setCsprBalance(prev => prev + amount - GAS_FEE_CSPR);
+    // Update CSPR balance
+    setCsprBalance(newBalance);
 
-    console.log(`Unstake completed - cooldown active for ${REFETCH_COOLDOWN_MS / 1000}s`);
-  }, [activeAccount?.publicKey]);
+    console.log(`Unstake completed: ${csprBalance} -> ${newBalance} CSPR`);
+  }, [activeAccount?.publicKey, csprBalance]);
 
   const value: BalanceContextType = {
     csprBalance,
