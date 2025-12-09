@@ -3,8 +3,13 @@
 //! This contract allows users to stake and unstake CSPR tokens.
 //! Uses Odra's payable functions and proxy_caller for proper CSPR transfers.
 
+#![no_std]
+
 use odra::prelude::*;
 use odra::casper_types::U512;
+
+// Re-export for CLI
+pub use odra::host::{Deployer, HostRef, NoArgs};
 
 /// Errors that may occur during contract execution
 #[odra::odra_error]
@@ -138,14 +143,14 @@ impl StakeVue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use odra::host::{Deployer, HostRef, NoArgs};
+    use odra::host::{Deployer, HostRef};
 
     #[test]
     fn test_stake_and_unstake() {
         let env = odra_test::env();
 
         // Deploy contract
-        let mut contract = StakeVue::deploy(&env, NoArgs);
+        let mut contract = StakeVue::deploy(&env, StakeVueInitArgs {});
 
         let user = env.get_account(0);
         env.set_caller(user);
@@ -170,7 +175,7 @@ mod tests {
     #[test]
     fn test_multiple_users() {
         let env = odra_test::env();
-        let mut contract = StakeVue::deploy(&env, NoArgs);
+        let mut contract = StakeVue::deploy(&env, StakeVueInitArgs {});
 
         let user1 = env.get_account(0);
         let user2 = env.get_account(1);

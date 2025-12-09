@@ -16,9 +16,6 @@ rustup target add wasm32-unknown-unknown
 
 # 3. Installer cargo-odra
 cargo install cargo-odra
-
-# 4. Vérifier casper-client (tu l'as déjà)
-casper-client --version
 ```
 
 ## Build
@@ -42,69 +39,84 @@ cargo odra test
 cargo odra test -b casper
 ```
 
-## Déploiement
+## Déploiement avec CLI (recommandé)
+
+Le CLI Odra simplifie énormément le déploiement et l'interaction !
+
+### Configuration
 
 ```bash
-# Déployer sur testnet
-casper-client put-transaction session \
-  --node-address http://65.109.83.79:7777/rpc \
-  --chain-name casper-test \
-  --secret-key ~/secret_key.pem \
-  --payment-amount 300000000000 \
-  --gas-price-tolerance 1 \
-  --standard-payment true \
-  --wasm-path ./wasm/StakeVue.wasm \
-  --session-arg "odra_cfg_package_hash_key_name:string:'stakevue_v8_package'" \
-  --session-arg "odra_cfg_allow_key_override:bool:'true'" \
-  --session-arg "odra_cfg_is_upgradable:bool:'true'"
+# Exporter les variables d'environnement
+export ODRA_CASPER_LIVENET_SECRET_KEY_PATH=~/secret_key.pem
+export ODRA_CASPER_LIVENET_NODE_ADDRESS=http://65.109.83.79:7777/rpc
+export ODRA_CASPER_LIVENET_CHAIN_NAME=casper-test
 ```
 
-## Appeler stake (avec proxy_caller)
-
-Pour staker des CSPR, il faut utiliser le proxy_caller d'Odra :
+### Déployer
 
 ```bash
-# D'abord, récupérer le proxy_caller.wasm depuis Odra
-# Puis appeler stake avec les tokens attachés
-
-casper-client put-transaction session \
-  --node-address http://65.109.83.79:7777/rpc \
-  --chain-name casper-test \
-  --secret-key ~/secret_key.pem \
-  --payment-amount 10000000000 \
-  --gas-price-tolerance 1 \
-  --standard-payment true \
-  --wasm-path ./wasm/proxy_caller.wasm \
-  --session-arg "contract_package_hash:key='hash-XXXXX'" \
-  --session-arg "entry_point:string='stake'" \
-  --session-arg "attached_value:u512='10000000000'" \
-  --session-arg "amount:u512='10000000000'"
+cargo run --bin stakevue-cli --features livenet deploy
 ```
 
-## Appeler unstake (direct)
+Output:
+```
+💁  INFO : Found wasm under "wasm/StakeVue.wasm".
+💁  INFO : Deploying "StakeVue".
+🙄  WAIT : Waiting 10 for transaction...
+💁  INFO : Contract deployed successfully!
+🔗  LINK : https://testnet.cspr.live/transaction/xxx
+```
+
+### Voir les commandes disponibles
 
 ```bash
-casper-client put-transaction package \
-  --node-address http://65.109.83.79:7777/rpc \
-  --chain-name casper-test \
-  --secret-key ~/secret_key.pem \
-  --gas-price-tolerance 1 \
-  --contract-package-hash "hash-XXXXX" \
-  --payment-amount 5000000000 \
-  --standard-payment true \
-  --session-entry-point "unstake" \
-  --session-arg "amount:u512='5000000000'"
+cargo run --bin stakevue-cli --features livenet contract StakeVue
 ```
 
-## Entry Points
+Output:
+```
+Commands for interacting with the StakeVue contract
 
-| Function | Description | Payable |
-|----------|-------------|---------|
-| `stake()` | Stake CSPR (montant = attached_value) | Oui |
-| `unstake(amount)` | Retirer des CSPR | Non |
-| `get_stake(user)` | Voir le stake d'un user | Non (view) |
-| `get_total_staked()` | Total staké | Non (view) |
-| `get_contract_balance()` | Balance du contrat | Non (view) |
+Usage: stakevue-cli contract StakeVue <COMMAND>
+
+Commands:
+  stake             Stake CSPR tokens (payable)
+  unstake           Unstake CSPR tokens
+  get_stake         Get stake balance for a user
+  get_total_staked  Get total staked in contract
+  get_contract_balance  Get contract CSPR balance
+```
+
+### Staker des CSPR
+
+```bash
+# Staker 10 CSPR (10_000_000_000 motes)
+cargo run --bin stakevue-cli --features livenet -- contract StakeVue stake \
+  --attached_value 10000000000 \
+  --gas 5000000000
+```
+
+### Voir son stake
+
+```bash
+cargo run --bin stakevue-cli --features livenet -- contract StakeVue get_stake \
+  --user "account-hash-2f63ef2c9db78bcf2288529e2217cd8e70614f0b1aad4f8ef8871acd39ac2f7e"
+```
+
+### Unstaker des CSPR
+
+```bash
+# Unstaker 5 CSPR
+cargo run --bin stakevue-cli --features livenet -- contract StakeVue unstake \
+  --amount 5000000000 \
+  --gas 5000000000
+```
+
+### Voir les events
+
+```bash
+cargo run --bin stakevue-cli --features livenet -- print-events StakeVue -n 5
+```
 
 ## Structure
 
@@ -115,7 +127,24 @@ smart-contract-odra/
 ├── src/
 │   └── lib.rs        # Code du contrat
 ├── bin/
-│   └── build.rs      # Build helper
+│   └── cli.rs        # CLI pour deploy/interact
+├── resources/
+│   └── contracts.toml  # (généré) Adresses des contrats déployés
 └── wasm/             # (généré après build)
     └── StakeVue.wasm
 ```
+
+## Entry Points
+
+| Function | Description | Payable |
+|----------|-------------|---------|
+| `stake()` | Stake CSPR (montant = attached_value) | ✅ Oui |
+| `unstake(amount)` | Retirer des CSPR | Non |
+| `get_stake(user)` | Voir le stake d'un user | Non (view) |
+| `get_total_staked()` | Total staké | Non (view) |
+| `get_contract_balance()` | Balance du contrat | Non (view) |
+
+## Events
+
+- `Staked { user, amount, total_stake }` - Émis quand un user stake
+- `Unstaked { user, amount, remaining_stake }` - Émis quand un user unstake
