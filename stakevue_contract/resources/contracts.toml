@@ -1,0 +1,5 @@
+last_updated = "2025-12-09T20:00:00Z"
+
+[[contracts]]
+name = "StakeVue"
+package_hash = "hash-f9205d8ad33cfb7fd47873babc4bc3388098beaea3573e7b8a69800dab9d68e4"
