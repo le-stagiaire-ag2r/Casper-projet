@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { csprCloudApi, isProxyAvailable } from '../services/csprCloud';
 
@@ -15,6 +15,7 @@ interface BalanceContextType {
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
 
 const GAS_FEE_CSPR = 5; // Gas fee in CSPR
+const REFETCH_COOLDOWN_MS = 120000; // 2 minutes cooldown after stake/unstake
 
 interface BalanceProviderProps {
   children: ReactNode;
@@ -51,6 +52,9 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRealBalance, setIsRealBalance] = useState<boolean>(false);
 
+  // Track when the last local transaction happened to avoid stale API cache issues
+  const lastTransactionTimeRef = useRef<number>(0);
+
   // Load stCSPR from localStorage when wallet connects
   useEffect(() => {
     if (activeAccount?.publicKey) {
@@ -67,6 +71,14 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
       setCsprBalance(0);
       // DO NOT reset stCsprBalance here - it's stored locally, not on blockchain
       setIsRealBalance(false);
+      return;
+    }
+
+    // Check if we're in cooldown period after a recent transaction
+    // During cooldown, we skip refetching to avoid stale API cache overwriting local balance
+    const timeSinceLastTransaction = Date.now() - lastTransactionTimeRef.current;
+    if (lastTransactionTimeRef.current > 0 && timeSinceLastTransaction < REFETCH_COOLDOWN_MS) {
+      console.log(`Skipping balance refetch - in cooldown (${Math.round((REFETCH_COOLDOWN_MS - timeSinceLastTransaction) / 1000)}s remaining)`);
       return;
     }
 
@@ -153,10 +165,11 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
   }, [activeAccount?.publicKey, fetchBalance]);
 
   // Update balances after staking
-  // IMPORTANT: We do NOT refetch immediately because the API cache might return
-  // the old balance, which would overwrite our correct local calculation.
-  // The auto-refresh every 30 seconds will eventually sync with the blockchain.
+  // IMPORTANT: We set a cooldown to prevent stale API cache from overwriting our local balance
   const updateAfterStake = useCallback((amount: number) => {
+    // Mark that a transaction just happened - this starts the cooldown period
+    lastTransactionTimeRef.current = Date.now();
+
     // Update CSPR balance (deduct staked amount + gas fee)
     setCsprBalance(prev => Math.max(0, prev - amount - GAS_FEE_CSPR));
 
@@ -168,13 +181,15 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
       return newBalance;
     });
 
-    // DO NOT refetch immediately - API cache might return stale data
-    // The 30-second auto-refresh will sync eventually
+    console.log(`Stake completed - cooldown active for ${REFETCH_COOLDOWN_MS / 1000}s`);
   }, [activeAccount?.publicKey]);
 
   // Update balances after unstaking
-  // Same logic as staking - no immediate refetch to avoid API cache issues
+  // IMPORTANT: We set a cooldown to prevent stale API cache from overwriting our local balance
   const updateAfterUnstake = useCallback((amount: number) => {
+    // Mark that a transaction just happened - this starts the cooldown period
+    lastTransactionTimeRef.current = Date.now();
+
     // Update stCSPR balance (burn the unstaked amount)
     setStCsprBalance(prev => {
       const newBalance = Math.max(0, prev - amount);
@@ -186,8 +201,7 @@ export const BalanceProvider: React.FC<BalanceProviderProps> = ({ children }) =>
     // Update CSPR balance (add unstaked amount minus gas fee)
     setCsprBalance(prev => prev + amount - GAS_FEE_CSPR);
 
-    // DO NOT refetch immediately - API cache might return stale data
-    // The 30-second auto-refresh will sync eventually
+    console.log(`Unstake completed - cooldown active for ${REFETCH_COOLDOWN_MS / 1000}s`);
   }, [activeAccount?.publicKey]);
 
   const value: BalanceContextType = {
