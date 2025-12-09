@@ -36,16 +36,29 @@ const TotalValue = styled.div`
   text-align: right;
 `;
 
-const TotalAmount = styled.div<{ $isDark: boolean }>`
-  font-size: 24px;
-  font-weight: 700;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+const BalanceRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-bottom: 4px;
 `;
 
-const TotalChange = styled.div<{ $positive: boolean }>`
-  font-size: 12px;
-  color: ${props => props.$positive ? '#30d158' : '#ff453a'};
+const BalanceItem = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
+  font-size: 16px;
   font-weight: 600;
+  color: ${props => props.$highlight ? '#30d158' : (props.$isDark ? '#fff' : '#1a1a2e')};
+`;
+
+const BalanceLabel = styled.span<{ $isDark: boolean }>`
+  font-size: 11px;
+  color: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'};
+  margin-right: 4px;
+`;
+
+const TotalUsdValue = styled.div<{ $isDark: boolean }>`
+  font-size: 12px;
+  color: ${props => props.$isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'};
 `;
 
 const SVGContainer = styled.div`
@@ -187,8 +200,7 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
       return history.map(h => ({
         date: new Date(h.timestamp),
         cspr: h.csprBalance,
-        stCspr: h.stCsprBalance,
-        total: h.csprBalance + h.stCsprBalance
+        stCspr: h.stCsprBalance
       }));
     }
 
@@ -209,8 +221,7 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
       data.push({
         date,
         cspr: csprVal,
-        stCspr: stCsprVal,
-        total: csprVal + stCsprVal
+        stCspr: stCsprVal
       });
     }
 
@@ -224,11 +235,11 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
   const chartWidth = viewBoxWidth - padding.left - padding.right;
   const chartHeight = viewBoxHeight - padding.top - padding.bottom;
 
-  // Calculate scales
-  const maxValue = Math.max(...chartData.map(d => d.total), 1);
+  // Calculate scales - use max of individual values, not combined total
+  const maxValue = Math.max(...chartData.map(d => Math.max(d.cspr, d.stCspr)), 1);
   const xStep = chartWidth / Math.max(chartData.length - 1, 1);
 
-  // Generate paths for CSPR and stCSPR
+  // Generate paths for CSPR and stCSPR (separate, not combined!)
   const csprPoints = chartData.map((d, i) => ({
     x: padding.left + i * xStep,
     y: padding.top + chartHeight - (d.cspr / maxValue) * chartHeight
@@ -239,11 +250,6 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
     y: padding.top + chartHeight - (d.stCspr / maxValue) * chartHeight
   }));
 
-  const totalPoints = chartData.map((d, i) => ({
-    x: padding.left + i * xStep,
-    y: padding.top + chartHeight - (d.total / maxValue) * chartHeight
-  }));
-
   const createPath = (points: { x: number; y: number }[]) =>
     points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 
@@ -252,11 +258,10 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
     return `${line} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`;
   };
 
-  // Calculate total and change
-  const currentTotal = csprBalance + stCsprBalance;
-  const totalUsd = currentTotal * usdPrice;
-  const firstTotal = chartData[0]?.total || currentTotal;
-  const changePercent = firstTotal > 0 ? ((currentTotal - firstTotal) / firstTotal) * 100 : 0;
+  // Calculate USD values (separate, not combined as CSPR!)
+  const csprUsd = csprBalance * usdPrice;
+  const stCsprUsd = stCsprBalance * usdPrice;
+  const totalUsd = csprUsd + stCsprUsd;
 
   // Format date labels
   const formatDate = (date: Date) => {
@@ -270,25 +275,30 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
           <span>📊</span> Portfolio History
         </Title>
         <TotalValue>
-          <TotalAmount $isDark={isDark}>
-            {currentTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} CSPR
-          </TotalAmount>
-          <TotalChange $positive={changePercent >= 0}>
-            {changePercent >= 0 ? '↑' : '↓'} {Math.abs(changePercent).toFixed(1)}% · ${totalUsd.toFixed(2)}
-          </TotalChange>
+          <BalanceRow>
+            <BalanceItem $isDark={isDark}>
+              <BalanceLabel $isDark={isDark}>CSPR</BalanceLabel>
+              {csprBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </BalanceItem>
+            {stCsprBalance > 0 && (
+              <BalanceItem $isDark={isDark} $highlight>
+                <BalanceLabel $isDark={isDark}>stCSPR</BalanceLabel>
+                {stCsprBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </BalanceItem>
+            )}
+          </BalanceRow>
+          <TotalUsdValue $isDark={isDark}>
+            Total: ${totalUsd.toFixed(2)} USD
+          </TotalUsdValue>
         </TotalValue>
       </Header>
 
       <SVGContainer>
         <ChartSVG viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} preserveAspectRatio="xMidYMid meet">
           <defs>
-            <linearGradient id="totalGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#5856d6" />
-              <stop offset="100%" stopColor="#af52de" />
-            </linearGradient>
-            <linearGradient id="totalAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#5856d6" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#5856d6" stopOpacity="0" />
+            <linearGradient id="csprAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#ff9f0a" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#ff9f0a" stopOpacity="0" />
             </linearGradient>
           </defs>
 
@@ -304,24 +314,36 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
             />
           ))}
 
-          {/* Area fills */}
-          <AreaPath d={createAreaPath(totalPoints)} fill="url(#totalAreaGradient)" />
+          {/* Area fills for CSPR */}
+          <AreaPath d={createAreaPath(csprPoints)} fill="url(#csprAreaGradient)" />
 
-          {/* Lines */}
-          <ChartPath d={createPath(csprPoints)} stroke="#ff9f0a" strokeDasharray="5,5" />
-          <ChartPath d={createPath(stCsprPoints)} stroke="#30d158" strokeDasharray="5,5" />
-          <ChartPath d={createPath(totalPoints)} stroke="url(#totalGradient)" />
+          {/* Lines - separate for each token */}
+          <ChartPath d={createPath(csprPoints)} stroke="#ff9f0a" />
+          <ChartPath d={createPath(stCsprPoints)} stroke="#30d158" />
 
-          {/* Data points for total */}
-          {totalPoints.map((p, i) => (
+          {/* Data points for CSPR */}
+          {csprPoints.map((p, i) => (
             <circle
-              key={i}
+              key={`cspr-${i}`}
               cx={p.x}
               cy={p.y}
-              r={4}
-              fill="#5856d6"
+              r={3}
+              fill="#ff9f0a"
               stroke="#fff"
-              strokeWidth={2}
+              strokeWidth={1.5}
+            />
+          ))}
+
+          {/* Data points for stCSPR */}
+          {stCsprPoints.map((p, i) => (
+            <circle
+              key={`stcspr-${i}`}
+              cx={p.x}
+              cy={p.y}
+              r={3}
+              fill="#30d158"
+              stroke="#fff"
+              strokeWidth={1.5}
             />
           ))}
 
@@ -356,16 +378,12 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
 
       <Legend>
         <LegendItem $isDark={isDark}>
-          <LegendLine color="#5856d6" />
-          Total Balance
+          <LegendLine color="#ff9f0a" />
+          CSPR (wallet)
         </LegendItem>
         <LegendItem $isDark={isDark}>
-          <LegendLine color="#ff9f0a" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #ff9f0a, #ff9f0a 5px, transparent 5px, transparent 10px)' }} />
-          CSPR
-        </LegendItem>
-        <LegendItem $isDark={isDark}>
-          <LegendLine color="#30d158" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #30d158, #30d158 5px, transparent 5px, transparent 10px)' }} />
-          stCSPR
+          <LegendLine color="#30d158" />
+          stCSPR (staked)
         </LegendItem>
       </Legend>
     </Container>
