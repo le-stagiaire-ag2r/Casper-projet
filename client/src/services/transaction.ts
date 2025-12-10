@@ -2,11 +2,12 @@
  * Transaction Service for StakeVue V9
  *
  * Uses proxy_caller.wasm for payable functions (stake)
- * Uses StoredContractByHash for non-payable functions (unstake)
+ * Uses proxy_caller.wasm for non-payable functions too (unstake)
  *
- * V9 Changes:
- * - unstake() now takes stcspr_amount: U256 (was amount: U512)
- * - stCSPR is a real CEP-18 token on-chain
+ * V9 Simplified:
+ * - unstake() takes amount: U512
+ * - stCSPR tracked via Mapping in contract
+ * - Ownable + Pauseable modules for admin control
  *
  * Based on:
  * - Odra Framework proxy_caller pattern
@@ -215,9 +216,9 @@ export const buildUnstakeTransaction = async (
   const amountMotes = csprToMotes(amountCspr);
   const paymentMotes = config.transaction_payment || '5000000000';
 
-  // Build RuntimeArgs for unstake(stcspr_amount: U256) - V9 uses U256 for stCSPR
+  // Build RuntimeArgs for unstake(amount: U512) - V9 simplified uses U512
   const unstakeArgs = Args.fromMap({
-    stcspr_amount: CLValue.newCLUInt256(amountMotes),
+    amount: CLValue.newCLUInt512(amountMotes),
   });
   const serializedArgs = unstakeArgs.toBytes();
 

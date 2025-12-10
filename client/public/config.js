@@ -2,10 +2,11 @@
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V9 Odra Contract with CEP-18 stCSPR Token
-  // V9 uses package_hash with proxy_caller.wasm for payable functions
+  // Smart Contract Configuration - V9 Odra Contract (Ownable + Pauseable)
+  // V9 uses package_hash with proxy_caller.wasm for all calls
+  // NOTE: Update this after deploying new V9 contract
   contract_hash: "", // Not used - kept for backwards compatibility
-  contract_package_hash: "ab4f4780daef5aca3c3c36cad559c93714938b80e6778e087bb645b0af2d635f",
+  contract_package_hash: "", // TODO: Deploy new V9 contract and update this
 
   // CSPR.click Configuration (from console.cspr.build)
   cspr_click_app_name: "Casper stake",
