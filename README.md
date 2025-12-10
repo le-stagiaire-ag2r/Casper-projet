@@ -214,12 +214,18 @@ Casper-projet/
 - [x] Deploy new contract to testnet
 - [x] Unit tests (8 tests passing)
 
-### V9.0 (Future)
-- [ ] Real stCSPR token (CEP-18 standard)
-- [ ] Token transfers between users
-- [ ] DEX integration potential
+### V9.0 - IN PROGRESS (Experimental)
+- [x] Real stCSPR token deployed (CEP-18 standard)
+- [x] Cross-contract call architecture implemented
+- [x] Token contract: `hash-938972a16eba403529c2c76aa1727a026fc1aa328f553185daba45703213f6bc`
+- [x] StakeVue V9 contract: `hash-c977c574e95ec91df64d2354f170542a019bb716dcd6268f301b27412d107e8b`
+- [ ] CLI `set_token` configuration (blocked by Casper 2.0 "no such addressable entity" issue)
+- [ ] Full integration testing
+
+**Note:** V9 contracts are deployed but configuration via CLI is blocked by Casper 2.0 migration issues. Frontend uses stable V8.2 until resolved.
 
 ### V10.0 (Future)
+- [ ] Complete V9 integration
 - [ ] Mainnet deployment
 - [ ] Security audit
 - [ ] Validator delegation
