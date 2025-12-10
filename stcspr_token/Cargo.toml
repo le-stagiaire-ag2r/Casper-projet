@@ -1,0 +1,18 @@
+[package]
+name = "stcspr_token"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+odra = "2.4.0"
+
+[dev-dependencies]
+odra-test = "2.4.0"
+
+[[bin]]
+name = "stcspr_token_build_contract"
+path = "bin/build_contract.rs"
+
+[[bin]]
+name = "stcspr_token_build_schema"
+path = "bin/build_schema.rs"

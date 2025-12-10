@@ -1,0 +1,5 @@
+name = "stcspr_token"
+version = "0.1.0"
+
+[[contracts]]
+fqn = "stcspr_token::StCsprToken"
