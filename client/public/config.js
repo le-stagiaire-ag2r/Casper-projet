@@ -1,11 +1,11 @@
-// StakeVue Runtime Configuration V8.1
+// StakeVue Runtime Configuration V9
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V8 Odra Contract (Casper Testnet)
-  // V8 uses package_hash with proxy_caller.wasm for payable functions
-  contract_hash: "", // Not used in V8 - kept for backwards compatibility
-  contract_package_hash: "f9205d8ad33cfb7fd47873babc4bc3388098beaea3573e7b8a69800dab9d68e4",
+  // Smart Contract Configuration - V9 Odra Contract with CEP-18 stCSPR Token
+  // V9 uses package_hash with proxy_caller.wasm for payable functions
+  contract_hash: "", // Not used - kept for backwards compatibility
+  contract_package_hash: "ab4f4780daef5aca3c3c36cad559c93714938b80e6778e087bb645b0af2d635f",
 
   // CSPR.click Configuration (from console.cspr.build)
   cspr_click_app_name: "Casper stake",
