@@ -52,13 +52,14 @@ pub struct TokenConfigured {
 }
 
 // ============================================================================
-// STAKEVUE CONTRACT V10 - with token in init
+// STAKEVUE CONTRACT V10 - hardcoded token for hackathon
 // ============================================================================
+
+// Hardcoded stCSPR token address (hackathon mode - no set_token needed)
+const STCSPR_TOKEN_HASH: &str = "hash-938972a16eba403529c2c76aa1727a026fc1aa328f553185daba45703213f6bc";
 
 #[odra::module(events = [Staked, Unstaked, TokenConfigured], errors = Error)]
 pub struct StakeVue {
-    /// stCSPR token contract address
-    stcspr_token: Var<Address>,
     /// Access control
     ownable: SubModule<Ownable>,
     /// Emergency pause
@@ -67,30 +68,26 @@ pub struct StakeVue {
     total_staked: Var<U512>,
 }
 
+fn get_token_address() -> Address {
+    use core::str::FromStr;
+    Address::from_str(STCSPR_TOKEN_HASH).unwrap()
+}
+
 #[odra::module]
 impl StakeVue {
-    /// Initialize the contract with owner and token address
-    pub fn init(&mut self, owner: Address, token: Address) {
+    /// Initialize the contract
+    pub fn init(&mut self, owner: Address) {
         self.ownable.init(owner);
-        self.stcspr_token.set(token);
         self.total_staked.set(U512::zero());
-        self.env().emit_event(TokenConfigured { token });
     }
 
     // ========================================================================
     // TOKEN CONFIGURATION
     // ========================================================================
 
-    /// Set the stCSPR token contract address (owner only, once)
-    pub fn set_token(&mut self, token: Address) {
-        self.ownable.assert_owner(&self.env().caller());
-        self.stcspr_token.set(token);
-        self.env().emit_event(TokenConfigured { token });
-    }
-
-    /// Get the token contract address
+    /// Get the token contract address (hardcoded for hackathon)
     pub fn get_token(&self) -> Address {
-        self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured)
+        get_token_address()
     }
 
     // ========================================================================
@@ -113,7 +110,7 @@ impl StakeVue {
         let token_amount = u512_to_u256(amount);
 
         // Mint stCSPR tokens to staker
-        let token_addr = self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured);
+        let token_addr = get_token_address();
         let mut token = StCsprTokenContractRef::new(self.env(), token_addr);
         token.mint(staker, token_amount);
 
@@ -138,7 +135,7 @@ impl StakeVue {
         let token_amount = u512_to_u256(amount);
 
         // Get token and check balance
-        let token_addr = self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured);
+        let token_addr = get_token_address();
         let mut token = StCsprTokenContractRef::new(self.env(), token_addr);
 
         let staker_balance = token.balance_of(staker);
@@ -165,7 +162,7 @@ impl StakeVue {
 
     /// Get stCSPR balance of an address (from token contract)
     pub fn get_stake(&self, staker: Address) -> U256 {
-        let token_addr = self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured);
+        let token_addr = get_token_address();
         let token = StCsprTokenContractRef::new(self.env(), token_addr);
         token.balance_of(staker)
     }
@@ -229,9 +226,7 @@ mod tests {
     fn setup() -> (odra::host::HostEnv, StakeVueHostRef) {
         let env = odra_test::env();
         let owner = env.get_account(0);
-        // Use a dummy token address for testing
-        let token = env.get_account(1);
-        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner, token });
+        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
         (env, contract)
     }
 
