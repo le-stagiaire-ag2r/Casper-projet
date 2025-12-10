@@ -69,10 +69,12 @@ pub struct StakeVue {
 
 #[odra::module]
 impl StakeVue {
-    /// Initialize the contract
-    pub fn init(&mut self, owner: Address) {
+    /// Initialize the contract with owner and token address
+    pub fn init(&mut self, owner: Address, token: Address) {
         self.ownable.init(owner);
+        self.stcspr_token.set(token);
         self.total_staked.set(U512::zero());
+        self.env().emit_event(TokenConfigured { token });
     }
 
     // ========================================================================
