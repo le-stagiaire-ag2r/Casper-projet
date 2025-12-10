@@ -1,3 +1,5 @@
+use odra_build::Wasm;
+
 fn main() {
-    stcspr_token::__StCsprToken::__install();
+    Wasm::build();
 }

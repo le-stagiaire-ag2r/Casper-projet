@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 odra = "2.4.0"
+odra-build = "2.4.0"
 
 [dev-dependencies]
 odra-test = "2.4.0"
