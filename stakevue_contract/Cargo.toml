@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 odra = { version = "2.4.0", default-features = false }
+odra-modules = { version = "2.4.0", default-features = false }
 odra-cli = { version = "2.4.0", optional = true }
 odra-casper-livenet-env = { version = "2.4.0", optional = true }
 
