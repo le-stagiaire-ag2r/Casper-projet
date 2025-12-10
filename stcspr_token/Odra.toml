@@ -1,0 +1,2 @@
+[[contracts]]
+fqn = "odra_modules::cep18_token::Cep18"
