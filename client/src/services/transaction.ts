@@ -1,10 +1,9 @@
 /**
- * Transaction Service for StakeVue V9
+ * Transaction Service for StakeVue V8.2
  *
- * Uses proxy_caller.wasm for payable functions (stake)
- * Uses proxy_caller.wasm for non-payable functions too (unstake)
+ * Uses proxy_caller.wasm for all contract calls (stake, unstake)
  *
- * V9 Simplified:
+ * V8.2 Features:
  * - unstake() takes amount: U512
  * - stCSPR tracked via Mapping in contract
  * - Ownable + Pauseable modules for admin control
@@ -216,7 +215,7 @@ export const buildUnstakeTransaction = async (
   const amountMotes = csprToMotes(amountCspr);
   const paymentMotes = config.transaction_payment || '5000000000';
 
-  // Build RuntimeArgs for unstake(amount: U512) - V9 simplified uses U512
+  // Build RuntimeArgs for unstake(amount: U512) - V8.2 uses U512
   const unstakeArgs = Args.fromMap({
     amount: CLValue.newCLUInt512(amountMotes),
   });

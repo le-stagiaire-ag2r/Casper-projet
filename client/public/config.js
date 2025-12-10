@@ -1,9 +1,9 @@
-// StakeVue Runtime Configuration V9
+// StakeVue Runtime Configuration V8.2
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V9 Odra Contract (Ownable + Pauseable)
-  // V9 uses package_hash with proxy_caller.wasm for all calls
+  // Smart Contract Configuration - V8.2 Odra Contract (Ownable + Pauseable)
+  // Uses package_hash with proxy_caller.wasm for all calls
   contract_hash: "", // Not used - kept for backwards compatibility
   contract_package_hash: "822196e8212ae0e6f1b9d5e158091b6b9e97501b120e16693d4bb9da1bc602de",
 

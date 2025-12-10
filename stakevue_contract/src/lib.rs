@@ -33,7 +33,7 @@ pub struct Unstaked {
 }
 
 // ============================================================================
-// STAKEVUE CONTRACT V9 - Simplified with Ownable + Pauseable
+// STAKEVUE CONTRACT V8.2 - with Ownable + Pauseable modules
 // ============================================================================
 
 /// StakeVue - Liquid Staking Protocol for Casper

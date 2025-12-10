@@ -1,8 +1,8 @@
 # StakeVue - Liquid Staking Protocol for Casper Network
 
 ![Casper Network](https://img.shields.io/badge/Casper-Testnet-blue)
-![Status](https://img.shields.io/badge/Status-V8.1_Beta-orange)
-![Version](https://img.shields.io/badge/Version-8.1.0-brightgreen)
+![Status](https://img.shields.io/badge/Status-V8.2_Beta-orange)
+![Version](https://img.shields.io/badge/Version-8.2.0-brightgreen)
 ![Open Source](https://img.shields.io/badge/Open_Source-Yes-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -15,7 +15,7 @@
 
 **Web App:** [https://casper-projet.vercel.app](https://casper-projet.vercel.app)
 
-**V8 Contract on Explorer:** [View on Testnet](https://testnet.cspr.live/contract-package/f9205d8ad33cfb7fd47873babc4bc3388098beaea3573e7b8a69800dab9d68e4)
+**V8.2 Contract on Explorer:** [View on Testnet](https://testnet.cspr.live/contract-package/822196e8212ae0e6f1b9d5e158091b6b9e97501b120e16693d4bb9da1bc602de)
 
 ---
 
@@ -29,108 +29,98 @@ Stake CSPR -> Get stCSPR -> Earn ~17% APY -> Stay Liquid
 
 ---
 
-## What's New in V8.1
+## What's New in V8.2
 
-### Frontend Integration Complete
-
-| Feature | Description |
-|---------|-------------|
-| **V8 Contract Connected** | Frontend now calls the real Odra V8 contract |
-| **proxy_caller.wasm** | Browser-compatible WASM for payable functions |
-| **Real CSPR Transfers** | Actual CSPR moves to/from the contract |
-| **Optimistic Balance Updates** | Instant UI feedback after transactions |
-| **Separated Token Display** | CSPR and stCSPR shown separately (no confusion) |
-
-### V8.1 Bug Fixes
-
-| Issue | Solution |
-|-------|----------|
-| Balance showing combined CSPR + stCSPR | Fixed - now displayed separately in Portfolio History |
-| API cache returning stale balance | Fixed - local balance is source of truth after transaction |
-
----
-
-## What's New in V8.0
-
-### Real CSPR Staking with Odra Framework
+### Admin Controls & Security Modules
 
 | Feature | Description |
 |---------|-------------|
-| **Real CSPR Transfers** | Actual CSPR tokens are transferred to/from the contract |
-| **Odra 2.4.0 Framework** | Modern smart contract framework for Casper 2.0 |
-| **Payable Functions** | Uses `#[odra(payable)]` for receiving CSPR |
-| **CLI Tool** | Built-in CLI for contract interaction |
-| **Testnet Deployed** | Fully tested on Casper testnet |
+| **Ownable Module** | Admin access control via Odra modules |
+| **Pauseable Module** | Emergency stop mechanism |
+| **Transfer Ownership** | Admin can transfer control to new owner |
+| **Pause/Unpause** | Owner can pause staking in emergencies |
 
-### V8 Contract Details
+### New Entry Points
+
+| Function | Access | Description |
+|----------|--------|-------------|
+| `pause()` | Owner only | Stop all stake/unstake operations |
+| `unpause()` | Owner only | Resume operations |
+| `transfer_ownership(new_owner)` | Owner only | Transfer admin rights |
+| `get_owner()` | Public | Query current owner |
+| `is_paused()` | Public | Check if contract is paused |
+
+### V8.2 Contract Details
 
 ```
-Package Hash: hash-f9205d8ad33cfb7fd47873babc4bc3388098beaea3573e7b8a69800dab9d68e4
+Package Hash: hash-822196e8212ae0e6f1b9d5e158091b6b9e97501b120e16693d4bb9da1bc602de
 Network: casper-test
 Framework: Odra 2.4.0
+Modules: Ownable, Pauseable
 Status: Deployed & Tested
 ```
 
-### Tested Transactions
+---
 
-| Action | Transaction Hash |
-|--------|------------------|
-| Stake (5 CSPR) | [2945b131...](https://testnet.cspr.live/transaction/2945b1311537024452ccdf9812797a2349696049b1c78eb809bd7af9297e4124) |
-| Unstake (2 CSPR) | [fcc6fd33...](https://testnet.cspr.live/transaction/fcc6fd3320e84c93d8a077f0502c7cd7557b03429804d0a2baf1f6ca169e372b) |
+## Previous Versions
+
+### V8.1 - Frontend Integration
+- Frontend connected to real Odra contract
+- proxy_caller.wasm for browser calls
+- Optimistic balance updates
+- Separated CSPR/stCSPR display
+
+### V8.0 - Real CSPR Staking
+- Real CSPR transfers via Odra framework
+- Payable functions with `#[odra(payable)]`
+- CLI tool for contract interaction
 
 ---
 
-## Known Limitations
-
-### CSPR.click API Cache Behavior
-
-The CSPR.click SDK caches balance data and **does not refresh automatically** without a page reload. This is a limitation of their API, not our code.
-
-**What happens:**
-```
-1. You stake 20 CSPR
-2. Your real balance: 550 -> 530 CSPR (on blockchain)
-3. CSPR.click API cache: still returns 550 (stale!)
-4. Without protection, UI would show wrong balance
-```
-
-**Our solution:**
-```
-1. After any transaction, we use LOCAL balance calculation
-2. Auto-refresh from API is disabled for that session
-3. When you reload the page, fresh data is fetched
-4. Balance is always accurate in the UI
-```
-
-This is the same approach used by MetaMask, Phantom, and other crypto wallets - **optimistic updates** with sync on page reload.
-
----
-
-## Smart Contract (V8 - Odra)
+## Smart Contract (V8.2 - Odra)
 
 ### Contract Code
 
 Located in `stakevue_contract/src/lib.rs`:
 
 ```rust
-#[odra::module(events = [Staked, Unstaked])]
+#[odra::module(events = [Staked, Unstaked], errors = Error)]
 pub struct StakeVue {
     stakes: Mapping<Address, U512>,
+    ownable: SubModule<Ownable>,
+    pausable: SubModule<Pauseable>,
     total_staked: Var<U512>,
 }
 
 #[odra::module]
 impl StakeVue {
+    pub fn init(&mut self, owner: Address) {
+        self.ownable.init(owner);
+        self.total_staked.set(U512::zero());
+    }
+
     #[odra(payable)]
     pub fn stake(&mut self) {
+        self.pausable.require_not_paused();
         let staker = self.env().caller();
         let amount = self.env().attached_value();
         // ... transfers real CSPR
     }
 
     pub fn unstake(&mut self, amount: U512) {
+        self.pausable.require_not_paused();
         // ... returns real CSPR to user
         self.env().transfer_tokens(&staker, &amount);
+    }
+
+    pub fn pause(&mut self) {
+        self.ownable.assert_owner(&self.env().caller());
+        self.pausable.pause();
+    }
+
+    pub fn unpause(&mut self) {
+        self.ownable.assert_owner(&self.env().caller());
+        self.pausable.unpause();
     }
 }
 ```
@@ -143,12 +133,17 @@ impl StakeVue {
 | `unstake(amount)` | Withdraw CSPR from stake |
 | `get_stake(staker)` | Query stake for an address |
 | `get_total_staked()` | Query total CSPR staked in contract |
+| `pause()` | Pause contract (owner only) |
+| `unpause()` | Unpause contract (owner only) |
+| `get_owner()` | Query contract owner |
+| `is_paused()` | Check if paused |
+| `transfer_ownership(new_owner)` | Transfer ownership (owner only) |
 
 ### Building the Contract
 
 ```bash
 cd stakevue_contract
-cargo odra build -c StakeVue
+cargo odra build
 ```
 
 ### Deploying
@@ -159,34 +154,16 @@ casper-client put-transaction session \
   --secret-key ~/secret_key.pem \
   --wasm-path wasm/StakeVue.wasm \
   --chain-name casper-test \
-  --gas-price-tolerance 10 \
-  --transaction-runtime vm-casper-v1 \
+  --gas-price-tolerance 1 \
   --standard-payment true \
-  --payment-amount 450000000000 \
+  --payment-amount 500000000000 \
   --install-upgrade \
-  --session-arg "odra_cfg_package_hash_key_name:string:'stakevue'" \
+  --session-arg "odra_cfg_package_hash_key_name:string:'stakevue_v8'" \
   --session-arg "odra_cfg_allow_key_override:bool:'true'" \
   --session-arg "odra_cfg_is_upgradable:bool:'true'" \
   --session-arg "odra_cfg_is_upgrade:bool:'false'" \
-  --session-arg "odra_cfg_constructor:string:'init'"
-```
-
-### Using the CLI
-
-```bash
-cd stakevue_contract
-
-# Set environment variables
-export ODRA_CASPER_LIVENET_SECRET_KEY_PATH=~/secret_key.pem
-export ODRA_CASPER_LIVENET_NODE_ADDRESS=http://NODE:7777
-export ODRA_CASPER_LIVENET_CHAIN_NAME=casper-test
-export ODRA_CASPER_LIVENET_EVENTS_URL=http://NODE:9999/events/main
-
-# Stake 5 CSPR
-cargo run --bin stakevue_cli --features livenet -- contract StakeVue stake --attached_value 5000000000 --gas 50000000000
-
-# Unstake 2 CSPR
-cargo run --bin stakevue_cli --features livenet -- contract StakeVue unstake --amount 2000000000 --gas 50000000000
+  --session-arg "odra_cfg_constructor:string:'init'" \
+  --session-arg "owner:key:'account-hash-YOUR_ACCOUNT_HASH'"
 ```
 
 ---
@@ -195,7 +172,7 @@ cargo run --bin stakevue_cli --features livenet -- contract StakeVue unstake --a
 
 ```
 Casper-projet/
-├── client/                      # React frontend (V8.1)
+├── client/                      # React frontend (V8.2)
 │   ├── public/
 │   │   ├── config.js            # Runtime configuration
 │   │   └── proxy_caller.wasm    # WASM for payable calls
@@ -205,12 +182,10 @@ Casper-projet/
 │       ├── hooks/               # Custom hooks
 │       ├── services/            # Transaction builder
 │       └── pages/               # Page components
-├── stakevue_contract/           # Odra smart contract (V8)
-│   ├── src/lib.rs               # Contract code (73 lines)
-│   ├── bin/cli.rs               # CLI tool
-│   ├── Cargo.toml               # Odra 2.4.0 dependencies
-│   ├── Odra.toml                # Odra config
-│   └── resources/contracts.toml # Deployed contract info
+├── stakevue_contract/           # Odra smart contract (V8.2)
+│   ├── src/lib.rs               # Contract code with Ownable + Pauseable
+│   ├── Cargo.toml               # Odra 2.4.0 + odra-modules
+│   └── Odra.toml                # Odra config
 ├── api/                         # Vercel serverless functions
 │   ├── price.ts                 # CoinGecko API proxy
 │   └── validators.ts            # Validator data proxy
@@ -229,29 +204,25 @@ Casper-projet/
 | **Actual Gas Used** | ~1 CSPR | Depends on operation |
 | **Gas Price** | 1 | Standard Casper price |
 
-The frontend validates that users have enough balance for both the stake amount AND gas fees before submitting.
-
 ---
 
 ## Roadmap
 
-### V8.1 - COMPLETE
-- [x] Integrate V8 contract with frontend
-- [x] Add proxy_caller.wasm for browser calls
-- [x] Update staking forms to use real CSPR
-- [x] Fix balance display (separate CSPR/stCSPR)
-- [x] Handle API cache limitation
-
-### V8.2 (Future)
-- [ ] Add stCSPR token minting (ERC-20 style)
-- [ ] Implement reward distribution mechanism
-- [ ] Add validator delegation selection
-- [ ] Multi-validator support
+### V8.2 - COMPLETE
+- [x] Add Ownable module (admin control)
+- [x] Add Pauseable module (emergency stop)
+- [x] Deploy new contract to testnet
+- [x] Unit tests (8 tests passing)
 
 ### V9.0 (Future)
+- [ ] Real stCSPR token (CEP-18 standard)
+- [ ] Token transfers between users
+- [ ] DEX integration potential
+
+### V10.0 (Future)
 - [ ] Mainnet deployment
 - [ ] Security audit
-- [ ] Governance token
+- [ ] Validator delegation
 
 ---
 
@@ -259,7 +230,7 @@ The frontend validates that users have enough balance for both the stake amount 
 
 | Component | Technology |
 |-----------|------------|
-| **Smart Contract** | Rust, Odra 2.4.0, WASM |
+| **Smart Contract** | Rust, Odra 2.4.0, odra-modules, WASM |
 | **Frontend** | React 18, TypeScript, styled-components |
 | **State Management** | React Context API |
 | **Wallet** | CSPR.click integration |
@@ -278,22 +249,14 @@ npm install
 npm start
 ```
 
-### Smart Contract (V8)
+### Smart Contract
 
 ```bash
 cd stakevue_contract
 rustup install nightly-2025-01-01
 rustup target add wasm32-unknown-unknown --toolchain nightly-2025-01-01
-cargo odra build -c StakeVue
-```
-
-### Environment Variables
-
-For local development, create `client/.env`:
-
-```env
-# Optional - defaults are in public/config.js
-REACT_APP_CHAIN_NAME=casper-test
+cargo odra build
+cargo test  # Run 8 unit tests
 ```
 
 ---
@@ -301,7 +264,7 @@ REACT_APP_CHAIN_NAME=casper-test
 ## Links
 
 - **Live Demo:** https://casper-projet.vercel.app
-- **V8 Contract:** https://testnet.cspr.live/contract-package/f9205d8ad33cfb7fd47873babc4bc3388098beaea3573e7b8a69800dab9d68e4
+- **V8.2 Contract:** https://testnet.cspr.live/contract-package/822196e8212ae0e6f1b9d5e158091b6b9e97501b120e16693d4bb9da1bc602de
 - **Odra Framework:** https://odra.dev
 - **Casper Network:** https://casper.network
 - **CSPR.click Docs:** https://docs.cspr.click
@@ -312,12 +275,12 @@ REACT_APP_CHAIN_NAME=casper-test
 
 | Version | Highlights |
 |---------|------------|
+| **V8.2** | Ownable + Pauseable modules, admin controls |
 | **V8.1** | Frontend integration, balance fix, API cache handling |
 | **V8.0** | Real CSPR staking with Odra 2.4.0 framework |
-| **V7.1** | LIVE badges, CORS fix, stable 17% APY |
-| **V7.0** | APY slider, all-time price chart, CSV export |
-| **V6.x** | Price alerts, portfolio history, redesigned UI |
-| **V5.0** | Security hardening, best practices |
+| **V7.x** | APY slider, price charts, CSV export |
+| **V6.x** | Price alerts, portfolio history |
+| **V5.0** | Security hardening |
 
 ---
 
@@ -326,8 +289,7 @@ REACT_APP_CHAIN_NAME=casper-test
 Previous versions and legacy code are preserved in the `/archive` folder:
 - `frontend-v1/` - Original HTML/CSS/JS frontend
 - `server/` - Node.js backend (never deployed)
-- `infra/` - Docker configurations
-- `V6.1-DEVELOPMENT-NOTES.md` - Historical development notes
+- `RELEASE_NOTES_V8.md` - V8.0/V8.1 release notes
 
 ---
 
