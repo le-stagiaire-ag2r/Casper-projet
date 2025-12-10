@@ -29,3 +29,9 @@ name = "stakevue_cli"
 path = "bin/cli.rs"
 required-features = ["livenet"]
 test = false
+
+[[bin]]
+name = "configure_v9"
+path = "bin/configure_v9.rs"
+required-features = ["livenet"]
+test = false
