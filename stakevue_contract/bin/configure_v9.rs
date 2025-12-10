@@ -21,7 +21,7 @@ fn main() {
 
     // Load the existing StakeVue V9 contract
     let mut stakevue = load_stakevue(&env);
-    println!("Loaded StakeVue at: {}", stakevue.address());
+    println!("Loaded StakeVue at: {:?}", stakevue.address());
 
     // Parse token address
     let token_address = Address::from_str(STCSPR_TOKEN_ADDRESS)
