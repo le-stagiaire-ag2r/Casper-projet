@@ -91,7 +91,7 @@ impl StCsprToken {
     }
 
     pub fn mint(&mut self, to: Address, amount: U256) {
-        self.assert_owner();
+        // Note: No owner check for hackathon - allows StakeVue cross-contract calls
         let balance = self.balances.get(&to).unwrap_or_default();
         self.balances.set(&to, balance + amount);
         let total = self.total_supply.get_or_default();
@@ -100,7 +100,7 @@ impl StCsprToken {
     }
 
     pub fn burn(&mut self, from: Address, amount: U256) {
-        self.assert_owner();
+        // Note: No owner check for hackathon - allows StakeVue cross-contract calls
         let balance = self.balances.get(&from).unwrap_or_default();
         if balance < amount {
             self.env().revert(Error::InsufficientBalance);
