@@ -3,6 +3,7 @@
 use odra::prelude::*;
 use odra::casper_types::{U512, U256};
 use odra_modules::access::Ownable;
+use odra_modules::cep18_token::Cep18;
 
 // ============================================================================
 // ERRORS
@@ -11,6 +12,7 @@ use odra_modules::access::Ownable;
 #[odra::odra_error]
 pub enum Error {
     InsufficientBalance = 1,
+    InsufficientStCsprBalance = 2,
     ZeroAmount = 3,
 }
 
@@ -31,37 +33,43 @@ pub struct Unstaked {
 }
 
 // ============================================================================
-// STAKEVUE CONTRACT V13 - Minimal test (like V8.2 that worked)
+// STAKEVUE CONTRACT V14 - With integrated CEP-18 token (like Halborn audit)
 // ============================================================================
-// This is the simplest possible staking contract to test if payable works.
-// No CEP-18 token, just basic stake tracking with a Mapping.
-// If this works, the issue is with SubModule<Cep18>.
-// If this fails, the issue is with the payable mechanism itself.
+// Based on V13 that works + SubModule<Cep18> for stCSPR token
+// Following the pattern from official Casper liquid staking contracts
 // ============================================================================
 
 #[odra::module(events = [Staked, Unstaked], errors = Error)]
 pub struct StakeVue {
     /// Access control
     ownable: SubModule<Ownable>,
-    /// User balances (internal tracking, no external token)
-    balances: Mapping<Address, U512>,
+    /// Integrated stCSPR CEP-18 token
+    token: SubModule<Cep18>,
     /// Total CSPR staked in contract
     total_staked: Var<U512>,
 }
 
 #[odra::module]
 impl StakeVue {
-    /// Initialize the contract with owner only (like V8.2)
+    /// Initialize the contract with owner only (like V13/V8.2)
     pub fn init(&mut self, owner: Address) {
         self.ownable.init(owner);
         self.total_staked.set(U512::zero());
+
+        // Initialize the integrated stCSPR token (like in Halborn audit)
+        self.token.init(
+            String::from("stCSPR"),
+            String::from("Staked CSPR"),
+            9,
+            U256::zero(),
+        );
     }
 
     // ========================================================================
     // STAKING FUNCTIONS
     // ========================================================================
 
-    /// Stake CSPR - simple tracking without token minting
+    /// Stake CSPR and receive stCSPR tokens
     #[odra(payable)]
     pub fn stake(&mut self) {
         let staker = self.env().caller();
@@ -71,9 +79,11 @@ impl StakeVue {
             self.env().revert(Error::ZeroAmount);
         }
 
-        // Update user balance
-        let current_balance = self.balances.get(&staker).unwrap_or_default();
-        self.balances.set(&staker, current_balance + amount);
+        // Convert U512 to U256 for token
+        let token_amount = u512_to_u256(amount);
+
+        // Mint stCSPR tokens to staker (using raw_mint like in tutorial)
+        self.token.raw_mint(&staker, &token_amount);
 
         // Update total staked
         let total = self.total_staked.get_or_default();
@@ -82,7 +92,7 @@ impl StakeVue {
         self.env().emit_event(Staked { staker, amount });
     }
 
-    /// Unstake: withdraw CSPR
+    /// Unstake: burn stCSPR and receive CSPR back
     pub fn unstake(&mut self, amount: U512) {
         let staker = self.env().caller();
 
@@ -90,14 +100,17 @@ impl StakeVue {
             self.env().revert(Error::ZeroAmount);
         }
 
-        // Check balance
-        let current_balance = self.balances.get(&staker).unwrap_or_default();
-        if amount > current_balance {
-            self.env().revert(Error::InsufficientBalance);
+        // Convert U512 to U256 for token
+        let token_amount = u512_to_u256(amount);
+
+        // Check staker's stCSPR balance
+        let staker_balance = self.token.balance_of(&staker);
+        if token_amount > staker_balance {
+            self.env().revert(Error::InsufficientStCsprBalance);
         }
 
-        // Update user balance
-        self.balances.set(&staker, current_balance - amount);
+        // Burn stCSPR tokens (using raw_burn like in tutorial)
+        self.token.raw_burn(&staker, &token_amount);
 
         // Update total staked
         let total = self.total_staked.get_or_default();
@@ -113,9 +126,9 @@ impl StakeVue {
     // VIEW FUNCTIONS
     // ========================================================================
 
-    /// Get staked balance of an address
-    pub fn get_stake(&self, staker: Address) -> U512 {
-        self.balances.get(&staker).unwrap_or_default()
+    /// Get stCSPR balance (staked amount) of an address
+    pub fn get_stake(&self, staker: Address) -> U256 {
+        self.token.balance_of(&staker)
     }
 
     /// Get total CSPR staked in the contract
@@ -128,14 +141,39 @@ impl StakeVue {
         self.ownable.get_owner()
     }
 
+    /// Get token name
+    pub fn token_name(&self) -> String {
+        self.token.name()
+    }
+
+    /// Get token symbol
+    pub fn token_symbol(&self) -> String {
+        self.token.symbol()
+    }
+
+    /// Get token total supply
+    pub fn token_total_supply(&self) -> U256 {
+        self.token.total_supply()
+    }
+
     // ========================================================================
-    // ADMIN FUNCTIONS (Owner only)
+    // ADMIN FUNCTIONS
     // ========================================================================
 
     /// Transfer ownership (owner only)
     pub fn transfer_ownership(&mut self, new_owner: Address) {
         self.ownable.transfer_ownership(&new_owner);
     }
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+fn u512_to_u256(value: U512) -> U256 {
+    let mut bytes = [0u8; 64];
+    value.to_little_endian(&mut bytes);
+    U256::from_little_endian(&bytes[..32])
 }
 
 // ============================================================================
@@ -161,6 +199,8 @@ mod tests {
 
         assert_eq!(contract.get_total_staked(), U512::zero());
         assert_eq!(contract.get_owner(), owner);
+        assert_eq!(contract.token_symbol(), "stCSPR");
+        assert_eq!(contract.token_total_supply(), U256::zero());
     }
 
     #[test]
@@ -168,23 +208,21 @@ mod tests {
         let (env, mut contract) = setup();
         let staker = env.get_account(1);
 
-        // Switch to staker account
         env.set_caller(staker);
 
         // Stake 10 CSPR
         let stake_amount = U512::from(10_000_000_000u64);
         contract.with_tokens(stake_amount).stake();
 
-        // Check balances
-        assert_eq!(contract.get_stake(staker), stake_amount);
+        // Check stCSPR received
+        assert_eq!(contract.get_stake(staker), U256::from(10_000_000_000u64));
         assert_eq!(contract.get_total_staked(), stake_amount);
+        assert_eq!(contract.token_total_supply(), U256::from(10_000_000_000u64));
 
         // Unstake 5 CSPR
-        let unstake_amount = U512::from(5_000_000_000u64);
-        contract.unstake(unstake_amount);
+        contract.unstake(U512::from(5_000_000_000u64));
 
-        // Check balances updated
-        assert_eq!(contract.get_stake(staker), U512::from(5_000_000_000u64));
+        assert_eq!(contract.get_stake(staker), U256::from(5_000_000_000u64));
         assert_eq!(contract.get_total_staked(), U512::from(5_000_000_000u64));
     }
 
@@ -197,16 +235,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "InsufficientBalance")]
+    #[should_panic(expected = "InsufficientStCsprBalance")]
     fn test_unstake_more_than_balance_fails() {
         let (env, mut contract) = setup();
         let staker = env.get_account(1);
         env.set_caller(staker);
 
-        // Stake 10 CSPR
         contract.with_tokens(U512::from(10_000_000_000u64)).stake();
-
-        // Try to unstake 20 CSPR
         contract.unstake(U512::from(20_000_000_000u64));
     }
 }
