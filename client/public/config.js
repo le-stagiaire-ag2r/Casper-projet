@@ -2,11 +2,10 @@
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V9 with stCSPR token integration
-  // V9 Package Hash: hash-c977c574e95ec91df64d2354f170542a019bb716dcd6268f301b27412d107e8b
-  // Token V3: hash-938972a16eba403529c2c76aa1727a026fc1aa328f553185daba45703213f6bc
+  // Smart Contract Configuration - V8.2 (testing if it still works)
+  // V8.2 Package Hash: hash-822196e8212ae0e6f1b9d5e158091b6b9e97501b120e16693d4bb9da1bc602de
   contract_hash: "", // Not used - kept for backwards compatibility
-  contract_package_hash: "c977c574e95ec91df64d2354f170542a019bb716dcd6268f301b27412d107e8b",
+  contract_package_hash: "822196e8212ae0e6f1b9d5e158091b6b9e97501b120e16693d4bb9da1bc602de",
 
   // CSPR.click Configuration (from console.cspr.build)
   cspr_click_app_name: "Casper stake",
