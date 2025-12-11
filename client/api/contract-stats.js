@@ -9,7 +9,7 @@ const RPC_ENDPOINTS = [
 
 const CONTRACT_PACKAGE_HASH = '2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985';
 const RATE_PRECISION = 1000000000;
-const API_VERSION = '2.2';
+const API_VERSION = '2.3';
 
 // Helper to make RPC calls
 async function rpcCall(rpcUrl, method, params, signal) {
@@ -155,10 +155,14 @@ module.exports = async function handler(req, res) {
 
           // Query the actual contract using the version hash
           if (activeContractHash) {
+            // Convert contract-xxx to hash-xxx for query_global_state
+            const queryContractKey = activeContractHash.replace('contract-', 'hash-');
+            debugInfo.queryContractKey = queryContractKey;
+
             try {
               const contractResult = await rpcCall(rpcUrl, 'query_global_state', {
                 state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
-                key: activeContractHash,
+                key: queryContractKey,
                 path: [],
               }, controller.signal);
 
@@ -235,7 +239,11 @@ module.exports = async function handler(req, res) {
         ];
 
         // Use active contract hash if available, otherwise fall back to package hash
-        const queryKey = activeContractHash || usedKeyFormat;
+        // Convert contract-xxx to hash-xxx format for queries
+        let queryKey = activeContractHash || usedKeyFormat;
+        if (queryKey && queryKey.startsWith('contract-')) {
+          queryKey = queryKey.replace('contract-', 'hash-');
+        }
         debugInfo.pathQueryKey = queryKey;
 
         debugInfo.pathAttempts = [];
