@@ -13,7 +13,7 @@ fn main() {
     let owner = env.caller();
     println!("Owner: {:?}", owner);
 
-    env.set_gas(300_000_000_000u64);
+    env.set_gas(500_000_000_000u64);
 
     println!("Deploying...");
     let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
