@@ -32,7 +32,7 @@ fn main() {
 
     // Add 1 CSPR as rewards (simulating validator rewards)
     let reward_amount = U512::from(1_000_000_000u64); // 1 CSPR
-    env.set_gas(200_000_000_000u64);
+    env.set_gas(10_000_000_000u64); // 10 CSPR gas
 
     println!("\nAdding 1 CSPR rewards...");
     stakevue.with_tokens(reward_amount).add_rewards();

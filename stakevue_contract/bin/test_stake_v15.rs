@@ -29,7 +29,7 @@ fn main() {
 
     // Stake 5 CSPR
     let stake_amount = U512::from(5_000_000_000u64); // 5 CSPR
-    env.set_gas(300_000_000_000u64);
+    env.set_gas(15_000_000_000u64); // 15 CSPR gas (same as V14)
 
     println!("\nStaking 5 CSPR...");
     stakevue.with_tokens(stake_amount).stake();
