@@ -1,22 +1,24 @@
 //! Test stake on V15 contract
 //! Run with: cargo run --bin test_stake_v15 --features livenet
 
-use odra::casper_types::U512;
+use odra::casper_types::{U512, ContractPackageHash};
 use odra::host::HostRef;
 use odra::prelude::*;
 use stakevue_contract::StakeVueHostRef;
 
-// V15 Contract Address - UPDATE THIS AFTER DEPLOY
-const CONTRACT_HASH: &str = "hash-73c7d3eb92943c49a6367120e0ea93f0e8cf0de3f998e5937c376ab3a1828e5e";
+// V15 Contract Address - UPDATE THIS AFTER DEPLOY (without 'hash-' prefix)
+const CONTRACT_HASH: &str = "73c7d3eb92943c49a6367120e0ea93f0e8cf0de3f998e5937c376ab3a1828e5e";
 
 fn main() {
     let env = odra_casper_livenet_env::env();
 
     println!("=== Testing Stake on V15 ===");
-    println!("Contract: {}", CONTRACT_HASH);
+    println!("Contract: hash-{}", CONTRACT_HASH);
 
     // Load existing contract
-    let address = Address::try_from(CONTRACT_HASH).expect("Invalid contract hash");
+    let package_hash = ContractPackageHash::from_formatted_str(&format!("contract-package-{}", CONTRACT_HASH))
+        .expect("Invalid contract hash");
+    let address = Address::from(package_hash);
     let mut stakevue = StakeVueHostRef::new(address, env.clone());
 
     let caller = env.caller();
