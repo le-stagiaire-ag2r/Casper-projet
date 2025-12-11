@@ -101,3 +101,9 @@ name = "test_stake_v13"
 path = "bin/test_stake_v13.rs"
 required-features = ["livenet"]
 test = false
+
+[[bin]]
+name = "test_unstake_v13"
+path = "bin/test_unstake_v13.rs"
+required-features = ["livenet"]
+test = false
