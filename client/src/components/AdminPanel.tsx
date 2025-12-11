@@ -291,6 +291,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
     totalPool,
     totalStcspr,
     simulateRewards,
+    isLive,
+    refresh,
   } = useContractData();
   const { success: toastSuccess, error: toastError, ToastComponent } = useToast();
 
@@ -376,6 +378,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
         // Update local state to simulate the change
         simulateRewards(numAmount);
         setAmount('');
+
+        // Refresh live data after 5 seconds
+        setTimeout(refresh, 5000);
       } else {
         throw new Error(result.error || 'Transaction failed');
       }

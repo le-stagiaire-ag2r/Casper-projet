@@ -20,6 +20,7 @@ declare global {
       owner_account_hash: string;
       add_rewards_payment: string;
       rate_precision: number;
+      rpc_url: string;
     };
 
     // CSPR.click global object
