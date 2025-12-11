@@ -1,6 +1,7 @@
 // Vercel Serverless Function - Contract Stats API (Simplified)
 
-const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
+// Try alternate RPC endpoints - the main one often has DNS issues
+const RPC_URL = 'https://node-clarity-testnet.make.services/rpc';
 const CONTRACT_PACKAGE_HASH = '2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985';
 const RATE_PRECISION = 1000000000;
 
