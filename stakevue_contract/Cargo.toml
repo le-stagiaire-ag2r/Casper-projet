@@ -53,3 +53,9 @@ name = "configure_v10"
 path = "bin/configure_v10.rs"
 required-features = ["livenet"]
 test = false
+
+[[bin]]
+name = "test_stake_v10"
+path = "bin/test_stake_v10.rs"
+required-features = ["livenet"]
+test = false
