@@ -272,7 +272,7 @@ When you stake via the frontend:
 | **V14** | Dec 2025 | Production-ready with integrated CEP-18 stCSPR token |
 | **V13** | Dec 2025 | Minimal version proving payable works |
 | **V12** | Dec 2025 | CEP-18 attempt (package key conflict) |
-| **V9-V10** | Dec 2025 | External token reference (broken attached_value) |
+| **V9-V10-V11** | Dec 2025 | External token reference (broken attached_value) |
 | **V8.2** | Dec 2025 | Ownable + Pauseable modules, Odra 2.4.0 |
 | **V8.0** | Dec 2025 | First real CSPR staking with Odra framework |
 | **V7.x** | Nov 2025 | APY slider, price charts, CSV export |
