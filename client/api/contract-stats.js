@@ -135,9 +135,104 @@ module.exports = async function handler(req, res) {
         // Check for AddressableEntity (Casper 2.0 format)
         if (foundEntity.AddressableEntity) {
           const entity = foundEntity.AddressableEntity;
+          const namedKeys = entity.named_keys || [];
 
-          // Try to get the contract's main purse balance
-          if (entity.main_purse) {
+          debugInfo.namedKeys = namedKeys.map(nk => nk.name);
+
+          // Try to read Odra storage variables from named keys
+          for (const nk of namedKeys) {
+            try {
+              // Look for total_cspr_pool or pool-related keys
+              if (nk.name.includes('total_cspr_pool') || nk.name.includes('pool')) {
+                const valueResponse = await fetch(rpcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 10,
+                    method: 'query_global_state',
+                    params: {
+                      state_identifier: null,
+                      key: nk.key,
+                      path: [],
+                    },
+                  }),
+                });
+                const valueData = await valueResponse.json();
+                if (valueData.result?.stored_value?.CLValue?.parsed) {
+                  const parsed = valueData.result.stored_value.CLValue.parsed;
+                  totalPool = parseInt(parsed, 10) || 0;
+                  source = 'named_key_pool';
+                }
+              }
+
+              // Look for token supply keys
+              if (nk.name.includes('total_supply') || nk.name.includes('supply')) {
+                const valueResponse = await fetch(rpcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 11,
+                    method: 'query_global_state',
+                    params: {
+                      state_identifier: null,
+                      key: nk.key,
+                      path: [],
+                    },
+                  }),
+                });
+                const valueData = await valueResponse.json();
+                if (valueData.result?.stored_value?.CLValue?.parsed) {
+                  const parsed = valueData.result.stored_value.CLValue.parsed;
+                  totalStcspr = parseInt(parsed, 10) || 0;
+                  source = 'named_key_supply';
+                }
+              }
+            } catch (e) {
+              // Continue to next key
+            }
+          }
+
+          // Fallback: Try querying with path for Odra Var storage
+          if (totalPool === 0) {
+            const odraKeys = ['total_cspr_pool', 'state:total_cspr_pool'];
+            for (const odraKey of odraKeys) {
+              try {
+                const pathResponse = await fetch(rpcUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 20,
+                    method: 'query_global_state',
+                    params: {
+                      state_identifier: null,
+                      key: usedKeyFormat,
+                      path: [odraKey],
+                    },
+                  }),
+                });
+                const pathData = await pathResponse.json();
+                debugInfo.odraAttempts = debugInfo.odraAttempts || [];
+                debugInfo.odraAttempts.push({
+                  key: odraKey,
+                  hasResult: !!pathData.result?.stored_value,
+                  error: pathData.error?.message,
+                });
+                if (pathData.result?.stored_value?.CLValue?.parsed) {
+                  totalPool = parseInt(pathData.result.stored_value.CLValue.parsed, 10) || 0;
+                  source = 'odra_path';
+                  break;
+                }
+              } catch (e) {
+                // Continue
+              }
+            }
+          }
+
+          // Try to get the contract's main purse balance as last resort
+          if (totalPool === 0 && entity.main_purse) {
             try {
               const balanceResponse = await fetch(rpcUrl, {
                 method: 'POST',
@@ -158,12 +253,15 @@ module.exports = async function handler(req, res) {
               });
               const balanceData = await balanceResponse.json();
               if (balanceData.result?.balance) {
-                totalPool = parseInt(balanceData.result.balance, 10) || 0;
-                totalStcspr = totalPool; // Assume 1:1 for now
-                source = 'balance_query';
+                const balance = parseInt(balanceData.result.balance, 10) || 0;
+                if (balance > 0) {
+                  totalPool = balance;
+                  totalStcspr = balance; // Assume 1:1 for purse balance
+                  source = 'purse_balance';
+                }
               }
             } catch (e) {
-              // Balance query failed, continue with 0
+              // Balance query failed
             }
           }
         }
@@ -187,6 +285,7 @@ module.exports = async function handler(req, res) {
           endpoint: rpcUrl.split('/')[2],
           keyFormat: usedKeyFormat,
           method: usedMethod,
+          debug: debugInfo,
         });
       }
 
