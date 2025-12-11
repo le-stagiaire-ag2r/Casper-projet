@@ -1,2 +1,4 @@
 [[contracts]]
 fqn = "stakevue_contract::StakeVue"
+package_hash_key_name = "stakevue_v14"
+allow_key_override = true

@@ -1,16 +1,18 @@
 /**
- * Transaction Service for StakeVue V8.2
+ * Transaction Service for StakeVue V14
  *
  * Uses proxy_caller.wasm for all contract calls (stake, unstake)
  *
- * V8.2 Features:
- * - unstake() takes amount: U512
- * - stCSPR tracked via Mapping in contract
- * - Ownable + Pauseable modules for admin control
+ * V14 Features:
+ * - stake() payable - uses attached_value()
+ * - unstake(amount: U512) - burns stCSPR and returns CSPR
+ * - Integrated SubModule<Cep18> token for stCSPR (mint/burn)
+ * - Ownable module for admin control
  *
  * Based on:
- * - Odra Framework proxy_caller pattern
+ * - Odra Framework 2.4.0 proxy_caller pattern
  * - Casper SDK V5 patterns
+ * - Official Casper liquid staking architecture
  */
 
 import {

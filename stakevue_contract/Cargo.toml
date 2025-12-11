@@ -47,3 +47,81 @@ name = "test_stake_v9"
 path = "bin/test_stake_v9.rs"
 required-features = ["livenet"]
 test = false
+
+[[bin]]
+name = "configure_v10"
+path = "bin/configure_v10.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v10"
+path = "bin/test_stake_v10.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_simple"
+path = "bin/test_stake_simple.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "deploy_v11"
+path = "bin/deploy_v11.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v82"
+path = "bin/test_stake_v82.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "deploy_v12"
+path = "bin/deploy_v12.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v12"
+path = "bin/test_stake_v12.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "deploy_v13"
+path = "bin/deploy_v13.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v13"
+path = "bin/test_stake_v13.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_unstake_v13"
+path = "bin/test_unstake_v13.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "deploy_v14"
+path = "bin/deploy_v14.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v14"
+path = "bin/test_stake_v14.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_unstake_v14"
+path = "bin/test_unstake_v14.rs"
+required-features = ["livenet"]
+test = false

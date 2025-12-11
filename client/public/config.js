@@ -1,11 +1,12 @@
-// StakeVue Runtime Configuration V9
+// StakeVue Runtime Configuration V14
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V10 (fresh deploy with token in init)
-  // V10 Package Hash: hash-d1857d850653ebc0aaf13fffd7610b9e3f4794dfefae158b193edf11a5dd62e3
+  // Smart Contract Configuration - V14 (integrated SubModule<Cep18> token)
+  // V14 Package Hash: hash-e55ad54bcc8fa35710ca8776675cb79d044a467368c143c2c2771aa150cec696
+  // Features: stake() payable, unstake(amount), integrated stCSPR token minting/burning
   contract_hash: "", // Not used - kept for backwards compatibility
-  contract_package_hash: "d1857d850653ebc0aaf13fffd7610b9e3f4794dfefae158b193edf11a5dd62e3",
+  contract_package_hash: "e55ad54bcc8fa35710ca8776675cb79d044a467368c143c2c2771aa150cec696",
 
   // CSPR.click Configuration (from console.cspr.build)
   cspr_click_app_name: "Casper stake",

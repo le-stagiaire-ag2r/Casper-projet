@@ -2,21 +2,8 @@
 
 use odra::prelude::*;
 use odra::casper_types::{U512, U256};
-use odra::ContractRef;
 use odra_modules::access::Ownable;
-use odra_modules::security::Pauseable;
-
-// ============================================================================
-// EXTERNAL TOKEN INTERFACE
-// ============================================================================
-
-#[odra::external_contract]
-pub trait StCsprToken {
-    fn mint(&mut self, to: Address, amount: U256);
-    fn burn(&mut self, from: Address, amount: U256);
-    fn balance_of(&self, address: Address) -> U256;
-    fn transfer_ownership(&mut self, new_owner: Address);
-}
+use odra_modules::cep18_token::Cep18;
 
 // ============================================================================
 // ERRORS
@@ -27,7 +14,6 @@ pub enum Error {
     InsufficientBalance = 1,
     InsufficientStCsprBalance = 2,
     ZeroAmount = 3,
-    TokenNotConfigured = 4,
 }
 
 // ============================================================================
@@ -46,51 +32,37 @@ pub struct Unstaked {
     pub amount: U512,
 }
 
-#[odra::event]
-pub struct TokenConfigured {
-    pub token: Address,
-}
-
 // ============================================================================
-// STAKEVUE CONTRACT V9 - with set_token for livenet configuration
+// STAKEVUE CONTRACT V14 - With integrated CEP-18 token (like Halborn audit)
+// ============================================================================
+// Based on V13 that works + SubModule<Cep18> for stCSPR token
+// Following the pattern from official Casper liquid staking contracts
 // ============================================================================
 
-#[odra::module(events = [Staked, Unstaked, TokenConfigured], errors = Error)]
+#[odra::module(events = [Staked, Unstaked], errors = Error)]
 pub struct StakeVue {
-    /// stCSPR token contract address
-    stcspr_token: Var<Address>,
     /// Access control
     ownable: SubModule<Ownable>,
-    /// Emergency pause
-    pausable: SubModule<Pauseable>,
+    /// Integrated stCSPR CEP-18 token
+    token: SubModule<Cep18>,
     /// Total CSPR staked in contract
     total_staked: Var<U512>,
 }
 
 #[odra::module]
 impl StakeVue {
-    /// Initialize the contract with owner and token address
-    pub fn init(&mut self, owner: Address, token: Address) {
+    /// Initialize the contract with owner only (like V13/V8.2)
+    pub fn init(&mut self, owner: Address) {
         self.ownable.init(owner);
-        self.stcspr_token.set(token);
         self.total_staked.set(U512::zero());
-        self.env().emit_event(TokenConfigured { token });
-    }
 
-    // ========================================================================
-    // TOKEN CONFIGURATION
-    // ========================================================================
-
-    /// Set the stCSPR token contract address (owner only)
-    pub fn set_token(&mut self, token: Address) {
-        self.ownable.assert_owner(&self.env().caller());
-        self.stcspr_token.set(token);
-        self.env().emit_event(TokenConfigured { token });
-    }
-
-    /// Get the token contract address
-    pub fn get_token(&self) -> Address {
-        self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured)
+        // Initialize the integrated stCSPR token (like in Halborn audit)
+        self.token.init(
+            String::from("stCSPR"),
+            String::from("Staked CSPR"),
+            9,
+            U256::zero(),
+        );
     }
 
     // ========================================================================
@@ -100,8 +72,6 @@ impl StakeVue {
     /// Stake CSPR and receive stCSPR tokens
     #[odra(payable)]
     pub fn stake(&mut self) {
-        self.pausable.require_not_paused();
-
         let staker = self.env().caller();
         let amount = self.env().attached_value();
 
@@ -112,10 +82,8 @@ impl StakeVue {
         // Convert U512 to U256 for token
         let token_amount = u512_to_u256(amount);
 
-        // Mint stCSPR tokens to staker
-        let token_addr = self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured);
-        let mut token = StCsprTokenContractRef::new(self.env(), token_addr);
-        token.mint(staker, token_amount);
+        // Mint stCSPR tokens to staker (using raw_mint like in tutorial)
+        self.token.raw_mint(&staker, &token_amount);
 
         // Update total staked
         let total = self.total_staked.get_or_default();
@@ -126,8 +94,6 @@ impl StakeVue {
 
     /// Unstake: burn stCSPR and receive CSPR back
     pub fn unstake(&mut self, amount: U512) {
-        self.pausable.require_not_paused();
-
         let staker = self.env().caller();
 
         if amount == U512::zero() {
@@ -137,17 +103,14 @@ impl StakeVue {
         // Convert U512 to U256 for token
         let token_amount = u512_to_u256(amount);
 
-        // Get token and check balance
-        let token_addr = self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured);
-        let mut token = StCsprTokenContractRef::new(self.env(), token_addr);
-
-        let staker_balance = token.balance_of(staker);
+        // Check staker's stCSPR balance
+        let staker_balance = self.token.balance_of(&staker);
         if token_amount > staker_balance {
             self.env().revert(Error::InsufficientStCsprBalance);
         }
 
-        // Burn stCSPR tokens
-        token.burn(staker, token_amount);
+        // Burn stCSPR tokens (using raw_burn like in tutorial)
+        self.token.raw_burn(&staker, &token_amount);
 
         // Update total staked
         let total = self.total_staked.get_or_default();
@@ -163,11 +126,9 @@ impl StakeVue {
     // VIEW FUNCTIONS
     // ========================================================================
 
-    /// Get stCSPR balance of an address (from token contract)
+    /// Get stCSPR balance (staked amount) of an address
     pub fn get_stake(&self, staker: Address) -> U256 {
-        let token_addr = self.stcspr_token.get_or_revert_with(Error::TokenNotConfigured);
-        let token = StCsprTokenContractRef::new(self.env(), token_addr);
-        token.balance_of(staker)
+        self.token.balance_of(&staker)
     }
 
     /// Get total CSPR staked in the contract
@@ -175,31 +136,29 @@ impl StakeVue {
         self.total_staked.get_or_default()
     }
 
-    /// Check if contract is paused
-    pub fn is_paused(&self) -> bool {
-        self.pausable.is_paused()
-    }
-
     /// Get contract owner
     pub fn get_owner(&self) -> Address {
         self.ownable.get_owner()
     }
 
-    // ========================================================================
-    // ADMIN FUNCTIONS (Owner only)
-    // ========================================================================
-
-    /// Pause the contract (owner only)
-    pub fn pause(&mut self) {
-        self.ownable.assert_owner(&self.env().caller());
-        self.pausable.pause();
+    /// Get token name
+    pub fn token_name(&self) -> String {
+        self.token.name()
     }
 
-    /// Unpause the contract (owner only)
-    pub fn unpause(&mut self) {
-        self.ownable.assert_owner(&self.env().caller());
-        self.pausable.unpause();
+    /// Get token symbol
+    pub fn token_symbol(&self) -> String {
+        self.token.symbol()
     }
+
+    /// Get token total supply
+    pub fn token_total_supply(&self) -> U256 {
+        self.token.total_supply()
+    }
+
+    // ========================================================================
+    // ADMIN FUNCTIONS
+    // ========================================================================
 
     /// Transfer ownership (owner only)
     pub fn transfer_ownership(&mut self, new_owner: Address) {
@@ -229,9 +188,7 @@ mod tests {
     fn setup() -> (odra::host::HostEnv, StakeVueHostRef) {
         let env = odra_test::env();
         let owner = env.get_account(0);
-        // Use account 1 as dummy token address for tests
-        let token = env.get_account(1);
-        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner, token });
+        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
         (env, contract)
     }
 
@@ -242,24 +199,49 @@ mod tests {
 
         assert_eq!(contract.get_total_staked(), U512::zero());
         assert_eq!(contract.get_owner(), owner);
-        assert!(!contract.is_paused());
+        assert_eq!(contract.token_symbol(), "stCSPR");
+        assert_eq!(contract.token_total_supply(), U256::zero());
     }
 
     #[test]
-    #[should_panic(expected = "InvalidContractAddress")]  // Token is a dummy account, not a contract
-    fn test_payable_stake_attached_value_works() {
-        let (env, contract) = setup();
+    fn test_stake_and_unstake() {
+        let (env, mut contract) = setup();
+        let staker = env.get_account(1);
 
-        // Switch to a different account to stake
-        env.set_caller(env.get_account(2));
+        env.set_caller(staker);
 
-        // Stake 10 CSPR using with_tokens
-        let stake_amount = U512::from(10_000_000_000u64); // 10 CSPR
-
-        // This test verifies attached_value() works correctly.
-        // If attached_value() returned 0, we would get "ZeroAmount" error.
-        // Instead, we get "InvalidContractAddress" from the token.mint() call,
-        // which proves attached_value() correctly received the 10 CSPR.
+        // Stake 10 CSPR
+        let stake_amount = U512::from(10_000_000_000u64);
         contract.with_tokens(stake_amount).stake();
+
+        // Check stCSPR received
+        assert_eq!(contract.get_stake(staker), U256::from(10_000_000_000u64));
+        assert_eq!(contract.get_total_staked(), stake_amount);
+        assert_eq!(contract.token_total_supply(), U256::from(10_000_000_000u64));
+
+        // Unstake 5 CSPR
+        contract.unstake(U512::from(5_000_000_000u64));
+
+        assert_eq!(contract.get_stake(staker), U256::from(5_000_000_000u64));
+        assert_eq!(contract.get_total_staked(), U512::from(5_000_000_000u64));
+    }
+
+    #[test]
+    #[should_panic(expected = "ZeroAmount")]
+    fn test_stake_zero_fails() {
+        let (env, contract) = setup();
+        env.set_caller(env.get_account(1));
+        contract.with_tokens(U512::zero()).stake();
+    }
+
+    #[test]
+    #[should_panic(expected = "InsufficientStCsprBalance")]
+    fn test_unstake_more_than_balance_fails() {
+        let (env, mut contract) = setup();
+        let staker = env.get_account(1);
+        env.set_caller(staker);
+
+        contract.with_tokens(U512::from(10_000_000_000u64)).stake();
+        contract.unstake(U512::from(20_000_000_000u64));
     }
 }
