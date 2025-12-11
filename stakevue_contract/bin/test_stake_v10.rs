@@ -2,7 +2,7 @@
 //! Run with: cargo run --bin test_stake_v10 --features livenet
 
 use std::str::FromStr;
-use odra::host::{HostEnv, HostRefLoader};
+use odra::host::{HostEnv, HostRef, HostRefLoader};
 use odra::prelude::*;
 use odra::casper_types::U512;
 use stakevue_contract::{StakeVue, StakeVueHostRef};
