@@ -148,6 +148,9 @@ export const V15StatsCard: React.FC = () => {
     totalPool,
     totalStcspr,
     lastUpdated,
+    isLive,
+    isLoading,
+    refresh,
   } = useContractData();
 
   // Format values
@@ -170,14 +173,29 @@ export const V15StatsCard: React.FC = () => {
 
   return (
     <Container $isDark={isDark}>
-      <VersionBadge>
-        <LiveDot />
-        V15 Live
+      <VersionBadge style={{ background: isLive ? 'linear-gradient(135deg, #30d158 0%, #5856d6 100%)' : 'linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%)' }}>
+        <LiveDot style={{ background: isLive ? '#30d158' : '#ff9f0a' }} />
+        {isLive ? 'LIVE' : 'CACHED'}
       </VersionBadge>
 
       <Title $isDark={isDark}>
         <TitleIcon>📊</TitleIcon>
         Contract Statistics
+        <button
+          onClick={refresh}
+          disabled={isLoading}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: isLoading ? 'wait' : 'pointer',
+            fontSize: '16px',
+            marginLeft: '8px',
+            opacity: isLoading ? 0.5 : 1,
+          }}
+          title="Refresh from blockchain"
+        >
+          🔄
+        </button>
       </Title>
 
       <StatsGrid>

@@ -18,6 +18,7 @@ window.config = {
 
   // Network Configuration
   chain_name: "casper-test",
+  rpc_url: "https://rpc.testnet.casperlabs.io/rpc",
 
   // API Configuration
   api_url: "http://localhost:3001",
