@@ -62,27 +62,7 @@ required-features = ["livenet"]
 test = false
 
 # ============================================================================
-# V14 SCRIPTS (Archived - 1:1 ratio)
-# ============================================================================
-
-[[bin]]
-name = "deploy_v14"
-path = "bin/deploy_v14.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_stake_v14"
-path = "bin/test_stake_v14.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_unstake_v14"
-path = "bin/test_unstake_v14.rs"
-required-features = ["livenet"]
-test = false
-
-# ============================================================================
-# NOTE: Old scripts (V9-V13) moved to /archive/scripts-v9-v13/
+# NOTE: Old scripts archived
+# - V14 scripts: /archive/scripts-v14/
+# - V9-V13 scripts: /archive/scripts-v9-v13/
 # ============================================================================

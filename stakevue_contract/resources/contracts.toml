@@ -1,5 +1,10 @@
-last_updated = "2025-12-09T20:00:00Z"
+last_updated = "2025-12-11T14:00:00Z"
 
 [[contracts]]
 name = "StakeVue"
-package_hash = "hash-f9205d8ad33cfb7fd47873babc4bc3388098beaea3573e7b8a69800dab9d68e4"
+version = "V15"
+package_hash = "hash-2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985"
+features = ["exchange_rate", "add_rewards", "cep18_integrated"]
+
+# Archived V14
+# package_hash = "hash-f9205d8ad33cfb7fd47873babc4bc3388098beaea3573e7b8a69800dab9d68e4"
