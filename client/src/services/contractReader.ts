@@ -1,8 +1,8 @@
 /**
- * Contract Reader Service - V15 Live Data
+ * Contract Reader Service - V16 Live Data
  *
- * Reads contract state directly from Casper blockchain RPC
- * to get real-time exchange rate, pool, and supply values.
+ * Reads contract state via backend API for reliable data.
+ * Falls back to direct RPC queries if API is unavailable.
  */
 
 const config = (window as any).config || {};
@@ -15,6 +15,103 @@ export interface ContractState {
   totalPool: string; // in motes
   totalStcspr: string; // in motes
   lastUpdated: Date;
+  source?: string;
+}
+
+/**
+ * Read contract state - tries API first, falls back to RPC
+ */
+export async function readContractState(): Promise<ContractState> {
+  // Try the backend API first (more reliable)
+  try {
+    const apiResult = await readFromAPI();
+    if (apiResult.exchangeRate > 0) {
+      return apiResult;
+    }
+  } catch (err) {
+    console.warn('API fetch failed, trying direct RPC:', err);
+  }
+
+  // Fallback to direct RPC
+  try {
+    return await readFromRPC();
+  } catch (err) {
+    console.error('All contract read methods failed:', err);
+    return {
+      exchangeRate: 1.0,
+      totalPool: '0',
+      totalStcspr: '0',
+      lastUpdated: new Date(),
+      source: 'default',
+    };
+  }
+}
+
+/**
+ * Read from backend API (Vercel serverless function)
+ */
+async function readFromAPI(): Promise<ContractState> {
+  const response = await fetch('/api/contract-stats', {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`API returned ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  // Convert from API format
+  const exchangeRate = data.exchangeRate
+    ? Number(data.exchangeRate) / RATE_PRECISION
+    : parseFloat(data.exchangeRateFormatted) || 1.0;
+
+  const totalPool = data.totalPool
+    ? data.totalPool.toString()
+    : Math.floor((data.totalPoolCspr || 0) * RATE_PRECISION).toString();
+
+  const totalStcspr = data.totalStcspr
+    ? data.totalStcspr.toString()
+    : Math.floor((data.totalStcsprFormatted || 0) * RATE_PRECISION).toString();
+
+  return {
+    exchangeRate,
+    totalPool,
+    totalStcspr,
+    lastUpdated: new Date(data.timestamp || Date.now()),
+    source: data.source || 'api',
+  };
+}
+
+/**
+ * Read directly from Casper RPC (fallback)
+ */
+async function readFromRPC(): Promise<ContractState> {
+  const stateRootHash = await getStateRootHash();
+
+  // Query contract named keys
+  const [exchangeRateValue, poolValue, supplyValue] = await Promise.all([
+    queryContractKey(stateRootHash, 'exchange_rate'),
+    queryContractKey(stateRootHash, 'total_cspr_pool'),
+    queryContractKey(stateRootHash, 'total_stcspr_supply'),
+  ]);
+
+  // Parse values
+  const exchangeRateRaw = parseU512(exchangeRateValue);
+  const totalPool = parseU512(poolValue);
+  const totalStcspr = parseU512(supplyValue);
+
+  // Convert exchange rate from fixed point to float
+  const exchangeRate = Number(BigInt(exchangeRateRaw || RATE_PRECISION.toString())) / RATE_PRECISION;
+
+  return {
+    exchangeRate: exchangeRate || 1.0,
+    totalPool: totalPool || '0',
+    totalStcspr: totalStcspr || '0',
+    lastUpdated: new Date(),
+    source: 'rpc',
+  };
 }
 
 /**
@@ -56,7 +153,6 @@ async function getStateRootHash(): Promise<string> {
  */
 async function queryContractKey(stateRootHash: string, key: string): Promise<any> {
   try {
-    // First get the contract hash from the package
     const contractKey = `hash-${CONTRACT_PACKAGE_HASH}`;
 
     const result = await rpcCall('query_global_state', {
@@ -80,7 +176,6 @@ async function queryContractKey(stateRootHash: string, key: string): Promise<any
 function parseU512(clValue: any): string {
   if (!clValue) return '0';
 
-  // Handle different formats
   if (clValue.CLValue) {
     const parsed = clValue.CLValue.parsed;
     if (typeof parsed === 'string') return parsed;
@@ -94,55 +189,11 @@ function parseU512(clValue: any): string {
 }
 
 /**
- * Read contract state from blockchain
- */
-export async function readContractState(): Promise<ContractState> {
-  try {
-    const stateRootHash = await getStateRootHash();
-
-    // Query exchange_rate, total_cspr_pool, and total_stcspr_supply
-    const [exchangeRateValue, poolValue, supplyValue] = await Promise.all([
-      queryContractKey(stateRootHash, 'exchange_rate'),
-      queryContractKey(stateRootHash, 'total_cspr_pool'),
-      queryContractKey(stateRootHash, 'total_stcspr_supply'),
-    ]);
-
-    // Parse values
-    const exchangeRateRaw = parseU512(exchangeRateValue);
-    const totalPool = parseU512(poolValue);
-    const totalStcspr = parseU512(supplyValue);
-
-    // Convert exchange rate from fixed point to float
-    const exchangeRate = Number(BigInt(exchangeRateRaw || RATE_PRECISION.toString())) / RATE_PRECISION;
-
-    return {
-      exchangeRate: exchangeRate || 1.0,
-      totalPool: totalPool || '0',
-      totalStcspr: totalStcspr || '0',
-      lastUpdated: new Date(),
-    };
-  } catch (err) {
-    console.error('Failed to read contract state:', err);
-
-    // Return default values on error
-    return {
-      exchangeRate: 1.0,
-      totalPool: '0',
-      totalStcspr: '0',
-      lastUpdated: new Date(),
-    };
-  }
-}
-
-/**
  * Read user's stCSPR balance from the CEP-18 token contract
  */
 export async function readUserStCsprBalance(accountHash: string): Promise<string> {
   try {
     const stateRootHash = await getStateRootHash();
-
-    // The stCSPR balance is stored in a dictionary under the contract
-    // Dictionary key is the account hash
     const cleanHash = accountHash.replace('account-hash-', '');
 
     const result = await rpcCall('state_get_dictionary_item', {
@@ -162,7 +213,6 @@ export async function readUserStCsprBalance(accountHash: string): Promise<string
 
     return '0';
   } catch (err) {
-    // User might not have any stCSPR
     console.warn('Failed to read stCSPR balance:', err);
     return '0';
   }
@@ -179,11 +229,11 @@ export async function getContractStats(): Promise<{
 }> {
   const state = await readContractState();
 
-  const totalPoolCspr = Number(BigInt(state.totalPool)) / 1_000_000_000;
-  const totalStcsprSupply = Number(BigInt(state.totalStcspr)) / 1_000_000_000;
+  const totalPoolCspr = Number(BigInt(state.totalPool || '0')) / 1_000_000_000;
+  const totalStcsprSupply = Number(BigInt(state.totalStcspr || '0')) / 1_000_000_000;
 
-  // Rough USD estimate (use actual price feed in production)
-  const csprPrice = 0.0053; // From config or API
+  // Rough USD estimate
+  const csprPrice = 0.0053;
   const tvlUsd = totalPoolCspr * csprPrice;
 
   return {
