@@ -8,7 +8,7 @@ use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
 // V15 Contract Address - UPDATE THIS AFTER DEPLOY (with 'hash-' prefix)
-const CONTRACT_HASH: &str = "hash-73c7d3eb92943c49a6367120e0ea93f0e8cf0de3f998e5937c376ab3a1828e5e";
+const CONTRACT_HASH: &str = "hash-2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985";
 
 fn main() {
     let env = odra_casper_livenet_env::env();
