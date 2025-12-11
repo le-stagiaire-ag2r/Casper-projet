@@ -2,26 +2,31 @@
 //! Run with: cargo run --bin test_add_rewards_v15 --features livenet
 
 use odra::casper_types::U512;
-use odra::host::{Deployer, HostRef};
-use stakevue_contract::{StakeVue, StakeVueInitArgs};
+use odra::host::HostRef;
+use odra::Address;
+use stakevue_contract::StakeVueHostRef;
+
+// V15 Contract Address - UPDATE THIS AFTER DEPLOY
+const CONTRACT_HASH: &str = "hash-73c7d3eb92943c49a6367120e0ea93f0e8cf0de3f998e5937c376ab3a1828e5e";
 
 fn main() {
     let env = odra_casper_livenet_env::env();
 
     println!("=== Testing Add Rewards on V15 ===");
+    println!("Contract: {}", CONTRACT_HASH);
 
     // Load existing contract
-    let owner = env.caller();
-    let mut stakevue = StakeVue::deploy(&env, StakeVueInitArgs { owner });
+    let address = Address::try_from(CONTRACT_HASH).expect("Invalid contract hash");
+    let mut stakevue = StakeVueHostRef::new(address, env.clone());
 
     // Get state before
     let rate_before = stakevue.get_exchange_rate();
     let pool_before = stakevue.get_total_pool();
     let supply_before = stakevue.token_total_supply();
 
-    println!("Before rewards:");
+    println!("\nBefore rewards:");
     println!("  Exchange rate: {} (1.0 = 1_000_000_000)", rate_before);
-    println!("  Pool: {} CSPR", pool_before);
+    println!("  Pool: {} motes", pool_before);
     println!("  stCSPR supply: {}", supply_before);
 
     // Add 1 CSPR as rewards (simulating validator rewards)
@@ -37,8 +42,11 @@ fn main() {
 
     println!("\nAfter rewards:");
     println!("  Exchange rate: {} (increased!)", rate_after);
-    println!("  Pool: {} CSPR", pool_after);
+    println!("  Pool: {} motes", pool_after);
     println!("  stCSPR supply: {} (unchanged)", stakevue.token_total_supply());
 
-    println!("\nSUCCESS! Exchange rate increased.");
+    // Calculate rate change
+    let rate_increase = rate_after - rate_before;
+    println!("\nRate increased by: {}", rate_increase);
+    println!("SUCCESS! Exchange rate increased.");
 }
