@@ -163,10 +163,12 @@ Casper-projet/
 |   |   +-- config.js            # V15 contract address
 |   |   +-- proxy_caller.wasm    # Odra proxy for browser
 |   +-- src/
-|       +-- components/          # UI components
-|       +-- hooks/useStaking.ts  # Stake/unstake logic
-|       +-- services/
-|           +-- transaction.ts   # Transaction builder
+|   |   +-- components/          # UI components
+|   |   +-- hooks/useStaking.ts  # Stake/unstake logic
+|   |   +-- services/
+|   |       +-- transaction.ts   # Transaction builder
+|   +-- api/
+|       +-- contract-stats.js    # Live RPC API (Vercel serverless)
 +-- stakevue_contract/           # Odra smart contract
 |   +-- src/lib.rs               # V15 contract code
 |   +-- Cargo.toml               # Dependencies (v15.0.0)
@@ -175,10 +177,53 @@ Casper-projet/
 |       +-- deploy_v15.rs
 |       +-- test_stake_v15.rs
 |       +-- test_add_rewards_v15.rs
-+-- api/                         # Vercel serverless
++-- scripts/                     # Node.js utilities
+|   +-- add-rewards.js           # Add rewards via RPC
+|   +-- check-stats.js           # Check contract stats
 +-- archive/                     # Old versions (V1-V14)
 +-- README.md
 ```
+
+---
+
+## Live Blockchain API
+
+The `/api/contract-stats` endpoint reads **real-time data** from the deployed V15 contract on Casper testnet.
+
+### Endpoint
+
+```
+GET https://casper-projet.vercel.app/api/contract-stats
+```
+
+### Response Example
+
+```json
+{
+  "exchangeRate": 1275000000,
+  "totalPool": 27000000000,
+  "totalStcspr": 21176470587,
+  "exchangeRateFormatted": "1.2750",
+  "totalPoolCspr": 27,
+  "totalStcsprFormatted": 21.17,
+  "timestamp": "2025-12-11T16:45:00.000Z",
+  "source": "contract_main_purse",
+  "contractHash": "2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985"
+}
+```
+
+### Technical Details
+
+The API queries Casper 2.0 RPC to read Odra framework storage:
+
+| Step | Method | Purpose |
+|------|--------|---------|
+| 1 | `chain_get_state_root_hash` | Get current state |
+| 2 | `state_get_entity` | Find ContractPackage |
+| 3 | `query_global_state` | Get active contract version |
+| 4 | `query_balance` | Read `__contract_main_purse` balance |
+
+**Key insight:** Odra stores CSPR in `__contract_main_purse` named key, queried via `purse_uref` identifier.
 
 ---
 
@@ -250,11 +295,12 @@ cargo run --bin test_add_rewards_v15 --features livenet
 - [x] **V15 Exchange rate mechanism**
 - [x] **add_rewards() for rate appreciation**
 - [x] **7/7 unit tests passing**
+- [x] **Live Blockchain RPC API** (reads real contract stats)
+- [x] **Frontend exchange rate display**
 
 ### Next Steps
 - [ ] Validator delegation (real staking rewards)
 - [ ] Automated reward distribution
-- [ ] Frontend V15 integration (show exchange rate)
 - [ ] Security audit
 - [ ] Mainnet deployment
 
@@ -273,6 +319,7 @@ cargo run --bin test_add_rewards_v15 --features livenet
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **V15.1** | Dec 2025 | **Live RPC API** - Real-time contract stats from blockchain |
 | **V15** | Dec 2025 | **Exchange rate mechanism** - stCSPR appreciates with rewards |
 | **V14** | Dec 2025 | Production-ready with integrated CEP-18 stCSPR token |
 | **V13** | Dec 2025 | Minimal version proving payable works |
