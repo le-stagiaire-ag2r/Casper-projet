@@ -1,6 +1,6 @@
 [package]
 name = "stakevue_contract"
-version = "0.1.0"
+version = "14.0.0"
 edition = "2021"
 
 [dependencies]
@@ -19,92 +19,27 @@ odra-build = { version = "2.4.0", default-features = false }
 default = []
 livenet = ["odra-cli", "odra-casper-livenet-env"]
 
+# ============================================================================
+# BUILD SCRIPTS
+# ============================================================================
+
 [[bin]]
 name = "stakevue_contract_build_contract"
 path = "bin/build_contract.rs"
 test = false
 
 [[bin]]
+name = "stakevue_contract_build_schema"
+path = "bin/build_schema.rs"
+test = false
+
+# ============================================================================
+# V14 SCRIPTS (PRODUCTION)
+# ============================================================================
+
+[[bin]]
 name = "stakevue_cli"
 path = "bin/cli.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "configure_v9"
-path = "bin/configure_v9.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "deploy_v10"
-path = "bin/deploy_v10.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_stake_v9"
-path = "bin/test_stake_v9.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "configure_v10"
-path = "bin/configure_v10.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_stake_v10"
-path = "bin/test_stake_v10.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_stake_simple"
-path = "bin/test_stake_simple.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "deploy_v11"
-path = "bin/deploy_v11.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_stake_v82"
-path = "bin/test_stake_v82.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "deploy_v12"
-path = "bin/deploy_v12.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_stake_v12"
-path = "bin/test_stake_v12.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "deploy_v13"
-path = "bin/deploy_v13.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_stake_v13"
-path = "bin/test_stake_v13.rs"
-required-features = ["livenet"]
-test = false
-
-[[bin]]
-name = "test_unstake_v13"
-path = "bin/test_unstake_v13.rs"
 required-features = ["livenet"]
 test = false
 
@@ -125,3 +60,7 @@ name = "test_unstake_v14"
 path = "bin/test_unstake_v14.rs"
 required-features = ["livenet"]
 test = false
+
+# ============================================================================
+# NOTE: Old scripts (V9-V13) moved to /archive/scripts-v9-v13/
+# ============================================================================
