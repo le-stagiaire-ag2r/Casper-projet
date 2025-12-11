@@ -229,7 +229,9 @@ mod tests {
     fn setup() -> (odra::host::HostEnv, StakeVueHostRef) {
         let env = odra_test::env();
         let owner = env.get_account(0);
-        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
+        // Use account 1 as dummy token address for tests
+        let token = env.get_account(1);
+        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner, token });
         (env, contract)
     }
 
@@ -241,5 +243,23 @@ mod tests {
         assert_eq!(contract.get_total_staked(), U512::zero());
         assert_eq!(contract.get_owner(), owner);
         assert!(!contract.is_paused());
+    }
+
+    #[test]
+    #[should_panic(expected = "InvalidContractAddress")]  // Token is a dummy account, not a contract
+    fn test_payable_stake_attached_value_works() {
+        let (env, contract) = setup();
+
+        // Switch to a different account to stake
+        env.set_caller(env.get_account(2));
+
+        // Stake 10 CSPR using with_tokens
+        let stake_amount = U512::from(10_000_000_000u64); // 10 CSPR
+
+        // This test verifies attached_value() works correctly.
+        // If attached_value() returned 0, we would get "ZeroAmount" error.
+        // Instead, we get "InvalidContractAddress" from the token.mint() call,
+        // which proves attached_value() correctly received the 10 CSPR.
+        contract.with_tokens(stake_amount).stake();
     }
 }
