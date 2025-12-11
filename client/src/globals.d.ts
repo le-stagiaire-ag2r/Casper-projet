@@ -16,6 +16,10 @@ declare global {
       cspr_live_url: string;
       transaction_payment: string;
       min_stake_amount: string;
+      // V15 additions
+      owner_account_hash: string;
+      add_rewards_payment: string;
+      rate_precision: number;
     };
 
     // CSPR.click global object
