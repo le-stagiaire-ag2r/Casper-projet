@@ -9,7 +9,7 @@ const RPC_ENDPOINTS = [
 
 const CONTRACT_PACKAGE_HASH = '2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985';
 const RATE_PRECISION = 1000000000;
-const API_VERSION = '2.3';
+const API_VERSION = '2.4';
 
 // Helper to make RPC calls
 async function rpcCall(rpcUrl, method, params, signal) {
@@ -198,8 +198,24 @@ module.exports = async function handler(req, res) {
       debugInfo.entityKind = entity?.entity_kind || 'unknown';
 
       // Method 1: Query named keys for Odra storage
+      let contractMainPurseURef = null;
+      let stateURef = null;
+
       for (const nk of namedKeys) {
         try {
+          // Look for __contract_main_purse (Odra's purse)
+          if (nk.name === '__contract_main_purse') {
+            contractMainPurseURef = nk.key;
+            debugInfo.contractMainPurseURef = nk.key;
+          }
+
+          // Look for state dictionary (where Odra stores Var<T>)
+          if (nk.name === 'state') {
+            stateURef = nk.key;
+            debugInfo.stateURef = nk.key;
+          }
+
+          // Direct pool query
           if (nk.name === 'total_cspr_pool' || nk.name.includes('pool')) {
             const valueResult = await rpcCall(rpcUrl, 'query_global_state', {
               state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
@@ -213,7 +229,8 @@ module.exports = async function handler(req, res) {
             }
           }
 
-          if (nk.name === 'total_supply' || nk.name.includes('supply') || nk.name.includes('token')) {
+          // Token supply query
+          if (nk.name === 'total_supply' || nk.name.includes('supply')) {
             const valueResult = await rpcCall(rpcUrl, 'query_global_state', {
               state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
               key: nk.key,
@@ -227,6 +244,65 @@ module.exports = async function handler(req, res) {
           }
         } catch (e) {
           // Continue
+        }
+      }
+
+      // Try to get balance from __contract_main_purse
+      if (contractMainPurseURef && totalPool === 0) {
+        try {
+          const purseBalanceResult = await rpcCall(rpcUrl, 'query_balance', {
+            purse_identifier: {
+              purse_uref: contractMainPurseURef,
+            },
+            state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
+          }, controller.signal);
+
+          debugInfo.contractPurseQuery = {
+            hasResult: !!purseBalanceResult.result?.balance,
+            balance: purseBalanceResult.result?.balance,
+            error: purseBalanceResult.error?.message,
+          };
+
+          if (purseBalanceResult.result?.balance) {
+            const balance = parseInt(purseBalanceResult.result.balance, 10) || 0;
+            if (balance > 0) {
+              totalPool = balance;
+              purseBalance = balance;
+              source = 'contract_main_purse';
+            }
+          }
+        } catch (e) {
+          debugInfo.contractPurseError = e.message;
+        }
+      }
+
+      // Try to query state dictionary for total_cspr_pool
+      if (stateURef && totalPool === 0) {
+        try {
+          // Query the state URef to see what's inside
+          const stateResult = await rpcCall(rpcUrl, 'query_global_state', {
+            state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
+            key: stateURef,
+            path: [],
+          }, controller.signal);
+
+          debugInfo.stateQuery = {
+            hasResult: !!stateResult.result?.stored_value,
+            type: stateResult.result?.stored_value ? Object.keys(stateResult.result.stored_value) : null,
+            error: stateResult.error?.message,
+          };
+
+          // If state is a CLValue (like a dictionary seed), try to query it
+          if (stateResult.result?.stored_value?.CLValue?.parsed) {
+            const stateValue = stateResult.result.stored_value.CLValue.parsed;
+            // If it's a number, it might be the total_cspr_pool directly
+            if (typeof stateValue === 'string' || typeof stateValue === 'number') {
+              totalPool = parseInt(stateValue, 10) || 0;
+              source = 'state_direct';
+            }
+          }
+        } catch (e) {
+          debugInfo.stateQueryError = e.message;
         }
       }
 
