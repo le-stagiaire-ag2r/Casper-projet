@@ -59,3 +59,15 @@ name = "test_stake_v10"
 path = "bin/test_stake_v10.rs"
 required-features = ["livenet"]
 test = false
+
+[[bin]]
+name = "test_stake_simple"
+path = "bin/test_stake_simple.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "deploy_v11"
+path = "bin/deploy_v11.rs"
+required-features = ["livenet"]
+test = false

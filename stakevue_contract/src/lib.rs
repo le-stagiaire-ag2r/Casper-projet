@@ -97,6 +97,24 @@ impl StakeVue {
     // STAKING FUNCTIONS
     // ========================================================================
 
+    /// Simple stake test - NO cross-contract calls
+    /// This helps isolate if attached_value() works without cross-contract calls
+    #[odra(payable)]
+    pub fn stake_simple(&mut self) {
+        let staker = self.env().caller();
+        let amount = self.env().attached_value();
+
+        if amount == U512::zero() {
+            self.env().revert(Error::ZeroAmount);
+        }
+
+        // Just update total - no cross-contract calls
+        let total = self.total_staked.get_or_default();
+        self.total_staked.set(total + amount);
+
+        self.env().emit_event(Staked { staker, amount });
+    }
+
     /// Stake CSPR and receive stCSPR tokens
     #[odra(payable)]
     pub fn stake(&mut self) {
