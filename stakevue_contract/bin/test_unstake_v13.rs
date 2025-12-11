@@ -14,7 +14,7 @@ fn main() {
 
     println!("=== Test Unstake V13 ===");
 
-    let stakevue = load_stakevue(&env);
+    let mut stakevue = load_stakevue(&env);
     let caller = env.caller();
 
     println!("Contract: {:?}", stakevue.address());
