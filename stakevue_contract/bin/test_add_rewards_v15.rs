@@ -1,7 +1,7 @@
 //! Test add_rewards on V15 contract (owner only)
 //! Run with: cargo run --bin test_add_rewards_v15 --features livenet
 
-use odra::casper_types::{U512, ContractPackageHash};
+use odra::casper_types::{U512, PackageHash};
 use odra::host::HostRef;
 use odra::prelude::*;
 use stakevue_contract::StakeVueHostRef;
@@ -15,9 +15,9 @@ fn main() {
     println!("=== Testing Add Rewards on V15 ===");
     println!("Contract: hash-{}", CONTRACT_HASH);
 
-    // Load existing contract
-    let package_hash = ContractPackageHash::from_formatted_str(&format!("contract-package-{}", CONTRACT_HASH))
-        .expect("Invalid contract hash");
+    // Load existing contract (Casper 2.0 uses PackageHash)
+    let package_hash = PackageHash::from_formatted_str(&format!("package-{}", CONTRACT_HASH))
+        .expect("Invalid package hash");
     let address = Address::from(package_hash);
     let mut stakevue = StakeVueHostRef::new(address, env.clone());
 
