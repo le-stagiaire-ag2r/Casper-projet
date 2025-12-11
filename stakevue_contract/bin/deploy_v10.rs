@@ -23,7 +23,7 @@ fn main() {
     println!("Token: {:?}", token);
 
     // Set gas for deployment
-    env.set_gas(200_000_000_000u64); // 200 CSPR
+    env.set_gas(500_000_000_000u64); // 500 CSPR
 
     // Deploy the contract
     println!("Deploying...");
