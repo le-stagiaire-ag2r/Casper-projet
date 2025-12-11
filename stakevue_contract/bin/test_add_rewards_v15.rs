@@ -3,9 +3,9 @@
 
 use std::str::FromStr;
 use odra::casper_types::U512;
-use odra::host::HostRef;
+use odra::host::{HostRef, HostRefLoader};
 use odra::prelude::*;
-use stakevue_contract::{StakeVue, StakeVueHostRef};
+use stakevue_contract::StakeVue;
 
 // V15 Contract Address - UPDATE THIS AFTER DEPLOY (with 'hash-' prefix)
 const CONTRACT_HASH: &str = "hash-73c7d3eb92943c49a6367120e0ea93f0e8cf0de3f998e5937c376ab3a1828e5e";
