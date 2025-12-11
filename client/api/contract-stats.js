@@ -9,7 +9,7 @@ const RPC_ENDPOINTS = [
 
 const CONTRACT_PACKAGE_HASH = '2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985';
 const RATE_PRECISION = 1000000000;
-const API_VERSION = '2.1';
+const API_VERSION = '2.2';
 
 // Helper to make RPC calls
 async function rpcCall(rpcUrl, method, params, signal) {
@@ -130,19 +130,68 @@ module.exports = async function handler(req, res) {
         continue;
       }
 
-      // Step 3: Extract contract data
+      // Step 3: Handle ContractPackage vs AddressableEntity
       let source = 'entity_found';
       let totalPool = 0;
       let totalStcspr = 0;
       let purseBalance = null;
+      let activeContractHash = null;
 
-      const entity = foundEntity.AddressableEntity || foundEntity;
+      let entity = foundEntity.AddressableEntity || foundEntity;
+      debugInfo.entityKeys = Object.keys(entity || {});
+
+      // If this is a ContractPackage, we need to get the active contract version
+      if (entity.ContractPackage) {
+        debugInfo.isContractPackage = true;
+        const pkg = entity.ContractPackage;
+        const versions = pkg.versions || [];
+        debugInfo.packageVersions = versions.length;
+
+        // Get the latest (active) version
+        if (versions.length > 0) {
+          const latestVersion = versions[versions.length - 1];
+          activeContractHash = latestVersion.contract_hash;
+          debugInfo.activeContractHash = activeContractHash;
+
+          // Query the actual contract using the version hash
+          if (activeContractHash) {
+            try {
+              const contractResult = await rpcCall(rpcUrl, 'query_global_state', {
+                state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
+                key: activeContractHash,
+                path: [],
+              }, controller.signal);
+
+              debugInfo.contractQuery = {
+                hasResult: !!contractResult.result?.stored_value,
+                error: contractResult.error?.message,
+              };
+
+              if (contractResult.result?.stored_value) {
+                const contractValue = contractResult.result.stored_value;
+                // Check if it's a Contract (Casper 1.x) or AddressableEntity
+                if (contractValue.Contract) {
+                  entity = contractValue.Contract;
+                  debugInfo.contractType = 'Contract';
+                } else if (contractValue.AddressableEntity) {
+                  entity = contractValue.AddressableEntity;
+                  debugInfo.contractType = 'AddressableEntity';
+                } else {
+                  debugInfo.contractType = Object.keys(contractValue);
+                }
+              }
+            } catch (e) {
+              debugInfo.contractQueryError = e.message;
+            }
+          }
+        }
+      }
+
       const namedKeys = entity?.named_keys || [];
       debugInfo.namedKeys = namedKeys.map(nk => nk.name);
       debugInfo.hasMainPurse = !!entity?.main_purse;
       debugInfo.mainPurse = entity?.main_purse || null;
       debugInfo.entityKind = entity?.entity_kind || 'unknown';
-      debugInfo.entityKeys = Object.keys(entity || {});
 
       // Method 1: Query named keys for Odra storage
       for (const nk of namedKeys) {
@@ -185,12 +234,16 @@ module.exports = async function handler(req, res) {
           ['token', 'total_supply'],
         ];
 
+        // Use active contract hash if available, otherwise fall back to package hash
+        const queryKey = activeContractHash || usedKeyFormat;
+        debugInfo.pathQueryKey = queryKey;
+
         debugInfo.pathAttempts = [];
         for (const path of odraPaths) {
           try {
             const pathResult = await rpcCall(rpcUrl, 'query_global_state', {
               state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
-              key: usedKeyFormat,
+              key: queryKey,
               path: path,
             }, controller.signal);
 
@@ -219,11 +272,17 @@ module.exports = async function handler(req, res) {
       // Method 3: Query contract's main purse balance (ALWAYS try this)
       debugInfo.purseAttempts = [];
 
-      // Try entity_addr format first
+      // Extract contract hash from activeContractHash (remove 'contract-' prefix if present)
+      const contractHashOnly = activeContractHash
+        ? activeContractHash.replace('contract-', '').replace('hash-', '')
+        : CONTRACT_PACKAGE_HASH;
+      debugInfo.contractHashForPurse = contractHashOnly;
+
+      // Try entity_addr format with the actual contract hash
       try {
         const entityBalanceResult = await rpcCall(rpcUrl, 'query_balance', {
           purse_identifier: {
-            main_purse_under_entity_addr: `entity-contract-${CONTRACT_PACKAGE_HASH}`,
+            main_purse_under_entity_addr: `entity-contract-${contractHashOnly}`,
           },
           state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
         }, controller.signal);
