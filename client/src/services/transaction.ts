@@ -1,11 +1,13 @@
 /**
- * Transaction Service for StakeVue V14
+ * Transaction Service for StakeVue V15
  *
- * Uses proxy_caller.wasm for all contract calls (stake, unstake)
+ * Uses proxy_caller.wasm for all contract calls (stake, unstake, add_rewards)
  *
- * V14 Features:
- * - stake() payable - uses attached_value()
- * - unstake(amount: U512) - burns stCSPR and returns CSPR
+ * V15 Features:
+ * - stake() payable - uses attached_value(), exchange rate aware
+ * - unstake(amount: U256) - burns stCSPR and returns CSPR based on rate
+ * - add_rewards() payable - owner can add rewards to increase exchange rate
+ * - get_exchange_rate() - query current rate (1.0 = 1_000_000_000)
  * - Integrated SubModule<Cep18> token for stCSPR (mint/burn)
  * - Ownable module for admin control
  *
@@ -306,6 +308,72 @@ export const buildTransferStCsprTransaction = (
 
   // Build payment (standardPayment expects string or BigNumber)
   const payment = ExecutableDeployItem.standardPayment(paymentMotes);
+
+  // Create deploy
+  const deploy = Deploy.makeDeploy(deployHeader, payment, session);
+
+  // Serialize deploy for CSPR.click
+  return { deploy: Deploy.toJSON(deploy) };
+};
+
+/**
+ * Build an Add Rewards Transaction using proxy_caller.wasm (Owner only)
+ *
+ * The add_rewards() function is payable and owner-only. It adds CSPR to the pool
+ * without minting new stCSPR, effectively increasing the exchange rate.
+ * This simulates validator rewards distribution.
+ */
+export const buildAddRewardsTransaction = async (
+  senderPublicKeyHex: string,
+  amountCspr: string
+): Promise<{ deploy: any }> => {
+  // Validate inputs
+  if (!senderPublicKeyHex) {
+    throw new Error('Sender public key is required');
+  }
+
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
+  }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
+
+  // Convert amounts
+  const amountMotes = csprToMotes(amountCspr);
+  // Payment = gas cost + attached value (rewards being added)
+  const gasMotes = config.add_rewards_payment || '10000000000'; // 10 CSPR for gas
+  const totalPayment = (BigInt(gasMotes) + BigInt(amountMotes)).toString();
+
+  // Build empty RuntimeArgs for add_rewards() - it uses attached_value
+  const rewardsArgs = Args.fromMap({});
+  const serializedArgs = rewardsArgs.toBytes();
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    // Package hash of the StakeVue contract (32 bytes as ByteArray)
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    // Entry point to call
+    entry_point: CLValue.newCLString('add_rewards'),
+    // Serialized RuntimeArgs as Bytes (List<U8>)
+    args: bytesToCLList(serializedArgs),
+    // Amount of CSPR to attach (this is what add_rewards() will receive)
+    attached_value: CLValue.newCLUInt512(amountMotes),
+    // Special Casper argument to allow access to main purse
+    amount: CLValue.newCLUInt512(amountMotes),
+  });
+
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+
+  // Build deploy header
+  const deployHeader = DeployHeader.default();
+  deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
+  deployHeader.chainName = config.chain_name || 'casper-test';
+  deployHeader.gasPrice = 1;
+
+  // Build payment (includes both gas and attached value)
+  const payment = ExecutableDeployItem.standardPayment(totalPayment);
 
   // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);

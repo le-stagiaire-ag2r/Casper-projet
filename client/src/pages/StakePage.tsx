@@ -13,6 +13,8 @@ import { TVLChart } from '../components/TVLChart';
 import { ExportCSV } from '../components/ExportCSV';
 import { ValidatorComparator } from '../components/ValidatorComparator';
 import { SettingsPanel } from '../components/SettingsPanel';
+import { V15StatsCard } from '../components/V15StatsCard';
+import { AdminPanel } from '../components/AdminPanel';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -110,11 +112,15 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
       <DemoNotice $isDark={isDark}>
         <NoticeIcon>⚠️</NoticeIcon>
         <NoticeText $isDark={isDark}>
-          <strong>Demo Mode:</strong> This version uses a demonstration contract.
-          Transactions are recorded on the blockchain, but CSPR is not
-          actually transferred. This is a safe test environment.
+          <strong>V15 Exchange Rate:</strong> This version features the exchange rate mechanism.
+          Rewards added to the pool increase the rate, making stCSPR appreciate over time.
         </NoticeText>
       </DemoNotice>
+
+      {/* V15 Stats Card - Exchange Rate & TVL */}
+      <FullWidthSection>
+        <V15StatsCard />
+      </FullWidthSection>
 
       <Dashboard />
 
@@ -122,6 +128,11 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark }) => {
         <StakingForm />
         <StakeHistory />
       </Grid>
+
+      {/* Admin Panel - For owner to add rewards */}
+      <FullWidthSection>
+        <AdminPanel isOwner={true} />
+      </FullWidthSection>
 
       <FullWidthSection>
         <StakingCalculator />

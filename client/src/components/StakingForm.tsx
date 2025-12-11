@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useStaking } from '../hooks/useStaking';
 import { useCsprClick } from '../hooks/useCsprClick';
+import { useContractData } from '../hooks/useContractData';
 import { useToast } from './Toast';
 import { useBalanceContext } from '../context/BalanceContext';
 import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
@@ -462,6 +463,7 @@ const APY_AVG = (APY_MIN + APY_MAX) / 2; // ~17%
 export const StakingForm: React.FC = () => {
   const { activeAccount } = useCsprClick();
   const { stake, unstake, isProcessing, deployHash, status, error } = useStaking();
+  const { exchangeRate, csprToStcspr, stcsprToCspr, updateAfterStake: updateContractAfterStake, updateAfterUnstake: updateContractAfterUnstake } = useContractData();
   const theme = useTheme() as any;
   const isDark = theme?.mode === 'dark';
   const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
@@ -554,13 +556,14 @@ export const StakingForm: React.FC = () => {
     return { valid: true, message: null, type: 'info' as const };
   }, [amount, activeTab, csprBalance, stCsprBalance]);
 
-  // Calculate preview values
+  // Calculate preview values using V15 exchange rate
   const preview = useMemo(() => {
     const numAmount = parseFloat(amount) || 0;
     if (numAmount <= 0) return null;
 
     if (activeTab === 'stake') {
-      const stCsprReceived = numAmount; // 1:1 exchange rate
+      // V15: stCSPR received = CSPR / exchange_rate
+      const stCsprReceived = csprToStcspr(numAmount);
       const yearlyEarningsMin = numAmount * APY_MIN;
       const yearlyEarningsMax = numAmount * APY_MAX;
       const monthlyEarnings = (numAmount * APY_AVG) / 12;
@@ -573,7 +576,8 @@ export const StakingForm: React.FC = () => {
         monthly: monthlyEarnings,
       };
     } else {
-      const csprReceived = numAmount; // 1:1 exchange rate
+      // V15: CSPR received = stCSPR * exchange_rate
+      const csprReceived = stcsprToCspr(numAmount);
       return {
         receive: csprReceived,
         receiveToken: 'CSPR',
@@ -582,7 +586,7 @@ export const StakingForm: React.FC = () => {
         monthly: 0,
       };
     }
-  }, [amount, activeTab]);
+  }, [amount, activeTab, csprToStcspr, stcsprToCspr]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -597,19 +601,23 @@ export const StakingForm: React.FC = () => {
       const result = await stake(amount);
       // Update balance immediately on success (demo mode support)
       if (result.success || result.deployHash) {
+        const stcsprReceived = csprToStcspr(txAmount);
         updateAfterStake(txAmount);
+        updateContractAfterStake(txAmount); // Update contract pool data
         playSuccessSound();
-        triggerConfetti(); // 🎉 Celebration!
-        toastSuccess('Stake Successful!', `${txAmount} CSPR staked → ${txAmount} stCSPR received`);
+        triggerConfetti();
+        toastSuccess('Stake Successful!', `${txAmount} CSPR staked → ${stcsprReceived.toFixed(4)} stCSPR received`);
         setAmount('');
       }
     } else {
       const result = await unstake(amount);
       // Update balance immediately on success (demo mode support)
       if (result.success || result.deployHash) {
+        const csprReceived = stcsprToCspr(txAmount);
         updateAfterUnstake(txAmount);
+        updateContractAfterUnstake(txAmount); // Update contract pool data
         playSuccessSound();
-        toastSuccess('Unstake Successful!', `${txAmount} stCSPR burned → ${txAmount} CSPR received`);
+        toastSuccess('Unstake Successful!', `${txAmount} stCSPR burned → ${csprReceived.toFixed(4)} CSPR received`);
         setAmount('');
       }
     }
@@ -778,8 +786,10 @@ export const StakingForm: React.FC = () => {
 
         <InfoBox $isDark={isDark}>
           <InfoRow $isDark={isDark}>
-            <InfoLabel $isDark={isDark}>Exchange Rate</InfoLabel>
-            <InfoValue $isDark={isDark}>1 CSPR = 1 stCSPR</InfoValue>
+            <InfoLabel $isDark={isDark}>Exchange Rate (V15)</InfoLabel>
+            <InfoValue $isDark={isDark} style={{ color: exchangeRate > 1 ? '#30d158' : undefined }}>
+              1 stCSPR = {exchangeRate.toFixed(4)} CSPR
+            </InfoValue>
           </InfoRow>
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>APY (estimated)</InfoLabel>
