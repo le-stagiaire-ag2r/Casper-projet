@@ -1,4 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Vercel Serverless Function - Contract Stats API
+// No external type imports needed - Vercel provides types at runtime
 
 // Casper RPC endpoint (testnet)
 const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
@@ -19,7 +20,7 @@ const ODRA_KEYS = {
  *
  * Returns: exchange rate, total pool, stCSPR supply
  */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
