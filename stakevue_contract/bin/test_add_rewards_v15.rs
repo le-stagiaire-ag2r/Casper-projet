@@ -3,7 +3,7 @@
 
 use odra::casper_types::U512;
 use odra::host::HostRef;
-use odra::Address;
+use odra::prelude::*;
 use stakevue_contract::StakeVueHostRef;
 
 // V15 Contract Address - UPDATE THIS AFTER DEPLOY
