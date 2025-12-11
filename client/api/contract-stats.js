@@ -9,6 +9,7 @@ const RPC_ENDPOINTS = [
 
 const CONTRACT_PACKAGE_HASH = '2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985';
 const RATE_PRECISION = 1000000000;
+const API_VERSION = '2.1';
 
 // Helper to make RPC calls
 async function rpcCall(rpcUrl, method, params, signal) {
@@ -40,7 +41,7 @@ module.exports = async function handler(req, res) {
   }
 
   let lastError = null;
-  const debugInfo = { attempts: [], version: '2.0' };
+  const debugInfo = { attempts: [], version: API_VERSION };
 
   // Try each RPC endpoint until one works
   for (const rpcUrl of RPC_ENDPOINTS) {
@@ -139,6 +140,9 @@ module.exports = async function handler(req, res) {
       const namedKeys = entity?.named_keys || [];
       debugInfo.namedKeys = namedKeys.map(nk => nk.name);
       debugInfo.hasMainPurse = !!entity?.main_purse;
+      debugInfo.mainPurse = entity?.main_purse || null;
+      debugInfo.entityKind = entity?.entity_kind || 'unknown';
+      debugInfo.entityKeys = Object.keys(entity || {});
 
       // Method 1: Query named keys for Odra storage
       for (const nk of namedKeys) {
@@ -213,50 +217,93 @@ module.exports = async function handler(req, res) {
       }
 
       // Method 3: Query contract's main purse balance (ALWAYS try this)
+      debugInfo.purseAttempts = [];
+
+      // Try entity_addr format first
       try {
-        // Try multiple purse query formats
-        const purseFormats = [
-          { main_purse_under_entity_addr: `entity-contract-${CONTRACT_PACKAGE_HASH}` },
-          { main_purse_under_public_key: null }, // Skip this
-          { purse_uref: entity?.main_purse },
-        ];
+        const entityBalanceResult = await rpcCall(rpcUrl, 'query_balance', {
+          purse_identifier: {
+            main_purse_under_entity_addr: `entity-contract-${CONTRACT_PACKAGE_HASH}`,
+          },
+          state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
+        }, controller.signal);
 
-        debugInfo.purseAttempts = [];
+        debugInfo.purseAttempts.push({
+          format: 'main_purse_under_entity_addr',
+          hasResult: !!entityBalanceResult.result?.balance,
+          balance: entityBalanceResult.result?.balance,
+          error: entityBalanceResult.error?.message,
+          fullError: entityBalanceResult.error,
+        });
 
-        for (const purseId of purseFormats) {
-          if (!purseId.purse_uref && !purseId.main_purse_under_entity_addr) continue;
-
-          try {
-            const balanceResult = await rpcCall(rpcUrl, 'query_balance', {
-              purse_identifier: purseId,
-              state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
-            }, controller.signal);
-
-            debugInfo.purseAttempts.push({
-              format: Object.keys(purseId)[0],
-              hasResult: !!balanceResult.result?.balance,
-              balance: balanceResult.result?.balance,
-              error: balanceResult.error?.message,
-            });
-
-            if (balanceResult.result?.balance) {
-              purseBalance = parseInt(balanceResult.result.balance, 10) || 0;
-              if (purseBalance > 0) {
-                // Use purse balance if we haven't found values from storage
-                if (totalPool === 0) {
-                  totalPool = purseBalance;
-                  totalStcspr = purseBalance; // Assume 1:1 if no supply found
-                  source = 'purse_balance';
-                }
-                break;
-              }
-            }
-          } catch (e) {
-            debugInfo.purseAttempts.push({ error: e.message });
+        if (entityBalanceResult.result?.balance) {
+          purseBalance = parseInt(entityBalanceResult.result.balance, 10) || 0;
+          if (purseBalance > 0 && totalPool === 0) {
+            totalPool = purseBalance;
+            totalStcspr = purseBalance;
+            source = 'purse_balance_entity';
           }
         }
       } catch (e) {
-        debugInfo.purseError = e.message;
+        debugInfo.purseAttempts.push({ format: 'main_purse_under_entity_addr', error: e.message });
+      }
+
+      // Try direct URef if entity has main_purse
+      if (entity?.main_purse && purseBalance === null) {
+        try {
+          const urefBalanceResult = await rpcCall(rpcUrl, 'query_balance', {
+            purse_identifier: {
+              purse_uref: entity.main_purse,
+            },
+            state_identifier: stateRootHash ? { StateRootHash: stateRootHash } : null,
+          }, controller.signal);
+
+          debugInfo.purseAttempts.push({
+            format: 'purse_uref',
+            uref: entity.main_purse,
+            hasResult: !!urefBalanceResult.result?.balance,
+            balance: urefBalanceResult.result?.balance,
+            error: urefBalanceResult.error?.message,
+          });
+
+          if (urefBalanceResult.result?.balance) {
+            purseBalance = parseInt(urefBalanceResult.result.balance, 10) || 0;
+            if (purseBalance > 0 && totalPool === 0) {
+              totalPool = purseBalance;
+              totalStcspr = purseBalance;
+              source = 'purse_balance_uref';
+            }
+          }
+        } catch (e) {
+          debugInfo.purseAttempts.push({ format: 'purse_uref', error: e.message });
+        }
+      }
+
+      // Try state_get_balance (legacy method)
+      try {
+        const legacyBalanceResult = await rpcCall(rpcUrl, 'state_get_balance', {
+          state_root_hash: stateRootHash,
+          purse_uref: entity?.main_purse || `uref-${CONTRACT_PACKAGE_HASH}-007`,
+        }, controller.signal);
+
+        debugInfo.purseAttempts.push({
+          format: 'state_get_balance',
+          hasResult: !!legacyBalanceResult.result?.balance_value,
+          balance: legacyBalanceResult.result?.balance_value,
+          error: legacyBalanceResult.error?.message,
+        });
+
+        if (legacyBalanceResult.result?.balance_value) {
+          const legacyBalance = parseInt(legacyBalanceResult.result.balance_value, 10) || 0;
+          if (legacyBalance > 0 && totalPool === 0) {
+            purseBalance = legacyBalance;
+            totalPool = legacyBalance;
+            totalStcspr = legacyBalance;
+            source = 'state_get_balance';
+          }
+        }
+      } catch (e) {
+        debugInfo.purseAttempts.push({ format: 'state_get_balance', error: e.message });
       }
 
       // Method 4: Try state_get_dictionary_item for Odra dictionaries
