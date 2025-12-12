@@ -14,6 +14,30 @@ const Container = styled.div`
   background: radial-gradient(ellipse at center, #0a0a12 0%, #000000 100%);
 `;
 
+// Créer une texture circulaire pour les particules (effet planète/sphère)
+const createCircleTexture = (): THREE.Texture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d')!;
+
+  // Gradient radial pour un effet de sphère lumineuse
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
+  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(32, 32, 32, 0, Math.PI * 2);
+  ctx.fill();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+};
+
 // Configuration de la galaxie
 const GALAXY_CONFIG = {
   particleCount: 15000,
@@ -30,6 +54,7 @@ const GALAXY_CONFIG = {
 // Composant pour les particules d'étoiles de fond
 const BackgroundStars: React.FC = () => {
   const starsRef = useRef<THREE.Points>(null);
+  const circleTexture = useMemo(() => createCircleTexture(), []);
 
   const [positions, sizes] = useMemo(() => {
     const count = 3000;
@@ -76,12 +101,13 @@ const BackgroundStars: React.FC = () => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.05}
+        size={0.08}
         sizeAttenuation={true}
         color="#ffffff"
         transparent={true}
         opacity={0.8}
         depthWrite={false}
+        map={circleTexture}
       />
     </points>
   );
@@ -95,6 +121,7 @@ interface GalaxyProps {
 const Galaxy: React.FC<GalaxyProps> = ({ scrollProgress }) => {
   const galaxyRef = useRef<THREE.Points>(null);
   const { camera } = useThree();
+  const circleTexture = useMemo(() => createCircleTexture(), []);
 
   // Générer les particules de la galaxie en spirale
   const [positions, colors, sizes] = useMemo(() => {
@@ -185,13 +212,14 @@ const Galaxy: React.FC<GalaxyProps> = ({ scrollProgress }) => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={GALAXY_CONFIG.size}
+        size={GALAXY_CONFIG.size * 2}
         sizeAttenuation={true}
         vertexColors={true}
         transparent={true}
         opacity={0.9}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
+        map={circleTexture}
       />
     </points>
   );
@@ -200,6 +228,7 @@ const Galaxy: React.FC<GalaxyProps> = ({ scrollProgress }) => {
 // Composant pour les nébuleuses
 const Nebula: React.FC<{ scrollProgress: number }> = ({ scrollProgress }) => {
   const nebulaRef = useRef<THREE.Points>(null);
+  const circleTexture = useMemo(() => createCircleTexture(), []);
 
   const [positions, colors] = useMemo(() => {
     const count = 500;
@@ -259,13 +288,14 @@ const Nebula: React.FC<{ scrollProgress: number }> = ({ scrollProgress }) => {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.15}
+        size={0.2}
         sizeAttenuation={true}
         vertexColors={true}
         transparent={true}
-        opacity={0.4}
+        opacity={0.5}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
+        map={circleTexture}
       />
     </points>
   );

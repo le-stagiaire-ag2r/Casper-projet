@@ -127,6 +127,7 @@ const NavInner = styled.div`
   margin: 0 auto;
   padding: 0 ${spacing[6]};
   display: flex;
+  justify-content: center;
   gap: ${spacing[2]};
 
   @media (max-width: 768px) {

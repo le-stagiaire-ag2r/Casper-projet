@@ -136,34 +136,6 @@ const SecondaryButton = styled.button`
   }
 `;
 
-const ScrollIndicator = styled.div`
-  position: absolute;
-  bottom: ${spacing[10]};
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: ${spacing[2]};
-  color: ${colors.text.muted};
-  font-size: ${typography.fontSize.xs};
-  text-transform: uppercase;
-  letter-spacing: ${typography.letterSpacing.widest};
-
-  &::after {
-    content: '';
-    width: 1px;
-    height: 40px;
-    background: linear-gradient(to bottom, ${colors.text.muted}, transparent);
-    animation: scrollLine 2s ease-in-out infinite;
-  }
-
-  @keyframes scrollLine {
-    0%, 100% { opacity: 0.3; transform: scaleY(0.5); }
-    50% { opacity: 1; transform: scaleY(1); }
-  }
-`;
-
 // Stats Section
 const StatsSection = styled(Section)`
   background: ${colors.background.secondary};
@@ -695,7 +667,6 @@ export const HomePage: React.FC<HomePageProps> = () => {
             </SecondaryButton>
           </HeroButtons>
         </HeroContent>
-        <ScrollIndicator>Scroll</ScrollIndicator>
       </HeroSection>
 
       {/* Stats */}
@@ -851,6 +822,7 @@ export const HomePage: React.FC<HomePageProps> = () => {
       {/* Footer Marquee */}
       <TextMarquee
         text="Liquid Staking"
+        outline
         duration={30}
         direction="right"
       />
