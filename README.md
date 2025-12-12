@@ -10,7 +10,7 @@
 
 ## What is StakeVue?
 
-You have CSPR. You want to earn rewards (~15% APY). But traditional staking **locks your tokens** for days or weeks.
+You have CSPR. You want to earn rewards (~15-17% APY). But traditional staking **locks your tokens** for days or weeks.
 
 **StakeVue solves this:**
 
