@@ -13,17 +13,17 @@
   <b>🎯 Casper Hackathon 2025</b> • <b>💰 DeFi Track</b> • <b>🏆 DoraHacks</b>
 </p>
 
----
+--- Please note that when reading this, the site is constantly evolving. This readme may not be up-to-date, some figures may have changed, or the logic may have been altered. In short, nothing technically serious, but be aware.
 
 ## 🤔 What is StakeVue?
 
-You have **CSPR**. You want to earn rewards (~15% APY). But traditional staking **locks your tokens** for days...
+You have **CSPR**. You want to earn rewards (~15-17% APY). But traditional staking **locks your tokens** for days...
 
 **StakeVue fixes that:**
 
 ```
 ❌ Traditional Staking:
-   100 CSPR ──▶ Validator ──▶ 🔒 LOCKED (14+ days)
+   100 CSPR ──▶ Validator ──▶ 🔒 LOCKED 
                               You can't use them!
 
 ✅ StakeVue:
