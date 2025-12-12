@@ -106,11 +106,6 @@ Traditional staking locks your tokens. **Liquid staking** lets you stake AND kee
 - **Leaderboard** - Top stakers ranking
 - **Portfolio History** - Track portfolio value over time
 
-### Admin
-- **Admin Panel** - Password protected (default: `stakevue2024`)
-- **Settings** - Theme, notifications, preferences
-- **FAQ Bot** - AI-powered help assistant
-
 ---
 
 ## V15 - Exchange Rate Mechanism
