@@ -4,11 +4,9 @@ import styled from 'styled-components';
 import { colors, typography, effects, layout, zIndex } from '../styles/designTokens';
 
 const Nav = styled.nav`
-  position: sticky;
-  top: 0;
-  z-index: ${zIndex.sticky};
-  background: rgba(10, 10, 10, 0.85);
-  backdrop-filter: blur(${effects.blur.lg});
+  position: relative;
+  z-index: 10;
+  background: ${colors.background.primary};
   border-bottom: 1px solid ${colors.border.default};
 `;
 

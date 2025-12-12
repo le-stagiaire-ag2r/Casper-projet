@@ -1,193 +1,173 @@
-import React, { useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useState, useEffect, useRef } from 'react';
+import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
-const float = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-`;
+gsap.registerPlugin(ScrollTrigger);
 
 const Container = styled.div`
-  max-width: 1100px;
+  max-width: ${layout.contentWidth};
   margin: 0 auto;
-  padding: 20px;
+  padding: ${spacing[8]} ${spacing[6]};
+
+  @media (max-width: 768px) {
+    padding: ${spacing[6]} ${spacing[4]};
+  }
 `;
 
 // Hero Section
-const HeroSection = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(88, 86, 214, 0.2) 0%, rgba(255, 45, 85, 0.2) 100%)'
-    : 'linear-gradient(135deg, rgba(88, 86, 214, 0.15) 0%, rgba(255, 45, 85, 0.15) 100%)'};
-  border-radius: 32px;
-  padding: 48px;
-  margin-bottom: 48px;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.08)'};
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #ff2d55, #5856d6, #af52de);
-  }
-`;
-
-const HeroContent = styled.div`
+const HeroSection = styled.section`
   text-align: center;
-  position: relative;
-  z-index: 1;
+  padding: ${spacing[16]} 0;
+  margin-bottom: ${spacing[12]};
 `;
 
-const HeroEmoji = styled.div`
-  font-size: 64px;
-  margin-bottom: 20px;
-  animation: ${float} 3s ease-in-out infinite;
+const HeroLabel = styled.span`
+  display: inline-block;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.accent.primary};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.widest};
+  margin-bottom: ${spacing[4]};
+  padding: ${spacing[2]} ${spacing[4]};
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.full};
 `;
 
 const HeroTitle = styled.h1`
-  font-size: 42px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #ff2d55 0%, #5856d6 50%, #af52de 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 16px;
+  font-family: ${typography.fontFamily.display};
+  font-size: clamp(${typography.fontSize['4xl']}, 8vw, ${typography.fontSize['7xl']});
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  line-height: ${typography.lineHeight.tight};
+  letter-spacing: ${typography.letterSpacing.tight};
+  margin-bottom: ${spacing[6]};
 `;
 
-const HeroSubtitle = styled.p<{ $isDark: boolean }>`
-  font-size: 18px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'};
-  margin-bottom: 32px;
+const HeroSubtitle = styled.p`
+  font-size: ${typography.fontSize.lg};
+  color: ${colors.text.secondary};
   max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto ${spacing[8]};
+  line-height: ${typography.lineHeight.relaxed};
 `;
 
 const HeroButton = styled.button`
-  padding: 16px 40px;
-  background: linear-gradient(135deg, #ff2d55 0%, #5856d6 100%);
+  padding: ${spacing[4]} ${spacing[8]};
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.semibold};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.wider};
+  color: ${colors.text.primary};
+  background: ${colors.accent.primary};
   border: none;
-  border-radius: 16px;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
+  border-radius: ${layout.borderRadius.full};
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all ${effects.transition.normal};
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(255, 45, 85, 0.4);
+    transform: translateY(-2px);
+    box-shadow: ${effects.shadow.glow};
   }
 `;
 
-// Stats Row
-const StatsRow = styled.div`
+// Stats
+const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 48px;
+  gap: ${spacing[4]};
+  margin-bottom: ${spacing[16]};
 
-  @media (max-width: 800px) {
+  @media (max-width: 900px) {
     grid-template-columns: repeat(2, 1fr);
   }
-`;
 
-const StatCard = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
-  border-radius: 20px;
-  padding: 24px;
-  text-align: center;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  backdrop-filter: blur(20px);
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: translateY(-4px);
-  }
-`;
-
-const StatIcon = styled.div`
-  font-size: 32px;
-  margin-bottom: 12px;
-`;
-
-const StatValue = styled.div<{ $color?: string }>`
-  font-size: 28px;
-  font-weight: 800;
-  color: ${props => props.$color || '#5856d6'};
-  margin-bottom: 4px;
-`;
-
-const StatLabel = styled.div<{ $isDark: boolean }>`
-  font-size: 13px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
-// Section
-const Section = styled.section`
-  margin-bottom: 56px;
-`;
-
-const SectionHeader = styled.div<{ $isDark: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 28px;
-`;
-
-const SectionIcon = styled.div<{ $bg: string }>`
-  width: 50px;
-  height: 50px;
-  background: ${props => props.$bg};
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-`;
-
-const SectionTitle = styled.h2<{ $isDark: boolean }>`
-  font-size: 28px;
-  font-weight: 700;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-`;
-
-// Comparison Cards
-const ComparisonGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-
-  @media (max-width: 700px) {
+  @media (max-width: 500px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const ComparisonCard = styled.div<{ $isDark: boolean; $type: 'bad' | 'good' }>`
-  background: ${props => props.$type === 'good'
-    ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
-    : 'linear-gradient(135deg, rgba(255, 69, 58, 0.1) 0%, rgba(255, 59, 48, 0.05) 100%)'};
-  border: 2px solid ${props => props.$type === 'good'
-    ? 'rgba(48, 209, 88, 0.3)'
-    : 'rgba(255, 69, 58, 0.3)'};
-  border-radius: 24px;
-  padding: 32px;
+const StatCard = styled.div`
+  background: ${colors.background.secondary};
+  border: 1px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.lg};
+  padding: ${spacing[6]};
+  text-align: center;
+  transition: all ${effects.transition.normal};
+
+  &:hover {
+    border-color: ${colors.border.hover};
+    transform: translateY(-2px);
+  }
+`;
+
+const StatValue = styled.div`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize['2xl']};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[1]};
+`;
+
+const StatLabel = styled.div`
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.text.tertiary};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.wider};
+`;
+
+// Section
+const Section = styled.section`
+  margin-bottom: ${spacing[16]};
+`;
+
+const SectionHeader = styled.div`
+  margin-bottom: ${spacing[8]};
+`;
+
+const SectionLabel = styled.span`
+  display: inline-block;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.accent.primary};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.widest};
+  margin-bottom: ${spacing[3]};
+`;
+
+const SectionTitle = styled.h2`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize['3xl']};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  letter-spacing: ${typography.letterSpacing.tight};
+`;
+
+// Comparison
+const ComparisonGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${spacing[6]};
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ComparisonCard = styled.div<{ $type: 'bad' | 'good' }>`
+  background: ${colors.background.secondary};
+  border: 1px solid ${props => props.$type === 'good'
+    ? 'rgba(34, 197, 94, 0.3)'
+    : 'rgba(239, 68, 68, 0.3)'};
+  border-radius: ${layout.borderRadius.xl};
+  padding: ${spacing[8]};
   position: relative;
-  overflow: hidden;
 
   &::before {
     content: '';
@@ -195,19 +175,21 @@ const ComparisonCard = styled.div<{ $isDark: boolean; $type: 'bad' | 'good' }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: ${props => props.$type === 'good' ? '#30d158' : '#ff453a'};
+    height: 2px;
+    background: ${props => props.$type === 'good'
+      ? colors.status.success
+      : colors.status.error};
   }
 `;
 
-const ComparisonTitle = styled.h3<{ $isDark: boolean; $type: 'bad' | 'good' }>`
-  font-size: 20px;
-  font-weight: 700;
-  color: ${props => props.$type === 'good' ? '#30d158' : '#ff453a'};
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+const ComparisonTitle = styled.h3<{ $type: 'bad' | 'good' }>`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${props => props.$type === 'good'
+    ? colors.status.success
+    : colors.status.error};
+  margin-bottom: ${spacing[6]};
 `;
 
 const ComparisonList = styled.ul`
@@ -216,144 +198,118 @@ const ComparisonList = styled.ul`
   margin: 0;
 `;
 
-const ComparisonItem = styled.li<{ $isDark: boolean }>`
-  font-size: 15px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)'};
-  padding: 12px 0;
+const ComparisonItem = styled.li`
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.secondary};
+  padding: ${spacing[3]} 0;
   display: flex;
   align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.05)'};
+  gap: ${spacing[3]};
+  border-bottom: 1px solid ${colors.border.default};
 
   &:last-child {
     border-bottom: none;
   }
-`;
 
-// Tutorial Steps
-const TutorialContainer = styled.div`
-  position: relative;
-`;
-
-const TutorialLine = styled.div<{ $isDark: boolean }>`
-  position: absolute;
-  left: 29px;
-  top: 60px;
-  bottom: 60px;
-  width: 2px;
-  background: ${props => props.$isDark
-    ? 'linear-gradient(180deg, #5856d6 0%, #ff2d55 100%)'
-    : 'linear-gradient(180deg, #5856d6 0%, #ff2d55 100%)'};
-  opacity: 0.3;
-
-  @media (max-width: 600px) {
-    display: none;
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
 `;
 
-const TutorialStep = styled.div<{ $isDark: boolean }>`
+// Tutorial Steps
+const TutorialGrid = styled.div`
   display: flex;
-  gap: 24px;
-  margin-bottom: 24px;
-  position: relative;
+  flex-direction: column;
+  gap: ${spacing[4]};
+`;
+
+const TutorialStep = styled.div`
+  display: flex;
+  gap: ${spacing[6]};
+  padding: ${spacing[6]};
+  background: ${colors.background.secondary};
+  border: 1px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.lg};
+  transition: all ${effects.transition.normal};
+
+  &:hover {
+    border-color: ${colors.accent.primary};
+    transform: translateX(4px);
+  }
 
   @media (max-width: 600px) {
     flex-direction: column;
   }
 `;
 
-const StepNumber = styled.div<{ $step: number }>`
-  width: 60px;
-  height: 60px;
-  background: ${props => {
-    const colors = [
-      'linear-gradient(135deg, #ff2d55, #ff6b8a)',
-      'linear-gradient(135deg, #ff9f0a, #ffb84d)',
-      'linear-gradient(135deg, #30d158, #5ae67e)',
-      'linear-gradient(135deg, #5856d6, #7a78e6)',
-      'linear-gradient(135deg, #af52de, #c77deb)',
-    ];
-    return colors[props.$step - 1] || colors[0];
-  }};
-  border-radius: 20px;
+const StepNumber = styled.div`
+  width: 48px;
+  height: 48px;
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.lg};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  font-weight: 800;
-  color: white;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.accent.primary};
   flex-shrink: 0;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 `;
 
-const StepContent = styled.div<{ $isDark: boolean }>`
+const StepContent = styled.div`
   flex: 1;
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
 `;
 
-const StepTitle = styled.h4<{ $isDark: boolean }>`
-  font-size: 18px;
-  font-weight: 700;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  margin-bottom: 8px;
+const StepTitle = styled.h4`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[2]};
 `;
 
-const StepDescription = styled.p<{ $isDark: boolean }>`
-  font-size: 14px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
-  line-height: 1.7;
+const StepDescription = styled.p`
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.secondary};
+  line-height: ${typography.lineHeight.relaxed};
   margin: 0;
 `;
 
-const StepTip = styled.div<{ $isDark: boolean }>`
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: ${props => props.$isDark
-    ? 'rgba(88, 86, 214, 0.15)'
-    : 'rgba(88, 86, 214, 0.1)'};
-  border-radius: 10px;
-  font-size: 13px;
-  color: #5856d6;
+const StepTip = styled.div`
+  margin-top: ${spacing[3]};
+  padding: ${spacing[3]} ${spacing[4]};
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.md};
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.accent.primary};
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${spacing[2]};
 `;
 
-// FAQ Section
+// FAQ
 const FAQGrid = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: ${spacing[3]};
 `;
 
-const FAQItem = styled.div<{ $isDark: boolean; $isOpen: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
-  border: 2px solid ${props => props.$isOpen
-    ? '#5856d6'
-    : props.$isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'};
-  border-radius: 20px;
+const FAQItem = styled.div<{ $isOpen: boolean }>`
+  background: ${colors.background.secondary};
+  border: 1px solid ${props => props.$isOpen
+    ? colors.accent.primary
+    : colors.border.default};
+  border-radius: ${layout.borderRadius.lg};
   overflow: hidden;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: ${props => props.$isOpen ? '#5856d6' : 'rgba(88, 86, 214, 0.3)'};
-  }
+  transition: all ${effects.transition.normal};
 `;
 
-const FAQQuestion = styled.button<{ $isDark: boolean }>`
+const FAQQuestion = styled.button`
   width: 100%;
-  padding: 24px;
+  padding: ${spacing[5]} ${spacing[6]};
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -363,86 +319,117 @@ const FAQQuestion = styled.button<{ $isDark: boolean }>`
   text-align: left;
 `;
 
-const FAQQuestionText = styled.span<{ $isDark: boolean }>`
-  font-size: 17px;
-  font-weight: 600;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+const FAQQuestionText = styled.span`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.base};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.text.primary};
 `;
 
-const FAQIcon = styled.div<{ $isOpen: boolean; $isDark: boolean }>`
-  width: 32px;
-  height: 32px;
-  background: ${props => props.$isOpen
-    ? 'linear-gradient(135deg, #ff2d55, #5856d6)'
-    : props.$isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
-  border-radius: 10px;
+const FAQIcon = styled.div<{ $isOpen: boolean }>`
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${props => props.$isOpen ? '#fff' : (props.$isDark ? '#fff' : '#1a1a2e')};
-  font-size: 14px;
-  transition: all 0.3s ease;
+  color: ${colors.text.tertiary};
+  transition: transform ${effects.transition.normal};
   transform: rotate(${props => props.$isOpen ? '180deg' : '0deg'});
 `;
 
-const FAQAnswer = styled.div<{ $isDark: boolean; $isOpen: boolean }>`
-  padding: ${props => props.$isOpen ? '0 24px 24px' : '0 24px'};
+const FAQAnswer = styled.div<{ $isOpen: boolean }>`
+  padding: ${props => props.$isOpen ? `0 ${spacing[6]} ${spacing[5]}` : `0 ${spacing[6]}`};
   max-height: ${props => props.$isOpen ? '500px' : '0'};
   opacity: ${props => props.$isOpen ? 1 : 0};
   overflow: hidden;
-  transition: all 0.3s ease;
-  font-size: 15px;
-  line-height: 1.8;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'};
+  transition: all ${effects.transition.normal};
+  font-size: ${typography.fontSize.sm};
+  line-height: ${typography.lineHeight.relaxed};
+  color: ${colors.text.secondary};
 `;
 
-// CTA Section
-const CTASection = styled.div<{ $isDark: boolean }>`
-  background: linear-gradient(135deg, #5856d6 0%, #af52de 100%);
-  border-radius: 32px;
-  padding: 48px;
+// CTA
+const CTASection = styled.div`
   text-align: center;
-  position: relative;
-  overflow: hidden;
+  padding: ${spacing[16]} ${spacing[6]};
+  background: ${colors.background.secondary};
+  border: 1px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius['2xl']};
 `;
 
 const CTATitle = styled.h2`
-  font-size: 32px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 16px;
-`;
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize['3xl']};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[4]};
 
-const CTASubtitle = styled.p`
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 28px;
-`;
-
-const CTAButton = styled.button`
-  padding: 18px 48px;
-  background: #fff;
-  border: none;
-  border-radius: 16px;
-  color: #5856d6;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  span {
+    color: ${colors.accent.primary};
   }
 `;
 
+const CTASubtitle = styled.p`
+  font-size: ${typography.fontSize.base};
+  color: ${colors.text.secondary};
+  margin-bottom: ${spacing[8]};
+`;
+
+// Icons
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke={colors.status.success} strokeWidth="2">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const XIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke={colors.status.error} strokeWidth="2">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const ChevronIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+const LightbulbIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14 }}>
+    <path d="M9 18h6M10 22h4M12 2v1M4.22 4.22l.7.7M1 12h1M4.22 19.78l.7-.7M21 12h1M19.78 4.22l-.7.7M19.78 19.78l-.7-.7M12 6a6 6 0 0 0-3 11.2V18a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-.8A6 6 0 0 0 12 6z" />
+  </svg>
+);
+
 interface GuidePageProps {
-  isDark: boolean;
+  isDark?: boolean;
 }
 
-export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
+export const GuidePage: React.FC<GuidePageProps> = () => {
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo('.hero-content > *',
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.1 }
+      );
+
+      gsap.utils.toArray('.animate-section').forEach((el: any) => {
+        gsap.fromTo(el,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1, y: 0, duration: 0.8,
+            scrollTrigger: { trigger: el, start: 'top 85%' }
+          }
+        );
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
 
   const faqs = [
     {
@@ -451,189 +438,128 @@ export const GuidePage: React.FC<GuidePageProps> = ({ isDark }) => {
     },
     {
       question: "Is my stake secure?",
-      answer: "Yes! StakeVue's smart contract has been audited and follows best security practices. Your stake is distributed across top-performing validators to minimize risk. The code is open source and verifiable on GitHub."
+      answer: "Yes! StakeVue's smart contract follows best security practices. Your stake is distributed across top-performing validators to minimize risk. The code is open source and verifiable on GitHub."
     },
     {
       question: "How much can I earn?",
-      answer: "Current APY is approximately 15-18% depending on network conditions. For example, staking 1000 CSPR would earn you roughly 170 CSPR per year in rewards, automatically compounded."
+      answer: "Current APY is approximately 15-18% depending on network conditions. For example, staking 1000 CSPR would earn you roughly 170 CSPR per year in rewards."
     },
     {
       question: "Can I unstake anytime?",
-      answer: "Absolutely! There's no lock-up period. You can unstake your stCSPR back to CSPR whenever you want. The standard Casper unbonding period applies (~14 hours)."
+      answer: "Yes! There's no lock-up period. You can unstake your stCSPR back to CSPR whenever you want. The standard Casper unbonding period applies (~14 hours)."
     },
     {
       question: "What's the minimum stake?",
-      answer: "You can stake as little as 1 CSPR. We recommend keeping some CSPR for transaction fees (around 5 CSPR per transaction)."
+      answer: "You can stake as little as 1 CSPR. We recommend keeping some CSPR for transaction fees (around 5 CSPR)."
     },
     {
       question: "How is stCSPR different from CSPR?",
-      answer: "stCSPR is a liquid token representing your staked CSPR. Over time, 1 stCSPR becomes worth more CSPR as rewards accumulate. You can trade it, use it as collateral, or simply hold it to earn rewards."
+      answer: "stCSPR is a liquid token representing your staked CSPR. Over time, 1 stCSPR becomes worth more CSPR as rewards accumulate."
     }
   ];
 
   const tutorials = [
-    {
-      title: "Install Casper Wallet",
-      description: "Download the official Casper Wallet extension from the Chrome Web Store. Create a new wallet and securely save your recovery phrase.",
-      tip: "💡 Never share your recovery phrase with anyone!"
-    },
-    {
-      title: "Get Some CSPR",
-      description: "Purchase CSPR on exchanges like Binance, Coinbase, or OKX. Transfer to your Casper wallet address. For testnet, use the free faucet.",
-      tip: "💡 Start with a small amount to test the process"
-    },
-    {
-      title: "Connect to StakeVue",
-      description: "Click 'Connect' in the top navigation bar. Select your wallet and approve the connection request.",
-      tip: "💡 Make sure you're on the correct network (Testnet/Mainnet)"
-    },
-    {
-      title: "Stake Your CSPR",
-      description: "Enter the amount you want to stake, review the transaction preview, and click 'Stake'. Sign the transaction in your wallet.",
-      tip: "💡 You'll receive stCSPR tokens instantly"
-    },
-    {
-      title: "Watch Your Rewards Grow",
-      description: "That's it! Your CSPR is now earning ~17% APY. Track your rewards in the dashboard, and unstake anytime you want.",
-      tip: "💡 Set price alerts to never miss market opportunities"
-    }
+    { title: "Install Casper Wallet", description: "Download the official Casper Wallet extension. Create a new wallet and securely save your recovery phrase.", tip: "Never share your recovery phrase" },
+    { title: "Get Some CSPR", description: "Purchase CSPR on exchanges like Binance or OKX. Transfer to your wallet. For testnet, use the free faucet.", tip: "Start with a small amount to test" },
+    { title: "Connect to StakeVue", description: "Click Connect in the top bar. Select your wallet and approve the connection.", tip: "Make sure you're on the correct network" },
+    { title: "Stake Your CSPR", description: "Enter the amount to stake, review the preview, and click Stake. Sign in your wallet.", tip: "You'll receive stCSPR instantly" },
+    { title: "Watch Rewards Grow", description: "Your CSPR is now earning ~17% APY. Track rewards in the dashboard.", tip: "Set price alerts for opportunities" }
   ];
 
   return (
-    <Container>
-      {/* Hero Section */}
-      <HeroSection $isDark={isDark}>
-        <HeroContent>
-          <HeroEmoji>🚀</HeroEmoji>
-          <HeroTitle>Master Liquid Staking</HeroTitle>
-          <HeroSubtitle $isDark={isDark}>
-            Learn how to earn passive income on your CSPR while keeping full liquidity.
-            No lock-ups, no complexity - just rewards.
-          </HeroSubtitle>
-          <HeroButton onClick={() => navigate('/stake')}>
-            Start Staking Now →
-          </HeroButton>
-        </HeroContent>
+    <Container ref={containerRef}>
+      <HeroSection className="hero-content">
+        <HeroLabel>Complete Guide</HeroLabel>
+        <HeroTitle>Master Liquid Staking</HeroTitle>
+        <HeroSubtitle>
+          Learn how to earn passive income on your CSPR while keeping full liquidity.
+          No lock-ups, no complexity - just rewards.
+        </HeroSubtitle>
+        <HeroButton onClick={() => navigate('/stake')}>
+          Start Staking Now
+        </HeroButton>
       </HeroSection>
 
-      {/* Stats Row */}
-      <StatsRow>
-        <StatCard $isDark={isDark}>
-          <StatIcon>📈</StatIcon>
-          <StatValue $color="#30d158">~17%</StatValue>
-          <StatLabel $isDark={isDark}>APY Rewards</StatLabel>
-        </StatCard>
-        <StatCard $isDark={isDark}>
-          <StatIcon>⚡</StatIcon>
-          <StatValue>Instant</StatValue>
-          <StatLabel $isDark={isDark}>stCSPR Minting</StatLabel>
-        </StatCard>
-        <StatCard $isDark={isDark}>
-          <StatIcon>🔓</StatIcon>
-          <StatValue>No Lock</StatValue>
-          <StatLabel $isDark={isDark}>Unstake Anytime</StatLabel>
-        </StatCard>
-        <StatCard $isDark={isDark}>
-          <StatIcon>🛡️</StatIcon>
-          <StatValue $color="#5856d6">Secure</StatValue>
-          <StatLabel $isDark={isDark}>Open Source</StatLabel>
-        </StatCard>
-      </StatsRow>
+      <StatsGrid className="animate-section">
+        <StatCard><StatValue>~17%</StatValue><StatLabel>APY Rewards</StatLabel></StatCard>
+        <StatCard><StatValue>Instant</StatValue><StatLabel>stCSPR Minting</StatLabel></StatCard>
+        <StatCard><StatValue>No Lock</StatValue><StatLabel>Unstake Anytime</StatLabel></StatCard>
+        <StatCard><StatValue>Secure</StatValue><StatLabel>Open Source</StatLabel></StatCard>
+      </StatsGrid>
 
-      {/* Comparison Section */}
-      <Section>
-        <SectionHeader $isDark={isDark}>
-          <SectionIcon $bg="linear-gradient(135deg, #ff2d55, #5856d6)">⚖️</SectionIcon>
-          <SectionTitle $isDark={isDark}>Why Liquid Staking?</SectionTitle>
+      <Section className="animate-section">
+        <SectionHeader>
+          <SectionLabel>Comparison</SectionLabel>
+          <SectionTitle>Why Liquid Staking?</SectionTitle>
         </SectionHeader>
         <ComparisonGrid>
-          <ComparisonCard $isDark={isDark} $type="bad">
-            <ComparisonTitle $isDark={isDark} $type="bad">
-              ❌ Traditional Staking
-            </ComparisonTitle>
+          <ComparisonCard $type="bad">
+            <ComparisonTitle $type="bad">Traditional Staking</ComparisonTitle>
             <ComparisonList>
-              <ComparisonItem $isDark={isDark}>🔒 Tokens locked for weeks</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>⏳ Long unbonding period</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>🚫 Can't use in DeFi</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>📉 Miss market opportunities</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>😰 Complex validator management</ComparisonItem>
+              <ComparisonItem><XIcon /> Tokens locked for weeks</ComparisonItem>
+              <ComparisonItem><XIcon /> Long unbonding period</ComparisonItem>
+              <ComparisonItem><XIcon /> Can't use in DeFi</ComparisonItem>
+              <ComparisonItem><XIcon /> Miss market opportunities</ComparisonItem>
+              <ComparisonItem><XIcon /> Complex validator management</ComparisonItem>
             </ComparisonList>
           </ComparisonCard>
-
-          <ComparisonCard $isDark={isDark} $type="good">
-            <ComparisonTitle $isDark={isDark} $type="good">
-              ✅ Liquid Staking (StakeVue)
-            </ComparisonTitle>
+          <ComparisonCard $type="good">
+            <ComparisonTitle $type="good">Liquid Staking (StakeVue)</ComparisonTitle>
             <ComparisonList>
-              <ComparisonItem $isDark={isDark}>🔓 Fully liquid stCSPR tokens</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>⚡ Unstake anytime</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>🔄 Use in DeFi protocols</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>📈 Never miss opportunities</ComparisonItem>
-              <ComparisonItem $isDark={isDark}>😎 We handle validators for you</ComparisonItem>
+              <ComparisonItem><CheckIcon /> Fully liquid stCSPR tokens</ComparisonItem>
+              <ComparisonItem><CheckIcon /> Unstake anytime</ComparisonItem>
+              <ComparisonItem><CheckIcon /> Use in DeFi protocols</ComparisonItem>
+              <ComparisonItem><CheckIcon /> Never miss opportunities</ComparisonItem>
+              <ComparisonItem><CheckIcon /> We handle validators for you</ComparisonItem>
             </ComparisonList>
           </ComparisonCard>
         </ComparisonGrid>
       </Section>
 
-      {/* Tutorial Section */}
-      <Section>
-        <SectionHeader $isDark={isDark}>
-          <SectionIcon $bg="linear-gradient(135deg, #30d158, #34c759)">📝</SectionIcon>
-          <SectionTitle $isDark={isDark}>How to Stake in 5 Steps</SectionTitle>
+      <Section className="animate-section">
+        <SectionHeader>
+          <SectionLabel>Tutorial</SectionLabel>
+          <SectionTitle>How to Stake in 5 Steps</SectionTitle>
         </SectionHeader>
-        <TutorialContainer>
-          <TutorialLine $isDark={isDark} />
-          {tutorials.map((tutorial, index) => (
-            <TutorialStep key={index} $isDark={isDark}>
-              <StepNumber $step={index + 1}>{index + 1}</StepNumber>
-              <StepContent $isDark={isDark}>
-                <StepTitle $isDark={isDark}>{tutorial.title}</StepTitle>
-                <StepDescription $isDark={isDark}>{tutorial.description}</StepDescription>
-                <StepTip $isDark={isDark}>{tutorial.tip}</StepTip>
+        <TutorialGrid>
+          {tutorials.map((t, i) => (
+            <TutorialStep key={i}>
+              <StepNumber>0{i + 1}</StepNumber>
+              <StepContent>
+                <StepTitle>{t.title}</StepTitle>
+                <StepDescription>{t.description}</StepDescription>
+                <StepTip><LightbulbIcon /> {t.tip}</StepTip>
               </StepContent>
             </TutorialStep>
           ))}
-        </TutorialContainer>
+        </TutorialGrid>
       </Section>
 
-      {/* FAQ Section */}
-      <Section>
-        <SectionHeader $isDark={isDark}>
-          <SectionIcon $bg="linear-gradient(135deg, #ff9f0a, #ffb84d)">❓</SectionIcon>
-          <SectionTitle $isDark={isDark}>Frequently Asked Questions</SectionTitle>
+      <Section className="animate-section">
+        <SectionHeader>
+          <SectionLabel>FAQ</SectionLabel>
+          <SectionTitle>Frequently Asked Questions</SectionTitle>
         </SectionHeader>
         <FAQGrid>
-          {faqs.map((faq, index) => (
-            <FAQItem
-              key={index}
-              $isDark={isDark}
-              $isOpen={openFAQ === index}
-            >
-              <FAQQuestion
-                $isDark={isDark}
-                onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
-              >
-                <FAQQuestionText $isDark={isDark}>{faq.question}</FAQQuestionText>
-                <FAQIcon $isOpen={openFAQ === index} $isDark={isDark}>▼</FAQIcon>
+          {faqs.map((faq, i) => (
+            <FAQItem key={i} $isOpen={openFAQ === i}>
+              <FAQQuestion onClick={() => setOpenFAQ(openFAQ === i ? null : i)}>
+                <FAQQuestionText>{faq.question}</FAQQuestionText>
+                <FAQIcon $isOpen={openFAQ === i}><ChevronIcon /></FAQIcon>
               </FAQQuestion>
-              <FAQAnswer $isDark={isDark} $isOpen={openFAQ === index}>
-                {faq.answer}
-              </FAQAnswer>
+              <FAQAnswer $isOpen={openFAQ === i}>{faq.answer}</FAQAnswer>
             </FAQItem>
           ))}
         </FAQGrid>
       </Section>
 
-      {/* CTA Section */}
-      <CTASection $isDark={isDark}>
-        <CTATitle>Ready to Start Earning?</CTATitle>
-        <CTASubtitle>
-          Join thousands of CSPR holders earning passive rewards with StakeVue
-        </CTASubtitle>
-        <CTAButton onClick={() => navigate('/stake')}>
-          🚀 Start Staking Now
-        </CTAButton>
+      <CTASection className="animate-section">
+        <CTATitle>Ready to <span>Start Earning</span>?</CTATitle>
+        <CTASubtitle>Join the Casper community earning passive rewards</CTASubtitle>
+        <HeroButton onClick={() => navigate('/stake')}>Start Staking Now</HeroButton>
       </CTASection>
     </Container>
   );
 };
+
+export default GuidePage;

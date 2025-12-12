@@ -18,8 +18,6 @@ import { StakePage } from './pages/StakePage';
 import { GuidePage } from './pages/GuidePage';
 import { BalanceProvider } from './context/BalanceContext';
 import { FAQBot } from './components/FAQBot';
-import { SmoothScroll } from './components/ui/SmoothScroll';
-import { CustomCursor } from './components/ui/CustomCursor';
 import { colors, typography, effects } from './styles/designTokens';
 
 // Get runtime config
@@ -41,8 +39,8 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
   }
 
-  html {
-    scroll-behavior: smooth;
+  html, body {
+    scroll-behavior: auto;
   }
 
   body {
@@ -112,7 +110,6 @@ const GlobalStyle = createGlobalStyle`
 
 const AppContainer = styled.div`
   min-height: 100vh;
-  padding-top: 60px;
 `;
 
 const MainContent = styled.main`
@@ -183,9 +180,8 @@ const AppContent: React.FC<{
   };
 
   return (
-    <SmoothScroll>
+    <>
       <GlobalStyle />
-      <CustomCursor enabled={true} />
 
       <ClickUI
         themeMode={themeMode}
@@ -224,7 +220,7 @@ const AppContent: React.FC<{
 
         <FAQBot isDark={isDark} />
       </AppContainer>
-    </SmoothScroll>
+    </>
   );
 };
 
