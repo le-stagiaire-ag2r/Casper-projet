@@ -17,7 +17,6 @@ import { ValidatorComparator } from '../components/ValidatorComparator';
 import { V15StatsCard } from '../components/V15StatsCard';
 import { AdminPanel } from '../components/AdminPanel';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
-import { FloatingGhosts } from '../components/ui/FloatingGhosts';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -345,9 +344,6 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
 
   return (
     <PageContainer>
-      {/* Floating Casper Ghosts */}
-      <FloatingGhosts count={8} />
-
       {/* Hero Header */}
       <HeroHeader>
         <HeroLabel className="hero-label">Dashboard</HeroLabel>

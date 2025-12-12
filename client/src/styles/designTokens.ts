@@ -26,14 +26,14 @@ export const colors = {
     glow: 'rgba(139, 92, 246, 0.4)',
   },
 
-  // Status colors
+  // Status colors - Purple theme
   status: {
-    success: '#22c55e',
-    successMuted: 'rgba(34, 197, 94, 0.15)',
-    error: '#ef4444',
-    errorMuted: 'rgba(239, 68, 68, 0.15)',
-    warning: '#f59e0b',
-    warningMuted: 'rgba(245, 158, 11, 0.15)',
+    success: '#a78bfa',
+    successMuted: 'rgba(167, 139, 250, 0.15)',
+    error: '#f472b6',
+    errorMuted: 'rgba(244, 114, 182, 0.15)',
+    warning: '#c4b5fd',
+    warningMuted: 'rgba(196, 181, 253, 0.15)',
   },
 
   // Border colors

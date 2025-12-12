@@ -14,6 +14,25 @@ const Container = styled.div`
   background: radial-gradient(ellipse at center, #0a0a12 0%, #000000 100%);
 `;
 
+// Overlay avec dégradé violet pour améliorer la lisibilité
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 10, 25, 0.85) 0%,
+    rgba(25, 15, 40, 0.75) 25%,
+    rgba(35, 20, 55, 0.70) 50%,
+    rgba(25, 15, 40, 0.75) 75%,
+    rgba(15, 10, 25, 0.85) 100%
+  );
+`;
+
 // Créer une texture circulaire pour les particules (effet planète/sphère)
 const createCircleTexture = (): THREE.Texture => {
   const canvas = document.createElement('canvas');
@@ -334,19 +353,22 @@ export const GalaxyBackground: React.FC = () => {
   }, []);
 
   return (
-    <Container>
-      <Canvas
-        camera={{ position: [0, 0, 4], fov: 75 }}
-        dpr={[1, 2]}
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: 'high-performance'
-        }}
-      >
-        <Scene scrollProgress={scrollProgress} />
-      </Canvas>
-    </Container>
+    <>
+      <Container>
+        <Canvas
+          camera={{ position: [0, 0, 4], fov: 75 }}
+          dpr={[1, 2]}
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance'
+          }}
+        >
+          <Scene scrollProgress={scrollProgress} />
+        </Canvas>
+      </Container>
+      <Overlay />
+    </>
   );
 };
 

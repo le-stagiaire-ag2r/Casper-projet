@@ -47,17 +47,17 @@ const ToastItem = styled.div<{ $type: 'success' | 'error' | 'info'; $isExiting: 
 
   background: ${props => {
     switch (props.$type) {
-      case 'success': return 'rgba(48, 209, 88, 0.95)';
-      case 'error': return 'rgba(255, 69, 58, 0.95)';
-      default: return 'rgba(88, 86, 214, 0.95)';
+      case 'success': return 'rgba(167, 139, 250, 0.95)';
+      case 'error': return 'rgba(244, 114, 182, 0.95)';
+      default: return 'rgba(139, 92, 246, 0.95)';
     }
   }};
 
   box-shadow: 0 8px 32px ${props => {
     switch (props.$type) {
-      case 'success': return 'rgba(48, 209, 88, 0.3)';
-      case 'error': return 'rgba(255, 69, 58, 0.3)';
-      default: return 'rgba(88, 86, 214, 0.3)';
+      case 'success': return 'rgba(167, 139, 250, 0.3)';
+      case 'error': return 'rgba(244, 114, 182, 0.3)';
+      default: return 'rgba(139, 92, 246, 0.3)';
     }
   }};
 

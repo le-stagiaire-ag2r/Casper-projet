@@ -53,7 +53,7 @@ const AdminBadge = styled.div`
   position: absolute;
   top: ${spacing[4]};
   right: ${spacing[4]};
-  background: linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%);
+  background: linear-gradient(135deg, #c4b5fd 0%, #ff2d55 100%);
   color: white;
   font-family: ${typography.fontFamily.mono};
   font-size: ${typography.fontSize.xs};
@@ -228,7 +228,7 @@ const PreviewValue = styled.span<{ $highlight?: boolean }>`
 const SubmitButton = styled.button`
   width: 100%;
   padding: ${spacing[4]};
-  background: linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%);
+  background: linear-gradient(135deg, #c4b5fd 0%, #ff2d55 100%);
   border: none;
   border-radius: ${layout.borderRadius.lg};
   color: #fff;
@@ -268,8 +268,8 @@ const Spinner = styled.div`
 const SuccessMessage = styled.div`
   margin-top: ${spacing[4]};
   padding: ${spacing[3]};
-  background: rgba(48, 209, 88, 0.1);
-  border: 1px solid rgba(48, 209, 88, 0.3);
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.3);
   border-radius: ${layout.borderRadius.md};
   color: ${colors.status.success};
   font-size: ${typography.fontSize.sm};

@@ -20,6 +20,7 @@ import { BalanceProvider } from './context/BalanceContext';
 import { FAQBot } from './components/FAQBot';
 import { CustomCursor } from './components/ui/CustomCursor';
 import { GalaxyBackground } from './components/ui/GalaxyBackground';
+import { FloatingGhosts } from './components/ui/FloatingGhosts';
 import { colors, typography, effects } from './styles/designTokens';
 
 // Get runtime config
@@ -186,6 +187,7 @@ const AppContent: React.FC<{
       <GlobalStyle />
       <CustomCursor />
       <GalaxyBackground />
+      <FloatingGhosts count={10} />
 
       <ClickUI
         themeMode={themeMode}

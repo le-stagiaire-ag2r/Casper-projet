@@ -242,24 +242,24 @@ const Message = styled.div<{ type: 'success' | 'error' | 'info' }>`
   padding: 16px;
   background: ${(props) => {
     switch (props.type) {
-      case 'success': return 'rgba(48, 209, 88, 0.1)';
-      case 'error': return 'rgba(255, 69, 58, 0.1)';
-      default: return 'rgba(88, 86, 214, 0.1)';
+      case 'success': return 'rgba(167, 139, 250, 0.1)';
+      case 'error': return 'rgba(244, 114, 182, 0.1)';
+      default: return 'rgba(139, 92, 246, 0.1)';
     }
   }};
   border: 1px solid ${(props) => {
     switch (props.type) {
-      case 'success': return 'rgba(48, 209, 88, 0.3)';
-      case 'error': return 'rgba(255, 69, 58, 0.3)';
-      default: return 'rgba(88, 86, 214, 0.3)';
+      case 'success': return 'rgba(167, 139, 250, 0.3)';
+      case 'error': return 'rgba(244, 114, 182, 0.3)';
+      default: return 'rgba(139, 92, 246, 0.3)';
     }
   }};
   border-radius: 12px;
   color: ${(props) => {
     switch (props.type) {
-      case 'success': return '#30d158';
-      case 'error': return '#ff453a';
-      default: return '#5856d6';
+      case 'success': return '#a78bfa';
+      case 'error': return '#f472b6';
+      default: return '#8b5cf6';
     }
   }};
   font-size: 14px;
@@ -270,7 +270,7 @@ const ExplorerLink = styled.a`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #30d158;
+  color: #a78bfa;
   text-decoration: none;
   font-weight: 600;
   margin-top: 8px;
@@ -381,24 +381,24 @@ const ValidationMessage = styled.div<{ $type: 'error' | 'warning' | 'info' }>`
   border-radius: 8px;
   background: ${props => {
     switch (props.$type) {
-      case 'error': return 'rgba(255, 69, 58, 0.1)';
-      case 'warning': return 'rgba(255, 159, 10, 0.1)';
-      default: return 'rgba(88, 86, 214, 0.1)';
+      case 'error': return 'rgba(244, 114, 182, 0.1)';
+      case 'warning': return 'rgba(196, 181, 253, 0.1)';
+      default: return 'rgba(139, 92, 246, 0.1)';
     }
   }};
   color: ${props => {
     switch (props.$type) {
-      case 'error': return '#ff453a';
-      case 'warning': return '#ff9f0a';
-      default: return '#5856d6';
+      case 'error': return '#f472b6';
+      case 'warning': return '#c4b5fd';
+      default: return '#8b5cf6';
     }
   }};
 `;
 
 const DemoTag = styled.span`
   display: inline-block;
-  background: rgba(255, 159, 10, 0.2);
-  color: #ff9f0a;
+  background: rgba(196, 181, 253, 0.2);
+  color: #c4b5fd;
   font-size: 9px;
   font-weight: 700;
   padding: 2px 6px;
@@ -409,11 +409,11 @@ const DemoTag = styled.span`
 
 const PreviewBox = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%)'
-    : 'linear-gradient(135deg, rgba(48, 209, 88, 0.08) 0%, rgba(88, 86, 214, 0.08) 100%)'};
+    ? 'linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)'
+    : 'linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%)'};
   border: 1px solid ${props => props.$isDark
-    ? 'rgba(48, 209, 88, 0.2)'
-    : 'rgba(48, 209, 88, 0.15)'};
+    ? 'rgba(167, 139, 250, 0.2)'
+    : 'rgba(167, 139, 250, 0.15)'};
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 20px;
@@ -451,7 +451,7 @@ const PreviewValue = styled.span<{ $isDark: boolean; $highlight?: boolean }>`
   font-size: 14px;
   font-weight: 700;
   color: ${props => props.$highlight
-    ? '#30d158'
+    ? '#a78bfa'
     : props.$isDark ? '#fff' : '#1a1a2e'};
 `;
 
@@ -679,7 +679,7 @@ export const StakingForm: React.FC = () => {
         <BalanceLabel $isDark={isDark}>
           💰 Available {tokenSymbol}
           {!isRealBalance && <DemoTag>DEMO</DemoTag>}
-          {isRealBalance && <DemoTag style={{ background: 'rgba(48, 209, 88, 0.2)', color: '#30d158' }}>LIVE</DemoTag>}
+          {isRealBalance && <DemoTag style={{ background: 'rgba(167, 139, 250, 0.2)', color: '#a78bfa' }}>LIVE</DemoTag>}
           {balanceLoading && <DemoTag style={{ background: 'rgba(88, 86, 214, 0.2)', color: '#5856d6' }}>...</DemoTag>}
         </BalanceLabel>
         <BalanceValue $isDark={isDark}>
@@ -787,13 +787,13 @@ export const StakingForm: React.FC = () => {
         <InfoBox $isDark={isDark}>
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>Exchange Rate (V15)</InfoLabel>
-            <InfoValue $isDark={isDark} style={{ color: exchangeRate > 1 ? '#30d158' : undefined }}>
+            <InfoValue $isDark={isDark} style={{ color: exchangeRate > 1 ? '#a78bfa' : undefined }}>
               1 stCSPR = {exchangeRate.toFixed(4)} CSPR
             </InfoValue>
           </InfoRow>
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>APY (estimated)</InfoLabel>
-            <InfoValue $isDark={isDark} style={{ color: '#30d158' }}>~15-18%</InfoValue>
+            <InfoValue $isDark={isDark} style={{ color: '#a78bfa' }}>~15-18%</InfoValue>
           </InfoRow>
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>Gas Fee</InfoLabel>

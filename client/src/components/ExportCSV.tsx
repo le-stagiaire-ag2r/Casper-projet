@@ -166,15 +166,15 @@ const ExportButton = styled.button<{ $isDark: boolean }>`
 `;
 
 const SuccessMessage = styled.div`
-  background: rgba(48, 209, 88, 0.1);
-  border: 1px solid rgba(48, 209, 88, 0.3);
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.3);
   border-radius: 8px;
   padding: 12px 16px;
   margin-top: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #30d158;
+  color: #a78bfa;
   font-size: 0.9rem;
 `;
 
@@ -428,8 +428,8 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
             <div style={{
               padding: '12px',
               borderRadius: '8px',
-              background: isDark ? 'rgba(48, 209, 88, 0.1)' : 'rgba(48, 209, 88, 0.1)',
-              color: '#30d158',
+              background: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(167, 139, 250, 0.1)',
+              color: '#a78bfa',
               fontWeight: 600,
             }}>
               {priceHistory.length} entries
