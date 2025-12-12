@@ -19,7 +19,7 @@ import { GuidePage } from './pages/GuidePage';
 import { BalanceProvider } from './context/BalanceContext';
 import { FAQBot } from './components/FAQBot';
 import { CustomCursor } from './components/ui/CustomCursor';
-import { FloatingBackground } from './components/ui/FloatingBackground';
+import { GalaxyBackground } from './components/ui/GalaxyBackground';
 import { colors, typography, effects } from './styles/designTokens';
 
 // Get runtime config
@@ -185,7 +185,7 @@ const AppContent: React.FC<{
     <>
       <GlobalStyle />
       <CustomCursor />
-      <FloatingBackground intensity="medium" />
+      <GalaxyBackground />
 
       <ClickUI
         themeMode={themeMode}
