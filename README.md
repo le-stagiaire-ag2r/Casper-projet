@@ -1,188 +1,143 @@
-# StakeVue - Liquid Staking Protocol for Casper Network
+# StakeVue
+
+**Liquid Staking Protocol for Casper Network**
 
 ![Casper Network](https://img.shields.io/badge/Casper-2.0_Testnet-blue)
-![Status](https://img.shields.io/badge/Status-V16_Visual_Overhaul-brightgreen)
-![Framework](https://img.shields.io/badge/Framework-Odra_2.4.0-purple)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-**Hackathon:** Casper Hackathon 2025 on DoraHacks
-**Track:** DeFi - Liquid Staking
+![Version](https://img.shields.io/badge/Version-16-brightgreen)
+![Framework](https://img.shields.io/badge/Odra-2.4.0-purple)
 
 ---
 
-## Live Demo
+## What is StakeVue?
 
-**Web App:** [https://casper-projet.vercel.app](https://casper-projet.vercel.app)
+You have CSPR. You want to earn rewards (~15% APY). But traditional staking **locks your tokens** for days or weeks.
 
-**V15 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985)
+**StakeVue solves this:**
+
+```
+Traditional Staking:
+  100 CSPR --> Validator --> LOCKED (can't use for 14+ days)
+
+StakeVue:
+  100 CSPR --> StakeVue --> 100 stCSPR (usable immediately!)
+                           Your stCSPR earns rewards
+                           Withdraw anytime, no waiting
+```
+
+That's **liquid staking**. Your tokens work for you AND stay liquid.
 
 ---
 
-## V16 - Visual Overhaul
+## How It Works
 
-Complete UI/UX redesign with premium crypto aesthetics:
-
-### Design System
-
-| Feature | Description |
-|---------|-------------|
-| **Galaxy Background** | 3D WebGL animated background with 15,000 particles |
-| **Glass Morphism** | Transparent cards with backdrop blur effect |
-| **Purple Theme** | Cosmic purple accent (#8b5cf6) throughout |
-| **Custom Cursor** | Animated cursor with glow effects |
-| **SVG Icons** | Clean vector icons replacing all emojis |
-| **Pill Navigation** | Floating glass buttons with hover effects |
-
-### UI Components
+### 1. You Stake
 
 ```
-+--------------------------------------------------+
-|  Navigation (transparent, pill buttons)           |
-+--------------------------------------------------+
-|                                                  |
-|  +-- Galaxy Background (WebGL 3D)                |
-|  |                                               |
-|  |  +----------------------------------------+   |
-|  |  |  Glass Card (rgba(20,10,30,0.6))       |   |
-|  |  |  - Backdrop blur                       |   |
-|  |  |  - Purple border on hover              |   |
-|  |  |  - SVG icons                           |   |
-|  |  +----------------------------------------+   |
-|  |                                               |
-+--------------------------------------------------+
-```
-
----
-
-## What is Liquid Staking?
-
-Traditional staking locks your tokens. **Liquid staking** lets you stake AND keep your liquidity!
-
-```
-+---------------------------------------------------------------------+
-|  TRADITIONAL STAKING                                                |
-|                                                                     |
-|  Your 100 CSPR --> Validator --> LOCKED for days/weeks              |
-|                                  You can't use them!                |
-+---------------------------------------------------------------------+
-
-+---------------------------------------------------------------------+
-|  LIQUID STAKING (StakeVue)                                          |
-|                                                                     |
-|  Your 100 CSPR --> StakeVue --> You get 100 stCSPR                  |
-|                                                                     |
-|  With your stCSPR you can:                                          |
-|  +-- Trade on DEX                                                   |
-|  +-- Use as collateral in DeFi                                      |
-|  +-- Transfer to anyone                                             |
-|  +-- Unstake anytime to get CSPR back (with rewards!)               |
-+---------------------------------------------------------------------+
-```
-
----
-
-## Features
-
-### Staking
-- **Stake/Unstake** - Full CSPR.click wallet integration
-- **Exchange Rate** - Dynamic rate that appreciates with rewards
-- **Transaction History** - Track all your stake/unstake actions
-- **stCSPR Token** - CEP-18 compliant liquid token
-
-### Analytics
-- **Global Stats** - Network APY, total staked, validators
-- **Price Chart** - Historical CSPR price with 7d/30d/1y views
-- **TVL Chart** - Total Value Locked over time
-- **Validator Ranking** - Compare validators by performance
-
-### Tools
-- **Staking Calculator** - Estimate rewards by amount and duration
-- **Validator Comparator** - Side-by-side validator comparison
-- **Price Alerts** - Set alerts for CSPR price targets
-- **CSV Export** - Export transaction history
-
-### Gamification
-- **NFT Badges** - Earn badges for staking milestones
-- **Leaderboard** - Top stakers ranking
-- **Portfolio History** - Track portfolio value over time
-
-### Admin
-- **Admin Panel** - Password protected (default: `stakevue2024`)
-- **Settings** - Theme, notifications, preferences
-- **FAQ Bot** - AI-powered help assistant
-
----
-
-## V15 - Exchange Rate Mechanism
-
-### How stCSPR Appreciates
-
-Unlike V14 (1:1 ratio), V15 implements a **dynamic exchange rate** that increases over time as rewards accumulate:
-
-```
-+---------------------------------------------------------------------+
-|  EXCHANGE RATE APPRECIATION                                         |
-|                                                                     |
-|  Day 1: Stake 100 CSPR --> Get 100 stCSPR (rate = 1.0)              |
-|                                                                     |
-|  Day 30: Rewards added to pool                                      |
-|          Pool: 115 CSPR / Supply: 100 stCSPR                        |
-|          Rate = 1.15 (1 stCSPR = 1.15 CSPR)                         |
-|                                                                     |
-|  Day 30: Unstake 100 stCSPR --> Get 115 CSPR (+15% profit!)         |
-+---------------------------------------------------------------------+
-```
-
----
-
-## How StakeVue Works
-
-### Stake Flow (at rate 1.15)
-```
-+----------------+         +---------------------+
-|  Your Wallet   |         |  StakeVue Contract  |
-|                |         |                     |
-|  -115 CSPR     | ------> |  +115 CSPR (pool)   |
-|  +100 stCSPR   | <------ |  mint 100 stCSPR    |
-+----------------+         +---------------------+
+You send: 100 CSPR
+You receive: ~87 stCSPR (at current rate 1.15)
 
 Formula: stCSPR = CSPR / exchange_rate
 ```
 
-### Unstake Flow (at rate 1.15)
-```
-+----------------+         +---------------------+
-|  Your Wallet   |         |  StakeVue Contract  |
-|                |         |                     |
-|  +115 CSPR     | <------ |  -115 CSPR (pool)   |
-|  -100 stCSPR   | ------> |  BURN 100 stCSPR    |
-+----------------+         +---------------------+
+### 2. Your stCSPR Appreciates
 
-Formula: CSPR = stCSPR * exchange_rate
 ```
+Day 1:   Rate = 1.0   --> 100 stCSPR = 100 CSPR
+Day 30:  Rate = 1.15  --> 100 stCSPR = 115 CSPR
+Day 60:  Rate = 1.30  --> 100 stCSPR = 130 CSPR
+
+The rate increases as rewards flow into the pool.
+Your stCSPR count stays the same, but its VALUE grows.
+```
+
+### 3. You Unstake (Whenever You Want)
+
+```
+You burn: 100 stCSPR
+You receive: 115 CSPR (at rate 1.15)
+
+Formula: CSPR = stCSPR × exchange_rate
+```
+
+**No lock-up period. No waiting. Your money, your choice.**
 
 ---
 
-## Contract Details
+## The Exchange Rate
 
-| Property | Value |
-|----------|-------|
-| **Package Hash** | `2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985` |
-| **Network** | casper-test |
-| **Framework** | Odra 2.4.0 |
-| **Token Standard** | CEP-18 (integrated) |
-| **Exchange Rate** | Dynamic (rewards-based) |
+This is the core innovation. Here's a real example:
+
+```
+Pool starts with:
+  Total CSPR: 100
+  Total stCSPR: 100
+  Rate: 100/100 = 1.0
+
+Rewards are added (20 CSPR):
+  Total CSPR: 120
+  Total stCSPR: 100 (unchanged!)
+  Rate: 120/100 = 1.2
+
+Your 100 stCSPR is now worth 120 CSPR.
+You gained 20% without doing anything!
+```
+
+The magic: **pool grows, supply stays constant, rate increases**.
+
+---
+
+## Try It
+
+### Live Demo
+
+**https://casper-projet.vercel.app**
+
+1. Connect your Casper wallet (testnet)
+2. Get test CSPR from [faucet.casper.network](https://faucet.casper.network)
+3. Stake some CSPR
+4. Watch your stCSPR balance
+
+### What You'll See
+
+- 3D galaxy background
+- Glass-morphism UI
+- Real-time exchange rate
+- Your stCSPR balance and CSPR value
+- Transaction history
+
+---
+
+## The Smart Contract
+
+Deployed on Casper 2.0 Testnet:
+
+```
+Package: 2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985
+```
+
+[View on Explorer](https://testnet.cspr.live/contract-package/2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985)
 
 ### Entry Points
 
-| Function | Type | Description |
-|----------|------|-------------|
-| `stake()` | Payable | Stake CSPR, receive stCSPR at current rate |
-| `unstake(amount)` | Public | Burn stCSPR, receive CSPR at current rate |
-| `add_rewards()` | Owner/Payable | Add rewards to pool (increases rate) |
-| `get_exchange_rate()` | View | Current rate (9 decimals) |
-| `get_stcspr_balance(addr)` | View | stCSPR balance |
-| `get_cspr_value(addr)` | View | CSPR value of stCSPR balance |
+| Function | What it does |
+|----------|--------------|
+| `stake()` | Send CSPR, receive stCSPR |
+| `unstake(amount)` | Burn stCSPR, receive CSPR |
+| `add_rewards()` | Add rewards to pool (owner only) |
+| `get_exchange_rate()` | Current rate (9 decimals) |
+
+### Architecture
+
+```rust
+pub struct StakeVue {
+    token: SubModule<Cep18>,      // stCSPR (CEP-18 standard)
+    total_cspr_pool: Var<U512>,   // All CSPR in the contract
+}
+
+// Rate = total_cspr_pool / token.total_supply()
+```
+
+Built with [Odra Framework](https://odra.dev) - the easiest way to write Casper smart contracts.
 
 ---
 
@@ -190,45 +145,28 @@ Formula: CSPR = stCSPR * exchange_rate
 
 ```
 Casper-projet/
-+-- client/                      # React frontend
-|   +-- src/
-|   |   +-- components/          # UI components
-|   |   |   +-- ui/              # Galaxy, Cursor, etc.
-|   |   +-- pages/               # Home, Stake, Guide
-|   |   +-- styles/              # Design tokens
-|   |   +-- hooks/               # useStaking, useCsprClick
-|   +-- api/
-|       +-- contract-stats.js    # Vercel serverless API
-+-- stakevue_contract/           # Odra smart contract
-|   +-- src/lib.rs               # V15 contract
-|   +-- bin/                     # Deploy/test scripts
-+-- scripts/                     # Node.js utilities
-+-- archive/                     # Old versions (V1-V14)
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/     # UI components
+│   │   ├── pages/          # Home, Stake, Guide
+│   │   └── hooks/          # useStaking, useCsprClick
+│   └── api/
+│       └── contract-stats.js  # Vercel serverless (reads blockchain)
+│
+├── stakevue_contract/      # Odra smart contract
+│   ├── src/lib.rs          # Contract code
+│   └── bin/                # Deploy & test scripts
+│
+├── scripts/                # Node.js utilities
+├── archive/                # Old versions (V1-V14)
+│
+├── README.md               # You are here
+└── RELEASE_NOTES_V16.md    # Detailed changelog V8→V16
 ```
 
 ---
 
-## Live Blockchain API
-
-Real-time data from the deployed V15 contract:
-
-```
-GET https://casper-projet.vercel.app/api/contract-stats
-```
-
-```json
-{
-  "exchangeRate": 1275000000,
-  "totalPool": 27000000000,
-  "totalStcspr": 21176470587,
-  "exchangeRateFormatted": "1.2750",
-  "totalPoolCspr": 27
-}
-```
-
----
-
-## Quick Start
+## Run Locally
 
 ### Frontend
 
@@ -242,52 +180,69 @@ npm start
 
 ```bash
 cd stakevue_contract
-cargo odra build
-cargo test
-cargo run --bin deploy_v15 --features livenet
+cargo odra build           # Compile
+cargo test                 # Run tests
+cargo run --bin deploy_v15 --features livenet  # Deploy
 ```
-
----
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| Smart Contract | Rust, Odra 2.4.0, CEP-18 |
-| Frontend | React 18, TypeScript, styled-components |
-| 3D Graphics | Three.js, React Three Fiber |
-| Wallet | CSPR.click |
-| Deployment | Vercel, Casper 2.0 Testnet |
 
 ---
 
 ## Version History
 
-| Version | Date | Highlights |
-|---------|------|------------|
-| **V16** | Dec 2025 | **Visual Overhaul** - Galaxy background, glass UI, SVG icons, purple theme |
-| **V15.1** | Dec 2025 | Live RPC API - Real-time contract stats |
-| **V15** | Dec 2025 | Exchange rate mechanism - stCSPR appreciation |
-| **V14** | Dec 2025 | Production-ready with integrated CEP-18 |
-| **V1-V13** | Nov-Dec 2025 | Iterations (see archive/) |
+| Version | Highlights |
+|---------|------------|
+| **V16** | Visual overhaul - Galaxy background, glass UI, SVG icons |
+| **V15.1** | Live RPC API - Real contract stats from blockchain |
+| **V15** | Exchange rate mechanism - stCSPR appreciates |
+| **V14** | Integrated CEP-18 token (finally works!) |
+| **V13** | Minimal payable test |
+| **V12** | CEP-18 attempt (package key conflict) |
+| **V11** | External token debugging |
+| **V10** | Token integration attempts |
+| **V9** | External token reference (broken) |
+| **V8.2** | Ownable + Pauseable modules |
+| **V8.0** | First real CSPR staking with Odra |
+| **V7.x** | APY slider, price charts, CSV export |
+| **V6.x** | Price alerts, portfolio history |
+| **V5.0** | Security hardening (A+ score) |
+| **V4.0** | Multi-validator support |
+| **V3.0** | stCSPR token concept |
+| **V2.0** | Per-user stake tracking |
+| **V1.0** | Basic stake/unstake |
+
+**Full details:** [RELEASE_NOTES_V16.md](./RELEASE_NOTES_V16.md)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Smart Contract | Rust, Odra 2.4.0, CEP-18 |
+| Frontend | React 18, TypeScript, styled-components |
+| 3D Graphics | Three.js, React Three Fiber |
+| Wallet | CSPR.click |
+| API | Vercel Serverless, Casper RPC |
+| Deployment | Vercel (frontend), Casper Testnet (contract) |
 
 ---
 
 ## Links
 
 - **Live Demo:** https://casper-projet.vercel.app
-- **Contract:** https://testnet.cspr.live/contract-package/2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985
+- **Contract:** [View on Testnet](https://testnet.cspr.live/contract-package/2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985)
 - **Odra Framework:** https://odra.dev
 - **Casper Network:** https://casper.network
+- **Testnet Faucet:** https://faucet.casper.network
 
 ---
 
 ## License
 
-MIT License
+MIT
 
 ---
 
-**Built for Casper Hackathon 2025**
+**Casper Hackathon 2025** | DoraHacks | DeFi Track
 
-**StakeVue - Liquid Staking Made Simple**
+*Stake smart. Stay liquid.*
