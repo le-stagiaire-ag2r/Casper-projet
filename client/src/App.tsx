@@ -18,6 +18,9 @@ import { StakePage } from './pages/StakePage';
 import { GuidePage } from './pages/GuidePage';
 import { BalanceProvider } from './context/BalanceContext';
 import { FAQBot } from './components/FAQBot';
+import { SmoothScroll } from './components/ui/SmoothScroll';
+import { CustomCursor } from './components/ui/CustomCursor';
+import { colors, typography, effects } from './styles/designTokens';
 
 // Get runtime config
 const config = window.config;
@@ -30,80 +33,137 @@ const clickOptions: CsprClickInitOptions = {
   providers: config.cspr_click_providers,
 };
 
-// Global styles
-const GlobalStyle = createGlobalStyle<{ $isDark: boolean }>`
+// Global styles with new design system
+const GlobalStyle = createGlobalStyle`
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
-      'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-family: ${typography.fontFamily.body};
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: ${props => props.$isDark
-      ? 'linear-gradient(180deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%)'
-      : 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%)'};
+    background: ${colors.background.primary};
+    color: ${colors.text.primary};
     min-height: 100vh;
-    color: ${props => props.$isDark ? '#ffffff' : '#1a1a2e'};
+    overflow-x: hidden;
+  }
+
+  /* Selection */
+  ::selection {
+    background: ${colors.accent.primary};
+    color: ${colors.text.primary};
   }
 
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
   }
+
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: ${colors.background.secondary};
   }
+
   ::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.5);
+    background: ${colors.border.hover};
     border-radius: 4px;
+
+    &:hover {
+      background: ${colors.text.muted};
+    }
+  }
+
+  /* Links */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Buttons reset */
+  button {
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    outline: 2px solid ${colors.accent.primary};
+    outline-offset: 2px;
+  }
+
+  /* Smooth animations for reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 `;
 
 const AppContainer = styled.div`
   min-height: 100vh;
-  padding-top: 60px; /* Space for CSPR.click top bar only */
+  padding-top: 60px;
 `;
 
 const MainContent = styled.main`
-  padding: 0 20px 20px;
+  position: relative;
 `;
 
-const Footer = styled.footer<{ $isDark: boolean }>`
+const Footer = styled.footer`
   max-width: 1200px;
-  margin: 48px auto 0;
-  padding: 32px 20px;
-  text-align: center;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  font-size: 14px;
-  border-top: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.1)'};
+  margin: 0 auto;
+  padding: 48px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid ${colors.border.default};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 24px;
+    text-align: center;
+  }
+`;
+
+const FooterBrand = styled.div`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.text.secondary};
 `;
 
 const FooterLinks = styled.div`
   display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-top: 16px;
+  gap: 32px;
   flex-wrap: wrap;
+  justify-content: center;
 `;
 
 const FooterLink = styled.a`
-  color: inherit;
-  text-decoration: none;
-  opacity: 0.8;
-  transition: opacity 0.2s;
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.tertiary};
+  transition: color ${effects.transition.fast};
 
   &:hover {
-    opacity: 1;
-    color: #5856d6;
+    color: ${colors.text.primary};
   }
+`;
+
+const FooterMeta = styled.div`
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.text.muted};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.wider};
 `;
 
 // Inner App component with theme state
@@ -112,7 +172,6 @@ const AppContent: React.FC<{
   themeMode: ThemeModeType;
   onThemeSwitch: () => void;
 }> = ({ isDark, themeMode, onThemeSwitch }) => {
-  // Top bar settings with account menu items as React elements
   const topBarSettings = {
     onThemeSwitch,
     accountMenuItems: [
@@ -124,15 +183,16 @@ const AppContent: React.FC<{
   };
 
   return (
-    <>
-      <GlobalStyle $isDark={isDark} />
-      {/* ClickUI with top bar */}
+    <SmoothScroll>
+      <GlobalStyle />
+      <CustomCursor enabled={true} />
+
       <ClickUI
         themeMode={themeMode}
         topBarSettings={topBarSettings}
       />
+
       <AppContainer>
-        {/* Navigation is now inside the container, below CSPR.click bar */}
         <Navigation isDark={isDark} />
 
         <MainContent>
@@ -142,32 +202,29 @@ const AppContent: React.FC<{
             <Route path="/guide" element={<GuidePage isDark={isDark} />} />
           </Routes>
 
-          <Footer $isDark={isDark}>
-            <p>StakeVue - Secure Liquid Staking Protocol</p>
+          <Footer>
+            <FooterBrand>StakeVue</FooterBrand>
             <FooterLinks>
               <FooterLink href="https://cspr.live" target="_blank" rel="noopener noreferrer">
-                CSPR.live
+                Explorer
               </FooterLink>
               <FooterLink href="https://docs.cspr.click" target="_blank" rel="noopener noreferrer">
-                CSPR.click Docs
+                Docs
               </FooterLink>
               <FooterLink href="https://casper.network" target="_blank" rel="noopener noreferrer">
-                Casper Network
+                Casper
               </FooterLink>
               <FooterLink href="https://github.com/le-stagiaire-ag2r/Casper-projet" target="_blank" rel="noopener noreferrer">
                 GitHub
               </FooterLink>
             </FooterLinks>
-            <p style={{ marginTop: '16px', fontSize: '12px', opacity: 0.7 }}>
-              Powered by CSPR.click | Built for Casper Hackathon 2025
-            </p>
+            <FooterMeta>Casper Hackathon 2025</FooterMeta>
           </Footer>
         </MainContent>
 
-        {/* FAQ Bot - Floating chat assistant */}
         <FAQBot isDark={isDark} />
       </AppContainer>
-    </>
+    </SmoothScroll>
   );
 };
 
