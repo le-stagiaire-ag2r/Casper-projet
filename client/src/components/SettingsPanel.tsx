@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { NotificationSettings } from './NotificationSettings';
 import { NFTBadges } from './NFTBadges';
+import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -13,27 +14,58 @@ const slideIn = keyframes`
   to { transform: translateX(0); }
 `;
 
-const SettingsButton = styled.button<{ $isDark: boolean }>`
+// SVG Icons
+const SettingsIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const BellIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
+const AwardIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="7" />
+    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+  </svg>
+);
+
+const SettingsButton = styled.button`
   position: fixed;
   bottom: 96px;
   right: 24px;
-  width: 50px;
-  height: 50px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff9f0a 0%, #ff6b00 100%);
-  border: none;
+  background: ${colors.background.elevated};
+  border: 1px solid ${colors.border.default};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 4px 20px rgba(255, 159, 10, 0.4);
-  transition: all 0.3s ease;
-  z-index: 9998;
+  color: ${colors.text.secondary};
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all ${effects.transition.normal};
+  z-index: 999;
 
   &:hover {
     transform: scale(1.1) rotate(30deg);
-    box-shadow: 0 6px 30px rgba(255, 159, 10, 0.5);
+    border-color: ${colors.accent.primary};
+    color: ${colors.accent.primary};
+    box-shadow: ${effects.shadow.glow};
   }
 
   &:active {
@@ -47,87 +79,93 @@ const Overlay = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   z-index: 200;
   display: ${props => props.$isOpen ? 'block' : 'none'};
   animation: ${fadeIn} 0.2s ease;
 `;
 
-const Panel = styled.div<{ $isDark: boolean; $isOpen: boolean }>`
+const Panel = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
   right: 0;
   width: 100%;
   max-width: 500px;
   height: 100vh;
-  background: ${props => props.$isDark
-    ? 'linear-gradient(180deg, #1a1a2e 0%, #0a0a1a 100%)'
-    : 'linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%)'};
+  background: ${colors.background.primary};
   z-index: 201;
   display: ${props => props.$isOpen ? 'flex' : 'none'};
   flex-direction: column;
   animation: ${slideIn} 0.3s ease;
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.4);
+  border-left: 1px solid ${colors.border.default};
 
   @media (max-width: 520px) {
     max-width: 100%;
   }
 `;
 
-const PanelHeader = styled.div<{ $isDark: boolean }>`
+const PanelHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.1)'};
+  padding: ${spacing[5]} ${spacing[6]};
+  border-bottom: 1px solid ${colors.border.default};
+  background: ${colors.background.secondary};
 `;
 
-const PanelTitle = styled.h2<{ $isDark: boolean }>`
-  font-size: 20px;
-  font-weight: 700;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+const PanelTitle = styled.h2`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${colors.text.primary};
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: ${spacing[3]};
   margin: 0;
 `;
 
-const CloseButton = styled.button<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.05)'};
+const TitleIcon = styled.div`
+  width: 36px;
+  height: 36px;
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.md};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${colors.accent.primary};
+`;
+
+const CloseButton = styled.button`
+  background: transparent;
   border: none;
-  border-radius: 10px;
+  border-radius: ${layout.borderRadius.md};
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  color: ${colors.text.tertiary};
+  transition: all ${effects.transition.fast};
 
   &:hover {
-    background: ${props => props.$isDark
-      ? 'rgba(255, 255, 255, 0.15)'
-      : 'rgba(0, 0, 0, 0.1)'};
-    transform: rotate(90deg);
+    background: ${colors.background.elevated};
+    color: ${colors.text.primary};
   }
 `;
 
 const PanelContent = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: ${spacing[6]};
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: ${spacing[8]};
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
 
   &::-webkit-scrollbar-track {
@@ -135,29 +173,32 @@ const PanelContent = styled.div`
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(88, 86, 214, 0.3);
-    border-radius: 3px;
+    background: ${colors.border.default};
+    border-radius: 2px;
   }
 `;
 
 const Section = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: ${spacing[4]};
 `;
 
-const SectionTitle = styled.h3<{ $isDark: boolean }>`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
+const SectionTitle = styled.h3`
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.text.tertiary};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: ${typography.letterSpacing.wider};
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: ${spacing[2]};
+`;
+
+const SectionIcon = styled.span`
+  color: ${colors.accent.primary};
 `;
 
 interface SettingsPanelProps {
@@ -172,35 +213,35 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ isDark }) => {
 
   return (
     <>
-      <SettingsButton $isDark={isDark} onClick={togglePanel} title="Settings">
-        <span role="img" aria-label="settings">⚙️</span>
+      <SettingsButton onClick={togglePanel} title="Settings" data-cursor-hover>
+        <SettingsIcon />
       </SettingsButton>
 
       <Overlay $isOpen={isOpen} onClick={closePanel} />
 
-      <Panel $isDark={isDark} $isOpen={isOpen}>
-        <PanelHeader $isDark={isDark}>
-          <PanelTitle $isDark={isDark}>
-            <span>⚙️</span>
+      <Panel $isOpen={isOpen}>
+        <PanelHeader>
+          <PanelTitle>
+            <TitleIcon><SettingsIcon /></TitleIcon>
             Settings & Extras
           </PanelTitle>
-          <CloseButton $isDark={isDark} onClick={closePanel}>
-            ✕
+          <CloseButton onClick={closePanel}>
+            <CloseIcon />
           </CloseButton>
         </PanelHeader>
 
         <PanelContent>
           <Section>
-            <SectionTitle $isDark={isDark}>
-              <span>🔔</span>
+            <SectionTitle>
+              <SectionIcon><BellIcon /></SectionIcon>
               Notifications
             </SectionTitle>
             <NotificationSettings isDark={isDark} />
           </Section>
 
           <Section>
-            <SectionTitle $isDark={isDark}>
-              <span>🏅</span>
+            <SectionTitle>
+              <SectionIcon><AwardIcon /></SectionIcon>
               Achievements & Badges
             </SectionTitle>
             <NFTBadges isDark={isDark} />

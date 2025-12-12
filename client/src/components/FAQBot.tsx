@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 const slideUp = keyframes`
   from {
@@ -17,47 +18,77 @@ const pulse = keyframes`
   50% { transform: scale(1.05); }
 `;
 
-const FloatingButton = styled.button<{ $isDark: boolean }>`
+// SVG Icons
+const ChatIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const BotIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="10" rx="2" />
+    <circle cx="12" cy="5" r="2" />
+    <path d="M12 7v4" />
+    <line x1="8" y1="16" x2="8" y2="16" />
+    <line x1="16" y1="16" x2="16" y2="16" />
+  </svg>
+);
+
+const SendIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </svg>
+);
+
+const FloatingButton = styled.button`
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5856d6, #af52de);
-  border: none;
+  background: ${colors.background.elevated};
+  border: 1px solid ${colors.border.default};
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(88, 86, 214, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  color: ${colors.accent.primary};
   z-index: 1000;
-  transition: all 0.3s;
+  transition: all ${effects.transition.normal};
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 30px rgba(88, 86, 214, 0.5);
+    border-color: ${colors.accent.primary};
+    box-shadow: ${effects.shadow.glow};
   }
 `;
 
-const ChatWindow = styled.div<{ $isDark: boolean; $isOpen: boolean }>`
+const ChatWindow = styled.div<{ $isOpen: boolean }>`
   position: fixed;
-  bottom: 100px;
+  bottom: 96px;
   right: 24px;
   width: 380px;
   height: 500px;
-  background: ${props => props.$isDark ? '#1a1a2e' : '#fff'};
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  background: ${colors.background.secondary};
+  border-radius: ${layout.borderRadius.xl};
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   display: ${props => props.$isOpen ? 'flex' : 'none'};
   flex-direction: column;
   overflow: hidden;
   z-index: 1001;
   animation: ${slideUp} 0.3s ease-out;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.1)'};
+  border: 1px solid ${colors.border.default};
 
   @media (max-width: 420px) {
     width: calc(100vw - 48px);
@@ -67,98 +98,116 @@ const ChatWindow = styled.div<{ $isDark: boolean; $isOpen: boolean }>`
 `;
 
 const ChatHeader = styled.div`
-  background: linear-gradient(135deg, #5856d6, #af52de);
-  padding: 16px 20px;
+  background: ${colors.background.tertiary};
+  padding: ${spacing[4]} ${spacing[5]};
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid ${colors.border.default};
 `;
 
 const HeaderTitle = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: white;
+  gap: ${spacing[3]};
+  color: ${colors.text.primary};
 `;
 
 const BotAvatar = styled.div`
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.md};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  color: ${colors.accent.primary};
 `;
 
 const HeaderText = styled.div`
   h4 {
     margin: 0;
-    font-size: 1rem;
+    font-family: ${typography.fontFamily.display};
+    font-size: ${typography.fontSize.sm};
+    font-weight: ${typography.fontWeight.semibold};
+    color: ${colors.text.primary};
   }
   span {
-    font-size: 0.75rem;
-    opacity: 0.8;
+    font-size: ${typography.fontSize.xs};
+    color: ${colors.text.tertiary};
   }
 `;
 
 const CloseButton = styled.button`
-  background: rgba(255, 255, 255, 0.2);
+  background: transparent;
   border: none;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  color: ${colors.text.tertiary};
+  width: 32px;
+  height: 32px;
+  border-radius: ${layout.borderRadius.md};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  transition: all 0.2s;
+  transition: all ${effects.transition.fast};
 
   &:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: ${colors.background.elevated};
+    color: ${colors.text.primary};
   }
 `;
 
-const MessagesContainer = styled.div<{ $isDark: boolean }>`
+const MessagesContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: ${spacing[4]};
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: ${spacing[3]};
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${colors.border.default};
+    border-radius: 2px;
+  }
 `;
 
-const Message = styled.div<{ $isBot: boolean; $isDark: boolean }>`
+const Message = styled.div<{ $isBot: boolean }>`
   max-width: 85%;
-  padding: 12px 16px;
+  padding: ${spacing[3]} ${spacing[4]};
   border-radius: ${props => props.$isBot ? '16px 16px 16px 4px' : '16px 16px 4px 16px'};
   background: ${props => props.$isBot
-    ? props.$isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
-    : 'linear-gradient(135deg, #5856d6, #af52de)'};
-  color: ${props => props.$isBot
-    ? props.$isDark ? '#fff' : '#1a1a2e'
-    : '#fff'};
+    ? colors.background.tertiary
+    : colors.accent.primary};
+  color: ${colors.text.primary};
   align-self: ${props => props.$isBot ? 'flex-start' : 'flex-end'};
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: ${typography.fontSize.sm};
+  line-height: ${typography.lineHeight.relaxed};
   animation: ${slideUp} 0.2s ease-out;
+  border: 1px solid ${props => props.$isBot ? colors.border.default : 'transparent'};
+  white-space: pre-line;
 `;
 
-const TypingIndicator = styled.div<{ $isDark: boolean }>`
+const TypingIndicator = styled.div`
   display: flex;
   gap: 4px;
-  padding: 12px 16px;
-  background: ${props => props.$isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'};
+  padding: ${spacing[3]} ${spacing[4]};
+  background: ${colors.background.tertiary};
   border-radius: 16px 16px 16px 4px;
   width: fit-content;
+  border: 1px solid ${colors.border.default};
 
   span {
-    width: 8px;
-    height: 8px;
-    background: ${props => props.$isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)'};
+    width: 6px;
+    height: 6px;
+    background: ${colors.text.tertiary};
     border-radius: 50%;
     animation: ${pulse} 1s infinite;
 
@@ -167,92 +216,79 @@ const TypingIndicator = styled.div<{ $isDark: boolean }>`
   }
 `;
 
-const QuickReplies = styled.div<{ $isDark: boolean }>`
+const QuickReplies = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid ${props => props.$isDark
-    ? 'rgba(255,255,255,0.1)'
-    : 'rgba(0,0,0,0.1)'};
+  gap: ${spacing[2]};
+  padding: ${spacing[3]} ${spacing[4]};
+  border-top: 1px solid ${colors.border.default};
 `;
 
-const QuickReply = styled.button<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255,255,255,0.08)'
-    : 'rgba(88, 86, 214, 0.1)'};
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255,255,255,0.2)'
-    : 'rgba(88, 86, 214, 0.3)'};
-  color: ${props => props.$isDark ? '#fff' : '#5856d6'};
-  padding: 8px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+const QuickReply = styled.button`
+  background: transparent;
+  border: 1px solid ${colors.border.default};
+  color: ${colors.text.secondary};
+  padding: ${spacing[2]} ${spacing[3]};
+  border-radius: ${layout.borderRadius.full};
+  font-size: ${typography.fontSize.xs};
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all ${effects.transition.fast};
 
   &:hover {
-    background: ${props => props.$isDark
-      ? 'rgba(255,255,255,0.15)'
-      : 'rgba(88, 86, 214, 0.2)'};
+    border-color: ${colors.accent.primary};
+    color: ${colors.accent.primary};
   }
 `;
 
-const InputContainer = styled.div<{ $isDark: boolean }>`
-  padding: 12px 16px;
-  border-top: 1px solid ${props => props.$isDark
-    ? 'rgba(255,255,255,0.1)'
-    : 'rgba(0,0,0,0.1)'};
+const InputContainer = styled.div`
+  padding: ${spacing[3]} ${spacing[4]};
+  border-top: 1px solid ${colors.border.default};
   display: flex;
-  gap: 8px;
+  gap: ${spacing[2]};
 `;
 
-const Input = styled.input<{ $isDark: boolean }>`
+const Input = styled.input`
   flex: 1;
-  padding: 12px 16px;
-  border-radius: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255,255,255,0.2)'
-    : 'rgba(0,0,0,0.1)'};
-  background: ${props => props.$isDark
-    ? 'rgba(255,255,255,0.05)'
-    : 'rgba(0,0,0,0.02)'};
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  font-size: 0.9rem;
+  padding: ${spacing[3]} ${spacing[4]};
+  border-radius: ${layout.borderRadius.full};
+  border: 1px solid ${colors.border.default};
+  background: ${colors.background.tertiary};
+  color: ${colors.text.primary};
+  font-size: ${typography.fontSize.sm};
+  font-family: ${typography.fontFamily.body};
 
   &:focus {
     outline: none;
-    border-color: #5856d6;
+    border-color: ${colors.accent.primary};
   }
 
   &::placeholder {
-    color: ${props => props.$isDark
-      ? 'rgba(255,255,255,0.4)'
-      : 'rgba(0,0,0,0.4)'};
+    color: ${colors.text.muted};
   }
 `;
 
 const SendButton = styled.button`
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #5856d6, #af52de);
+  background: ${colors.accent.primary};
   border: none;
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  transition: all 0.2s;
+  transition: all ${effects.transition.fast};
 
   &:hover {
     transform: scale(1.05);
+    box-shadow: ${effects.shadow.glow};
   }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -266,75 +302,75 @@ interface ChatMessage {
   isBot: boolean;
 }
 
-// Better structured FAQ with priority keywords
+// FAQ data without emojis
 const FAQ_DATA = [
   {
     keywords: ['hello', 'hi', 'hey', 'bonjour', 'salut', 'coucou'],
-    response: 'Hello! 👋 Welcome to StakeVue. I can help you with liquid staking on Casper. What would you like to know?'
+    response: 'Hello! Welcome to StakeVue. I can help you with liquid staking on Casper. What would you like to know?'
   },
   {
     keywords: ['liquid staking', 'what is liquid', 'liquid stake'],
-    response: 'Liquid staking lets you stake CSPR and receive stCSPR tokens in return. Unlike traditional staking, you can use stCSPR in DeFi while still earning ~17% APY rewards! 🚀'
+    response: 'Liquid staking lets you stake CSPR and receive stCSPR tokens in return. Unlike traditional staking, you can use stCSPR in DeFi while still earning ~17% APY rewards!'
   },
   {
     keywords: ['stcspr', 'st cspr', 'staked cspr', 'token'],
-    response: 'stCSPR is your liquid staking token. When you stake 1000 CSPR, you get 1000 stCSPR. As rewards accumulate, your stCSPR becomes worth more CSPR over time! 💎'
+    response: 'stCSPR is your liquid staking token. When you stake 1000 CSPR, you get 1000 stCSPR. As rewards accumulate, your stCSPR becomes worth more CSPR over time!'
   },
   {
     keywords: ['apy', 'interest', 'rate', 'percentage', 'yield'],
-    response: 'Current APY on StakeVue is approximately 17%. This means staking 1000 CSPR earns you about 170 CSPR per year! Rates vary slightly based on network conditions. 📊'
+    response: 'Current APY on StakeVue is approximately 17%. This means staking 1000 CSPR earns you about 170 CSPR per year! Rates vary slightly based on network conditions.'
   },
   {
     keywords: ['earn', 'reward', 'profit', 'gain', 'money', 'much'],
-    response: 'With ~17% APY, here are examples:\n• 1,000 CSPR → ~170 CSPR/year\n• 10,000 CSPR → ~1,700 CSPR/year\n• 100,000 CSPR → ~17,000 CSPR/year\nRewards compound automatically! 💰'
+    response: 'With ~17% APY, here are examples:\n\n• 1,000 CSPR → ~170 CSPR/year\n• 10,000 CSPR → ~1,700 CSPR/year\n• 100,000 CSPR → ~17,000 CSPR/year\n\nRewards compound automatically!'
   },
   {
     keywords: ['safe', 'secure', 'risk', 'trust', 'audit'],
-    response: 'Security is our priority! StakeVue uses audited smart contracts, distributes stake across multiple validators, and your funds remain in your control. The protocol has been tested on testnet. 🛡️'
+    response: 'Security is our priority! StakeVue uses audited smart contracts, distributes stake across multiple validators, and your funds remain in your control. The protocol has been tested on testnet.'
   },
   {
     keywords: ['unstake', 'withdraw', 'remove', 'exit', 'get back'],
-    response: 'To unstake: Go to Stake page → Click "Unstake" tab → Enter stCSPR amount → Confirm transaction. There\'s a short unbonding period, then your CSPR is returned! ⚡'
+    response: 'To unstake:\n\n1. Go to Stake page\n2. Click "Unstake" tab\n3. Enter stCSPR amount\n4. Confirm transaction\n\nThere\'s a short unbonding period, then your CSPR is returned!'
   },
   {
     keywords: ['start', 'begin', 'how to', 'getting started', 'first'],
-    response: 'Getting started is easy!\n1️⃣ Connect your Casper wallet\n2️⃣ Enter CSPR amount to stake\n3️⃣ Click "Stake" and confirm\n4️⃣ Receive stCSPR instantly!\n\nStart with any amount you\'re comfortable with! 🎉'
+    response: 'Getting started is easy!\n\n1. Connect your Casper wallet\n2. Enter CSPR amount to stake\n3. Click "Stake" and confirm\n4. Receive stCSPR instantly!\n\nStart with any amount you\'re comfortable with!'
   },
   {
     keywords: ['minimum', 'min', 'least', 'smallest'],
-    response: 'Minimum stake is just 1 CSPR! However, we recommend keeping ~5 CSPR in your wallet for transaction fees. Start small and increase as you get comfortable. 💪'
+    response: 'Minimum stake is just 1 CSPR! However, we recommend keeping ~5 CSPR in your wallet for transaction fees. Start small and increase as you get comfortable.'
   },
   {
     keywords: ['validator', 'node', 'delegate'],
-    response: 'StakeVue automatically distributes your stake across top-performing validators with 99%+ uptime. This provides better security and consistent rewards compared to picking a single validator. 🌐'
+    response: 'StakeVue automatically distributes your stake across top-performing validators with 99%+ uptime. This provides better security and consistent rewards compared to picking a single validator.'
   },
   {
     keywords: ['fee', 'cost', 'charge', 'commission'],
-    response: 'StakeVue charges a small protocol fee (included in displayed APY). Network transaction fees are minimal (~0.1 CSPR). What you see as APY is your net return! 💸'
+    response: 'StakeVue charges a small protocol fee (included in displayed APY). Network transaction fees are minimal (~0.1 CSPR). What you see as APY is your net return!'
   },
   {
     keywords: ['casper', 'cspr', 'network', 'blockchain'],
-    response: 'Casper is a proof-of-stake blockchain known for its security and energy efficiency. CSPR is the native token. Staking helps secure the network while earning you rewards! 🔗'
+    response: 'Casper is a proof-of-stake blockchain known for its security and energy efficiency. CSPR is the native token. Staking helps secure the network while earning you rewards!'
   },
   {
     keywords: ['time', 'long', 'duration', 'wait', 'period'],
-    response: 'Staking is instant! For unstaking, there\'s an unbonding period (typically 7-14 eras, about 14-28 hours) before CSPR returns to your wallet. This is a network security feature. ⏱️'
+    response: 'Staking is instant! For unstaking, there\'s an unbonding period (typically 7-14 eras, about 14-28 hours) before CSPR returns to your wallet. This is a network security feature.'
   },
   {
     keywords: ['wallet', 'connect', 'casper wallet', 'signer'],
-    response: 'We support Casper Wallet and Casper Signer! Click the "Connect" button in the top bar, choose your wallet, and approve the connection. Make sure your wallet has CSPR to stake. 👛'
+    response: 'We support Casper Wallet and Casper Signer! Click the "Connect" button in the top bar, choose your wallet, and approve the connection. Make sure your wallet has CSPR to stake.'
   },
   {
     keywords: ['help', 'support', 'contact', 'problem', 'issue'],
-    response: 'Need help? Check our Guide page for detailed tutorials. For technical issues, visit our GitHub or join the Casper community Discord. We\'re here to help! 🤝'
+    response: 'Need help? Check our Guide page for detailed tutorials. For technical issues, visit our GitHub or join the Casper community Discord. We\'re here to help!'
   },
   {
     keywords: ['thank', 'thanks', 'merci', 'thx'],
-    response: 'You\'re welcome! Happy staking! If you have more questions, just ask. 😊'
+    response: 'You\'re welcome! Happy staking! If you have more questions, just ask.'
   },
   {
     keywords: ['bye', 'goodbye', 'see you', 'later', 'aurevoir'],
-    response: 'Goodbye! Happy staking and may your rewards be plentiful! 🌟'
+    response: 'Goodbye! Happy staking and may your rewards be plentiful!'
   }
 ];
 
@@ -351,7 +387,7 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      text: 'Hello! 👋 I\'m the StakeVue assistant. Ask me about liquid staking, rewards, stCSPR, or how to get started!',
+      text: 'Hello! I\'m the StakeVue assistant. Ask me about liquid staking, rewards, stCSPR, or how to get started!',
       isBot: true,
     }
   ]);
@@ -369,8 +405,6 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
 
   const findResponse = (query: string): string => {
     const normalizedQuery = query.toLowerCase().trim();
-
-    // Find the best matching FAQ entry
     let bestMatch: { score: number; response: string } = { score: 0, response: '' };
 
     for (const faq of FAQ_DATA) {
@@ -378,10 +412,7 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
 
       for (const keyword of faq.keywords) {
         if (normalizedQuery.includes(keyword)) {
-          // Longer keyword matches are more specific
           score += keyword.length;
-
-          // Exact match bonus
           if (normalizedQuery === keyword) {
             score += 10;
           }
@@ -393,13 +424,11 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
       }
     }
 
-    // If we found a match
     if (bestMatch.score > 0) {
       return bestMatch.response;
     }
 
-    // Default response with suggestions
-    return 'I\'m not sure I understand that question. 🤔 Try asking about:\n• Liquid staking basics\n• APY and rewards\n• How to stake/unstake\n• stCSPR tokens\n• Security';
+    return 'I\'m not sure I understand that question. Try asking about:\n\n• Liquid staking basics\n• APY and rewards\n• How to stake/unstake\n• stCSPR tokens\n• Security';
   };
 
   const handleSend = () => {
@@ -416,7 +445,6 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
     setInput('');
     setIsTyping(true);
 
-    // Simulate bot thinking
     setTimeout(() => {
       const response = findResponse(userInput);
       const botMessage: ChatMessage = {
@@ -459,41 +487,42 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
 
   return (
     <>
-      <FloatingButton $isDark={isDark} onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? '✕' : '💬'}
+      <FloatingButton onClick={() => setIsOpen(!isOpen)} data-cursor-hover>
+        {isOpen ? <CloseIcon /> : <ChatIcon />}
       </FloatingButton>
 
-      <ChatWindow $isDark={isDark} $isOpen={isOpen}>
+      <ChatWindow $isOpen={isOpen}>
         <ChatHeader>
           <HeaderTitle>
-            <BotAvatar>🤖</BotAvatar>
+            <BotAvatar><BotIcon /></BotAvatar>
             <HeaderText>
               <h4>StakeVue Assistant</h4>
-              <span>Ask me anything!</span>
+              <span>Ask me anything</span>
             </HeaderText>
           </HeaderTitle>
-          <CloseButton onClick={() => setIsOpen(false)}>✕</CloseButton>
+          <CloseButton onClick={() => setIsOpen(false)}>
+            <CloseIcon />
+          </CloseButton>
         </ChatHeader>
 
-        <MessagesContainer $isDark={isDark}>
+        <MessagesContainer>
           {messages.map(msg => (
-            <Message key={msg.id} $isBot={msg.isBot} $isDark={isDark}>
+            <Message key={msg.id} $isBot={msg.isBot}>
               {msg.text}
             </Message>
           ))}
           {isTyping && (
-            <TypingIndicator $isDark={isDark}>
+            <TypingIndicator>
               <span /><span /><span />
             </TypingIndicator>
           )}
           <div ref={messagesEndRef} />
         </MessagesContainer>
 
-        <QuickReplies $isDark={isDark}>
+        <QuickReplies>
           {QUICK_REPLIES.map(reply => (
             <QuickReply
               key={reply}
-              $isDark={isDark}
               onClick={() => handleQuickReply(reply)}
             >
               {reply}
@@ -501,16 +530,15 @@ export const FAQBot: React.FC<FAQBotProps> = ({ isDark }) => {
           ))}
         </QuickReplies>
 
-        <InputContainer $isDark={isDark}>
+        <InputContainer>
           <Input
-            $isDark={isDark}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your question..."
           />
           <SendButton onClick={handleSend} disabled={!input.trim()}>
-            ➤
+            <SendIcon />
           </SendButton>
         </InputContainer>
       </ChatWindow>
