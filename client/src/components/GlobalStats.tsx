@@ -9,11 +9,11 @@ const pulse = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: rgba(139, 92, 246, 0.06);
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 24px;
   padding: 32px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(139, 92, 246, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   position: relative;
   overflow: hidden;
 

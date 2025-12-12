@@ -25,10 +25,11 @@ const Container = styled.div`
 `;
 
 const Card = styled.div`
-  background: ${colors.background.secondary};
+  background: ${colors.glass.medium};
   border-radius: ${layout.borderRadius.xl};
   padding: ${spacing[7]};
   border: 1px solid ${colors.border.default};
+  backdrop-filter: blur(12px);
   transition: all ${effects.transition.normal};
   position: relative;
   overflow: hidden;
@@ -48,7 +49,6 @@ const Card = styled.div`
   &:hover {
     transform: translateY(-4px);
     border-color: ${colors.border.hover};
-    box-shadow: ${effects.shadow.lg};
 
     &::before {
       opacity: 1;
@@ -174,13 +174,14 @@ const PortfolioGrid = styled.div`
 
 const PortfolioCard = styled.div<{ $highlight?: boolean }>`
   background: ${props => props.$highlight
-    ? colors.accent.muted
-    : colors.background.secondary};
+    ? colors.glass.purple
+    : colors.glass.medium};
   border-radius: ${layout.borderRadius.lg};
   padding: ${spacing[5]};
   border: 1px solid ${props => props.$highlight
     ? 'rgba(139, 92, 246, 0.3)'
     : colors.border.default};
+  backdrop-filter: blur(12px);
   transition: all ${effects.transition.normal};
 
   &:hover {

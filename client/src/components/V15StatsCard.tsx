@@ -8,14 +8,11 @@ const pulse = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(175, 82, 222, 0.1) 100%)'
-    : 'linear-gradient(135deg, rgba(88, 86, 214, 0.15) 0%, rgba(175, 82, 222, 0.12) 100%)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 24px;
   padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(88, 86, 214, 0.3)'
-    : 'rgba(88, 86, 214, 0.25)'};
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  backdrop-filter: blur(12px);
   position: relative;
   overflow: hidden;
 `;
@@ -71,19 +68,14 @@ const StatsGrid = styled.div`
 
 const StatCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   background: ${props => props.$highlight
-    ? props.$isDark
-      ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.15) 0%, rgba(88, 86, 214, 0.1) 100%)'
-      : 'linear-gradient(135deg, rgba(48, 209, 88, 0.2) 0%, rgba(88, 86, 214, 0.12) 100%)'
-    : props.$isDark
-      ? 'rgba(255, 255, 255, 0.03)'
-      : 'rgba(0, 0, 0, 0.02)'};
+    ? 'rgba(139, 92, 246, 0.15)'
+    : 'rgba(20, 10, 30, 0.5)'};
   border-radius: 16px;
   padding: 16px;
   border: 1px solid ${props => props.$highlight
-    ? 'rgba(48, 209, 88, 0.3)'
-    : props.$isDark
-      ? 'rgba(255, 255, 255, 0.05)'
-      : 'rgba(0, 0, 0, 0.05)'};
+    ? 'rgba(139, 92, 246, 0.3)'
+    : 'rgba(255, 255, 255, 0.08)'};
+  backdrop-filter: blur(8px);
 `;
 
 const StatLabel = styled.div<{ $isDark: boolean }>`

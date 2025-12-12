@@ -2,21 +2,21 @@
 // Inspired by award-winning designs with clean, minimal aesthetics
 
 export const colors = {
-  // Primary palette - Deep dark with single accent
+  // Primary palette - Transparent to see galaxy
   background: {
     primary: 'transparent',
-    secondary: 'rgba(255, 255, 255, 0.03)',
-    tertiary: 'rgba(255, 255, 255, 0.05)',
-    elevated: 'rgba(255, 255, 255, 0.08)',
+    secondary: 'rgba(20, 10, 30, 0.6)',
+    tertiary: 'rgba(20, 10, 30, 0.7)',
+    elevated: 'rgba(20, 10, 30, 0.8)',
   },
 
-  // Glass effect backgrounds - see through to galaxy
+  // Glass effect backgrounds - purple tinted, see through to galaxy
   glass: {
-    light: 'rgba(255, 255, 255, 0.03)',
-    medium: 'rgba(255, 255, 255, 0.05)',
-    dark: 'rgba(255, 255, 255, 0.08)',
-    purple: 'rgba(139, 92, 246, 0.08)',
-    purpleStrong: 'rgba(139, 92, 246, 0.12)',
+    light: 'rgba(20, 10, 30, 0.5)',
+    medium: 'rgba(20, 10, 30, 0.6)',
+    dark: 'rgba(20, 10, 30, 0.7)',
+    purple: 'rgba(139, 92, 246, 0.15)',
+    purpleStrong: 'rgba(139, 92, 246, 0.25)',
   },
 
   // Text colors - High contrast

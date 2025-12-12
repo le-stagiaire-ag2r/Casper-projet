@@ -28,13 +28,13 @@ const shimmer = keyframes`
 `;
 
 const Container = styled.div`
-  background: ${colors.background.secondary};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: ${layout.borderRadius.xl};
   padding: ${spacing[6]};
-  border: 1px solid ${colors.border.default};
+  border: 1px solid rgba(139, 92, 246, 0.2);
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
 
   &::before {
     content: '';
@@ -42,10 +42,8 @@ const Container = styled.div`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, ${colors.accent.primary}, #ff2d55, ${colors.accent.primary});
-    background-size: 200% 100%;
-    animation: ${shimmer} 3s linear infinite;
+    height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
   }
 `;
 
@@ -122,11 +120,12 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled.div`
-  background: ${colors.background.elevated};
-  border: 1px solid ${colors.border.default};
+  background: rgba(20, 10, 30, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: ${layout.borderRadius.lg};
   padding: ${spacing[4]};
   text-align: center;
+  backdrop-filter: blur(8px);
   transition: all ${effects.transition.fast};
 
   &:hover {
