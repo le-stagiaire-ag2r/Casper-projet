@@ -135,19 +135,19 @@ const NavButton = styled.button<{ $active?: boolean }>`
   font-weight: ${typography.fontWeight.medium};
   text-transform: uppercase;
   letter-spacing: ${typography.letterSpacing.wider};
-  color: ${props => props.$active ? colors.text.primary : colors.text.tertiary};
-  background: ${props => props.$active ? 'rgba(139, 92, 246, 0.25)' : 'rgba(20, 10, 30, 0.6)'};
-  border: 1px solid ${props => props.$active ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
+  color: ${props => props.$active ? colors.text.primary : colors.text.secondary};
+  background: ${props => props.$active ? 'rgba(139, 92, 246, 0.3)' : 'rgba(30, 20, 50, 0.7)'};
+  border: 1px solid ${props => props.$active ? 'rgba(139, 92, 246, 0.6)' : 'rgba(139, 92, 246, 0.2)'};
   border-radius: ${layout.borderRadius.full};
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   cursor: pointer;
   transition: all ${effects.transition.fast};
   white-space: nowrap;
 
   &:hover {
     color: ${colors.text.primary};
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.4);
   }
 `;
 
