@@ -17,13 +17,13 @@
 
 ## 🤔 C'est quoi StakeVue ?
 
-Tu as des **CSPR**. Tu veux gagner des rewards (~15% APY). Mais le staking classique **bloque tes tokens** pendant des jours...
+Tu as des **CSPR**. Tu veux gagner des rewards (~15-17% APY). Mais le staking classique **bloque tes tokens** pendant des jours...
 
 **StakeVue règle ça :**
 
 ```
 ❌ Staking Traditionnel:
-   100 CSPR ──▶ Validator ──▶ 🔒 BLOQUÉ (14+ jours)
+   100 CSPR ──▶ Validator ──▶ 🔒 BLOQUÉ 
                               Tu peux rien faire !
 
 ✅ StakeVue:
