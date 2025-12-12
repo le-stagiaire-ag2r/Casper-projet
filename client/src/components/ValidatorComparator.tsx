@@ -311,11 +311,11 @@ const getValidatorIcon = (name: string, index: number): string => {
   const nameLower = name.toLowerCase();
   if (nameLower.includes('casper') || nameLower.includes('labs')) return '🏛️';
   if (nameLower.includes('make')) return '🔧';
-  if (nameLower.includes('bit') || nameLower.includes('coin')) return '💰';
+  if (nameLower.includes('bit') || nameLower.includes('coin')) return '';
   if (nameLower.includes('stake') || nameLower.includes('node')) return '🔷';
   if (nameLower.includes('valid')) return '✅';
 
-  const icons = ['🌐', '⚡', '🎯', '💎', '🚀', '🔥', '⭐', '🏆'];
+  const icons = ['', '', '', '', '', '', '', ''];
   return icons[index % icons.length];
 };
 
@@ -433,11 +433,11 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
     if (!validator1 || !validator2) return { metrics: {} as Record<string, MetricData>, v1Wins: 0, v2Wins: 0 };
 
     const metrics: Record<string, MetricData> = {
-      totalStake: { label: '💰 Total Stake', v1: validator1.totalStake, v2: validator2.totalStake, higherBetter: true },
-      fee: { label: '💸 Fee', v1: validator1.fee, v2: validator2.fee, higherBetter: false },
+      totalStake: { label: ' Total Stake', v1: validator1.totalStake, v2: validator2.totalStake, higherBetter: true },
+      fee: { label: ' Fee', v1: validator1.fee, v2: validator2.fee, higherBetter: false },
       delegatorsCount: { label: '👥 Delegators', v1: validator1.delegatorsCount, v2: validator2.delegatorsCount, higherBetter: true },
-      selfStake: { label: '🔒 Self-Stake', v1: validator1.selfStake, v2: validator2.selfStake, higherBetter: true },
-      networkShare: { label: '📊 Network Share', v1: validator1.networkShare, v2: validator2.networkShare, higherBetter: false },
+      selfStake: { label: ' Self-Stake', v1: validator1.selfStake, v2: validator2.selfStake, higherBetter: true },
+      networkShare: { label: ' Network Share', v1: validator1.networkShare, v2: validator2.networkShare, higherBetter: false },
     };
 
     let v1Wins = 0;
@@ -584,7 +584,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
                     onClick={() => copyToClipboard(validator1.publicKey)}
                     title="Copy full address"
                   >
-                    {copiedKey === validator1.publicKey ? '✓' : '📋'}
+                    {copiedKey === validator1.publicKey ? '✓' : ''}
                   </CopyButton>
                 )}
               </ValidatorAddress>
@@ -619,7 +619,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
                     onClick={() => copyToClipboard(validator2.publicKey)}
                     title="Copy full address"
                   >
-                    {copiedKey === validator2.publicKey ? '✓' : '📋'}
+                    {copiedKey === validator2.publicKey ? '✓' : ''}
                   </CopyButton>
                 )}
               </ValidatorAddress>
@@ -642,7 +642,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
 
       <SummarySection $isDark={isDark}>
         <SummaryTitle $isDark={isDark}>
-          💡 Recommendation
+           Recommendation
         </SummaryTitle>
         <SummaryText $isDark={isDark}>
           {getSummary()}

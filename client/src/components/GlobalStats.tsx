@@ -356,7 +356,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
     return (
       <Container $isDark={isDark}>
         <Title $isDark={isDark}>
-          <span>📊</span>
+          <span></span>
           Casper Network Statistics
           <LiveBadge>Loading...</LiveBadge>
         </Title>
@@ -378,14 +378,14 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
   return (
     <Container $isDark={isDark}>
       <Title $isDark={isDark}>
-        <span>📊</span>
+        <span></span>
         Casper Network Statistics
         <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
       </Title>
 
       <StatsGrid>
         <StatCard $isDark={isDark}>
-          <StatIcon>💰</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>Total Staked</StatLabel>
           <StatValue $isDark={isDark}>
             {formatNumber(stats.totalStaked)} CSPR
@@ -432,7 +432,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
         </StatCard>
 
         <StatCard $isDark={isDark}>
-          <StatIcon>📈</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>
             Staking Ratio
             <Tooltip
@@ -452,22 +452,22 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
 
       <NetworkInfo $isDark={isDark}>
         <NetworkItem $isDark={isDark}>
-          <span>🌐</span>
+          <span></span>
           Network:
           <NetworkValue $isDark={isDark}>Casper Mainnet</NetworkValue>
         </NetworkItem>
         <NetworkItem $isDark={isDark}>
-          <span>💵</span>
+          <span></span>
           CSPR Price:
           <NetworkValue $isDark={isDark}>${stats.csprPrice.toFixed(4)}</NetworkValue>
         </NetworkItem>
         <NetworkItem $isDark={isDark}>
-          <span>🔄</span>
+          <span></span>
           Supply:
           <NetworkValue $isDark={isDark}>{formatNumber(stats.circulatingSupply)}</NetworkValue>
         </NetworkItem>
         <NetworkItem $isDark={isDark}>
-          <span>⏱️</span>
+          <span>️</span>
           Era Time:
           <NetworkValue $isDark={isDark}>~2 hours</NetworkValue>
         </NetworkItem>

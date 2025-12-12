@@ -416,7 +416,7 @@ export const PriceAlertComponent: React.FC<PriceAlertProps> = ({ isDark }) => {
           <AlertItem key={alert.id} $isDark={isDark}>
             <AlertInfo>
               <AlertIcon $type={alert.type}>
-                {alert.type === 'above' ? '📈' : '📉'}
+                {alert.type === 'above' ? '' : ''}
               </AlertIcon>
               <AlertDetails>
                 <AlertPrice $isDark={isDark}>${alert.targetPrice.toFixed(4)}</AlertPrice>

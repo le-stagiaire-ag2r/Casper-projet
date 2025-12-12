@@ -264,9 +264,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ isDark, currentUserAdd
   };
 
   const getRankDisplay = (rank: number): React.ReactNode => {
-    if (rank === 1) return <RankMedal>🥇</RankMedal>;
-    if (rank === 2) return <RankMedal>🥈</RankMedal>;
-    if (rank === 3) return <RankMedal>🥉</RankMedal>;
+    if (rank === 1) return <RankMedal></RankMedal>;
+    if (rank === 2) return <RankMedal></RankMedal>;
+    if (rank === 3) return <RankMedal></RankMedal>;
     return <RankCell $rank={rank}>#{rank}</RankCell>;
   };
 
@@ -276,11 +276,11 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ isDark, currentUserAdd
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏆 Top Stakers
+           Top Stakers
           <Badge $isLive={false}>DEMO</Badge>
         </Title>
         <RefreshButton $isDark={isDark} onClick={fetchLeaderboard}>
-          🔄 Refresh
+           Refresh
         </RefreshButton>
       </Header>
 

@@ -313,13 +313,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
   const notificationTypes = [
     {
       key: 'priceAlerts' as const,
-      icon: '💰',
+      icon: '',
       title: 'Price Alerts',
       desc: 'Get notified when CSPR reaches your target price',
     },
     {
       key: 'stakingRewards' as const,
-      icon: '🎁',
+      icon: '',
       title: 'Staking Rewards',
       desc: 'Daily updates on your accumulated rewards',
     },
@@ -331,7 +331,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
     },
     {
       key: 'weeklyReport' as const,
-      icon: '📊',
+      icon: '',
       title: 'Weekly Reports',
       desc: 'Summary of your weekly staking performance',
     },
@@ -416,7 +416,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
       )}
 
       <InfoBox $isDark={isDark}>
-        💡 Notifications are stored locally and processed in your browser.
+         Notifications are stored locally and processed in your browser.
         No data is sent to external servers. You can revoke permission anytime in your browser settings.
       </InfoBox>
     </Container>

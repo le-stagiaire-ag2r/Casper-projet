@@ -268,7 +268,7 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          <span>📊</span> Portfolio History
+          <span></span> Portfolio History
         </Title>
         <TotalValue>
           <BalanceRow>

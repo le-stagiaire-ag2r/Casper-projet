@@ -49,7 +49,7 @@ const Title = styled.h3<{ $isDark: boolean }>`
 `;
 
 const APYBadge = styled.div`
-  background: linear-gradient(135deg, #30d158, #34c759);
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
@@ -58,7 +58,7 @@ const APYBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 15px rgba(48, 209, 88, 0.3);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 `;
 
 const InputSection = styled.div`
@@ -205,7 +205,7 @@ const SliderFill = styled.div<{ $percent: number }>`
   top: 0;
   height: 100%;
   width: ${props => props.$percent}%;
-  background: linear-gradient(90deg, #30d158, #5856d6);
+  background: linear-gradient(90deg, #8b5cf6, #5856d6);
   border-radius: 4px;
   transition: width 0.1s ease;
 `;
@@ -328,9 +328,9 @@ const ResultLabel = styled.div<{ $isDark: boolean }>`
 const ResultValue = styled.div<{ $highlight?: boolean }>`
   font-size: 24px;
   font-weight: 800;
-  color: ${props => props.$highlight ? '#30d158' : 'inherit'};
+  color: ${props => props.$highlight ? '#8b5cf6' : 'inherit'};
   background: ${props => props.$highlight
-    ? 'linear-gradient(135deg, #30d158, #34c759)'
+    ? 'linear-gradient(135deg, #8b5cf6, #a78bfa)'
     : 'none'};
   -webkit-background-clip: ${props => props.$highlight ? 'text' : 'none'};
   -webkit-text-fill-color: ${props => props.$highlight ? 'transparent' : 'inherit'};
@@ -393,7 +393,7 @@ const TotalValue = styled.div<{ $isDark: boolean }>`
 
 const TotalProfit = styled.span`
   font-size: 18px;
-  color: #30d158;
+  color: #8b5cf6;
   font-weight: 700;
 `;
 
@@ -483,7 +483,7 @@ export const StakingCalculator: React.FC = () => {
           🧮 Staking Calculator
         </Title>
         <APYBadge>
-          <span>📈</span>
+          <span></span>
           {selectedAPY}% APY
         </APYBadge>
       </Header>
@@ -495,8 +495,8 @@ export const StakingCalculator: React.FC = () => {
           </Label>
         </SliderHeader>
         <SliderTrack $isDark={isDark}>
-          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #30d158, #ff9f0a)' }} />
-          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #30d158, #34c759)' }} />
+          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #8b5cf6, #ff9f0a)' }} />
+          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' }} />
           <Slider
             type="range"
             min="1"
@@ -574,13 +574,13 @@ export const StakingCalculator: React.FC = () => {
 
       <ResultsSection $isDark={isDark}>
         <ResultsHeader>
-          <span style={{ fontSize: '24px' }}>💰</span>
+          <span style={{ fontSize: '24px' }}></span>
           <ResultsTitle $isDark={isDark}>Estimated Rewards</ResultsTitle>
         </ResultsHeader>
 
         <ResultsGrid>
           <ResultCard $isDark={isDark} $highlight>
-            <ResultIcon>🎁</ResultIcon>
+            <ResultIcon></ResultIcon>
             <ResultLabel $isDark={isDark}>Total Earnings</ResultLabel>
             <ResultValue $highlight>
               +{formatNumber(calculations.earnings)}
@@ -600,7 +600,7 @@ export const StakingCalculator: React.FC = () => {
           </ResultCard>
 
           <ResultCard $isDark={isDark}>
-            <ResultIcon>⚡</ResultIcon>
+            <ResultIcon></ResultIcon>
             <ResultLabel $isDark={isDark}>Daily Average</ResultLabel>
             <ResultValue>
               +{formatNumber(calculations.dailyAvg, 4)}
@@ -609,7 +609,7 @@ export const StakingCalculator: React.FC = () => {
           </ResultCard>
 
           <ResultCard $isDark={isDark}>
-            <ResultIcon>📊</ResultIcon>
+            <ResultIcon></ResultIcon>
             <ResultLabel $isDark={isDark}>Total Return</ResultLabel>
             <ResultValue $highlight>
               +{formatNumber(calculations.percentGain, 1)}%
@@ -630,7 +630,7 @@ export const StakingCalculator: React.FC = () => {
       </ResultsSection>
 
       <Disclaimer $isDark={isDark}>
-        <DisclaimerIcon>💡</DisclaimerIcon>
+        <DisclaimerIcon></DisclaimerIcon>
         <span>
           Calculation based on {selectedAPY}% APY. Rewards compound automatically.
           Actual returns may vary based on validator choice and network conditions.

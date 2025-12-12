@@ -113,13 +113,13 @@ const SectionNav = styled.nav`
 const NavInner = styled.div`
   max-width: ${layout.contentWidth};
   margin: 0 auto;
-  padding: 0 ${spacing[6]};
+  padding: ${spacing[3]} ${spacing[6]};
   display: flex;
   justify-content: center;
-  gap: ${spacing[2]};
+  gap: ${spacing[3]};
 
   @media (max-width: 768px) {
-    padding: 0 ${spacing[4]};
+    padding: ${spacing[3]} ${spacing[4]};
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 
@@ -130,22 +130,24 @@ const NavInner = styled.div`
 `;
 
 const NavButton = styled.button<{ $active?: boolean }>`
-  padding: ${spacing[4]} ${spacing[6]};
+  padding: ${spacing[2]} ${spacing[5]};
   font-family: ${typography.fontFamily.body};
   font-size: ${typography.fontSize.sm};
   font-weight: ${typography.fontWeight.medium};
   text-transform: uppercase;
   letter-spacing: ${typography.letterSpacing.wider};
   color: ${props => props.$active ? colors.text.primary : colors.text.tertiary};
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid ${props => props.$active ? colors.accent.primary : 'transparent'};
+  background: ${props => props.$active ? 'rgba(139, 92, 246, 0.2)' : 'transparent'};
+  border: 1px solid ${props => props.$active ? 'rgba(139, 92, 246, 0.4)' : 'transparent'};
+  border-radius: ${layout.borderRadius.full};
   cursor: pointer;
   transition: all ${effects.transition.fast};
   white-space: nowrap;
 
   &:hover {
     color: ${colors.text.primary};
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.2);
   }
 `;
 

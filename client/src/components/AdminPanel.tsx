@@ -51,7 +51,7 @@ const AdminBadge = styled.div`
   position: absolute;
   top: ${spacing[4]};
   right: ${spacing[4]};
-  background: linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
   color: white;
   font-family: ${typography.fontFamily.mono};
   font-size: ${typography.fontSize.xs};
@@ -227,7 +227,7 @@ const PreviewValue = styled.span<{ $highlight?: boolean }>`
 const SubmitButton = styled.button`
   width: 100%;
   padding: ${spacing[4]};
-  background: linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
   border: none;
   border-radius: ${layout.borderRadius.lg};
   color: #fff;
@@ -246,7 +246,7 @@ const SubmitButton = styled.button`
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 159, 10, 0.4);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
   }
 
   &:disabled {
@@ -315,6 +315,110 @@ const LiveIndicator = styled.span`
   }
 `;
 
+// Password protection styles
+const LockedOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 5, 15, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: ${layout.borderRadius.xl};
+`;
+
+const LockIcon = () => (
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const LockIconWrapper = styled.div`
+  color: ${colors.accent.primary};
+  margin-bottom: ${spacing[4]};
+  opacity: 0.8;
+`;
+
+const LockedTitle = styled.h4`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[2]};
+`;
+
+const LockedText = styled.p`
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.tertiary};
+  margin-bottom: ${spacing[5]};
+  text-align: center;
+  max-width: 280px;
+`;
+
+const PasswordInput = styled.input`
+  width: 200px;
+  padding: ${spacing[3]} ${spacing[4]};
+  background: rgba(20, 10, 30, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: ${layout.borderRadius.md};
+  color: ${colors.text.primary};
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  text-align: center;
+  margin-bottom: ${spacing[3]};
+  transition: all ${effects.transition.fast};
+
+  &::placeholder {
+    color: ${colors.text.muted};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${colors.accent.primary};
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  }
+`;
+
+const UnlockButton = styled.button`
+  padding: ${spacing[2]} ${spacing[5]};
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  border: none;
+  border-radius: ${layout.borderRadius.full};
+  color: white;
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.medium};
+  cursor: pointer;
+  transition: all ${effects.transition.fast};
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorText = styled.p`
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.status.error};
+  margin-top: ${spacing[2]};
+`;
+
+// Admin password from environment variable (set on Vercel)
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'stakevue2024';
+const ADMIN_UNLOCK_KEY = 'stakevue_admin_unlocked';
+
 interface AdminPanelProps {
   isOwner?: boolean; // Can override for demo
 }
@@ -336,6 +440,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [deployHash, setDeployHash] = useState<string | null>(null);
+
+  // Password protection state
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    // Check localStorage on initial load
+    return localStorage.getItem(ADMIN_UNLOCK_KEY) === 'true';
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleUnlock = () => {
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsUnlocked(true);
+      localStorage.setItem(ADMIN_UNLOCK_KEY, 'true');
+      setPasswordError('');
+      setPasswordInput('');
+    } else {
+      setPasswordError('Incorrect password');
+      setPasswordInput('');
+    }
+  };
+
+  const handlePasswordKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleUnlock();
+    }
+  };
 
   // Check if connected user is the owner
   const isOwner = useMemo(() => {
@@ -455,6 +585,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
       <ToastComponent />
       <Container>
         <AdminBadge>Admin Only</AdminBadge>
+
+        {/* Password protection overlay */}
+        {!isUnlocked && (
+          <LockedOverlay>
+            <LockIconWrapper>
+              <LockIcon />
+            </LockIconWrapper>
+            <LockedTitle>Admin Access Required</LockedTitle>
+            <LockedText>
+              This section is restricted to administrators. Enter the password to unlock.
+            </LockedText>
+            <PasswordInput
+              type="password"
+              placeholder="Enter password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyPress={handlePasswordKeyPress}
+            />
+            <UnlockButton onClick={handleUnlock} disabled={!passwordInput}>
+              Unlock
+            </UnlockButton>
+            {passwordError && <ErrorText>{passwordError}</ErrorText>}
+          </LockedOverlay>
+        )}
 
         <Title>
           <TitleIcon><WrenchIcon /></TitleIcon>

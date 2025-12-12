@@ -638,7 +638,7 @@ export const StakingForm: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
         <Title $isDark={isDark}>
-          <TitleIcon>{activeTab === 'stake' ? '💎' : '🔄'}</TitleIcon>
+          <TitleIcon>{activeTab === 'stake' ? '' : ''}</TitleIcon>
           {activeTab === 'stake' ? 'Stake' : 'Unstake'}
         </Title>
         <TabContainer $isDark={isDark}>
@@ -662,7 +662,7 @@ export const StakingForm: React.FC = () => {
       {/* Balance Display */}
       <BalanceDisplay $isDark={isDark}>
         <BalanceLabel $isDark={isDark}>
-          💰 Available {tokenSymbol}
+           Available {tokenSymbol}
           {!isRealBalance && <DemoTag>DEMO</DemoTag>}
           {isRealBalance && <DemoTag style={{ background: 'rgba(48, 209, 88, 0.2)', color: '#30d158' }}>LIVE</DemoTag>}
           {balanceLoading && <DemoTag style={{ background: 'rgba(88, 86, 214, 0.2)', color: '#5856d6' }}>...</DemoTag>}
@@ -700,7 +700,7 @@ export const StakingForm: React.FC = () => {
           </InputWrapper>
           {validation.message && (
             <ValidationMessage $type={validation.type}>
-              {validation.type === 'error' ? '⚠️' : validation.type === 'warning' ? '💡' : 'ℹ️'}
+              {validation.type === 'error' ? '⚠️' : validation.type === 'warning' ? '' : 'ℹ️'}
               {validation.message}
             </ValidationMessage>
           )}
@@ -710,7 +710,7 @@ export const StakingForm: React.FC = () => {
         {preview && validation.valid && (
           <PreviewBox $isDark={isDark}>
             <PreviewTitle $isDark={isDark}>
-              {activeTab === 'stake' ? '📊 You will receive' : '📊 You will get back'}
+              {activeTab === 'stake' ? ' You will receive' : ' You will get back'}
             </PreviewTitle>
             <PreviewRow>
               <PreviewLabel $isDark={isDark}>Amount</PreviewLabel>
@@ -745,7 +745,7 @@ export const StakingForm: React.FC = () => {
             </>
           ) : (
             <>
-              {activeTab === 'stake' ? '💎 Stake CSPR' : '🔄 Unstake stCSPR'}
+              {activeTab === 'stake' ? ' Stake CSPR' : ' Unstake stCSPR'}
             </>
           )}
         </SubmitButton>

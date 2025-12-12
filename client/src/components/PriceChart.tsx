@@ -367,7 +367,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
       <Header>
         <TitleSection>
           <Title $isDark={isDark}>
-            📈 CSPR Price
+             CSPR Price
             <Badge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</Badge>
           </Title>
           <TimeframeButtons>

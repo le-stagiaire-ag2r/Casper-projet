@@ -414,7 +414,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏆 Top Validators <LiveBadge>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
+           Top Validators <LiveBadge>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
         </Title>
       </Header>
 
@@ -431,7 +431,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
         {validators.map((validator, index) => (
           <TableRow key={validator.publicKey} $isDark={isDark} $rank={index + 1}>
             <Rank $rank={index + 1}>
-              {index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : index + 1 === 3 ? '🥉' : index + 1}
+              {index + 1 === 1 ? '' : index + 1 === 2 ? '' : index + 1 === 3 ? '' : index + 1}
             </Rank>
             <ValidatorInfo>
               <ValidatorName $isDark={isDark}>{validator.name}</ValidatorName>
@@ -443,7 +443,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
                     onClick={() => copyToClipboard(validator.publicKey)}
                     title="Copy full address"
                   >
-                    {copiedKey === validator.publicKey ? '✓' : '📋'}
+                    {copiedKey === validator.publicKey ? '✓' : ''}
                   </CopyButton>
                 )}
               </ValidatorAddress>

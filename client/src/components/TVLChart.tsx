@@ -308,7 +308,7 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
       <Header>
         <TitleSection>
           <Title $isDark={isDark}>
-            📈 Total Value Locked
+             Total Value Locked
             <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
           </Title>
           <TVLValue $isDark={isDark}>

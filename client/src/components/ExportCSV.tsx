@@ -227,10 +227,10 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
   const isWalletConnected = !!activeAccount?.publicKey;
 
   const exportOptions = [
-    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: isWalletConnected ? `${userStakes.length} real transactions` : 'Connect wallet' },
-    { type: 'portfolio' as ExportType, icon: '📊', title: 'Portfolio', desc: isWalletConnected ? 'Your real balances' : 'Connect wallet' },
-    { type: 'price_history' as ExportType, icon: '📈', title: 'Price History', desc: 'CSPR price data' },
-    { type: 'rewards' as ExportType, icon: '💰', title: 'Rewards', desc: 'Estimated rewards' },
+    { type: 'transactions' as ExportType, icon: '', title: 'Transactions', desc: isWalletConnected ? `${userStakes.length} real transactions` : 'Connect wallet' },
+    { type: 'portfolio' as ExportType, icon: '', title: 'Portfolio', desc: isWalletConnected ? 'Your real balances' : 'Connect wallet' },
+    { type: 'price_history' as ExportType, icon: '', title: 'Price History', desc: 'CSPR price data' },
+    { type: 'rewards' as ExportType, icon: '', title: 'Rewards', desc: 'Estimated rewards' },
   ];
 
   const daysOptions = [

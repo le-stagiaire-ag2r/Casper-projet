@@ -332,8 +332,8 @@ export const StakeHistory: React.FC = () => {
   };
 
   const getIcon = (type: string) => {
-    if (type === 'stake') return '💎';
-    if (type === 'unstake') return '🔄';
+    if (type === 'stake') return '';
+    if (type === 'unstake') return '';
     return '📤';
   };
 
@@ -382,7 +382,7 @@ export const StakeHistory: React.FC = () => {
             History
           </Title>
           <RefreshButton $isDark={isDark} onClick={fetchHistory}>
-            🔄 Refresh
+             Refresh
           </RefreshButton>
         </Header>
         <EmptyState>
@@ -402,7 +402,7 @@ export const StakeHistory: React.FC = () => {
           History
         </Title>
         <RefreshButton $isDark={isDark} onClick={fetchHistory}>
-          🔄 Refresh
+           Refresh
         </RefreshButton>
       </Header>
       <TransactionList>
@@ -441,7 +441,7 @@ export const StakeHistory: React.FC = () => {
                     onClick={() => copyToClipboard(tx.txHash)}
                     title="Copy full hash"
                   >
-                    {copiedHash === tx.txHash ? '✓' : '📋'}
+                    {copiedHash === tx.txHash ? '✓' : ''}
                   </CopyButton>
                 </HashContainer>
               )}

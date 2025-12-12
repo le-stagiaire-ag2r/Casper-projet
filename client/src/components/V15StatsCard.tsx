@@ -171,7 +171,7 @@ export const V15StatsCard: React.FC = () => {
       </VersionBadge>
 
       <Title $isDark={isDark}>
-        <TitleIcon>📊</TitleIcon>
+        <TitleIcon></TitleIcon>
         Contract Statistics
         <button
           onClick={refresh}
@@ -186,7 +186,7 @@ export const V15StatsCard: React.FC = () => {
           }}
           title="Refresh from blockchain"
         >
-          🔄
+          
         </button>
       </Title>
 
