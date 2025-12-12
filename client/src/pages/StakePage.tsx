@@ -17,7 +17,6 @@ import { ValidatorComparator } from '../components/ValidatorComparator';
 import { V15StatsCard } from '../components/V15StatsCard';
 import { AdminPanel } from '../components/AdminPanel';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
-import { FloatingGhosts } from '../components/ui/FloatingGhosts';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -101,14 +100,13 @@ const HeroSubtitle = styled.p`
   position: relative;
 `;
 
-// Section Navigation
+// Section Navigation - Transparent, just floating pills
 const SectionNav = styled.nav`
   position: sticky;
   top: 0;
   z-index: 50;
-  background: ${colors.background.primary};
-  border-bottom: 1px solid ${colors.border.default};
-  backdrop-filter: blur(20px);
+  background: transparent;
+  padding: ${spacing[4]} 0;
 `;
 
 const NavInner = styled.div`
@@ -131,22 +129,25 @@ const NavInner = styled.div`
 `;
 
 const NavButton = styled.button<{ $active?: boolean }>`
-  padding: ${spacing[4]} ${spacing[6]};
+  padding: ${spacing[2]} ${spacing[5]};
   font-family: ${typography.fontFamily.body};
   font-size: ${typography.fontSize.sm};
   font-weight: ${typography.fontWeight.medium};
   text-transform: uppercase;
   letter-spacing: ${typography.letterSpacing.wider};
-  color: ${props => props.$active ? colors.text.primary : colors.text.tertiary};
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid ${props => props.$active ? colors.accent.primary : 'transparent'};
+  color: ${props => props.$active ? colors.text.primary : colors.text.secondary};
+  background: ${props => props.$active ? 'rgba(139, 92, 246, 0.3)' : 'rgba(30, 20, 50, 0.7)'};
+  border: 1px solid ${props => props.$active ? 'rgba(139, 92, 246, 0.6)' : 'rgba(139, 92, 246, 0.2)'};
+  border-radius: ${layout.borderRadius.full};
+  backdrop-filter: blur(10px);
   cursor: pointer;
   transition: all ${effects.transition.fast};
   white-space: nowrap;
 
   &:hover {
     color: ${colors.text.primary};
+    background: rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.4);
   }
 `;
 
@@ -292,9 +293,8 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       // Hero animations
-      gsap.fromTo('.hero-label', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 });
-      gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.2 });
-      gsap.fromTo('.hero-subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.4 });
+      gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 });
+      gsap.fromTo('.hero-subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.2 });
 
       // Section animations
       gsap.utils.toArray('.animate-on-scroll').forEach((el: any) => {
@@ -345,12 +345,8 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
 
   return (
     <PageContainer>
-      {/* Floating Casper Ghosts */}
-      <FloatingGhosts count={8} />
-
       {/* Hero Header */}
       <HeroHeader>
-        <HeroLabel className="hero-label">Dashboard</HeroLabel>
         <HeroTitle className="hero-title">
           Stake & Earn
           <span>Manage your liquid staking portfolio</span>

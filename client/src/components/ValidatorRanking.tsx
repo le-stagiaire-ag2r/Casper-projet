@@ -8,15 +8,11 @@ const shimmer = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 20px;
   padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
 `;
 
 const Header = styled.div`
@@ -418,7 +414,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏆 Top Validators <LiveBadge>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
+           Top Validators <LiveBadge>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
         </Title>
       </Header>
 
@@ -435,7 +431,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
         {validators.map((validator, index) => (
           <TableRow key={validator.publicKey} $isDark={isDark} $rank={index + 1}>
             <Rank $rank={index + 1}>
-              {index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : index + 1 === 3 ? '🥉' : index + 1}
+              {index + 1 === 1 ? '' : index + 1 === 2 ? '' : index + 1 === 3 ? '' : index + 1}
             </Rank>
             <ValidatorInfo>
               <ValidatorName $isDark={isDark}>{validator.name}</ValidatorName>
@@ -447,7 +443,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
                     onClick={() => copyToClipboard(validator.publicKey)}
                     title="Copy full address"
                   >
-                    {copiedKey === validator.publicKey ? '✓' : '📋'}
+                    {copiedKey === validator.publicKey ? '✓' : ''}
                   </CopyButton>
                 )}
               </ValidatorAddress>
@@ -471,7 +467,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
       </Table>
 
       <DataSource $isDark={isDark}>
-        📡 Data from Casper Mainnet
+        Data from Casper Mainnet
       </DataSource>
     </Container>
   );

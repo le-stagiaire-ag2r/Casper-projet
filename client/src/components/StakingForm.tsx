@@ -24,20 +24,13 @@ const slideIn = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 24px;
   padding: 32px;
-  backdrop-filter: blur(20px);
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   position: relative;
   overflow: hidden;
-  box-shadow: ${props => props.$isDark
-    ? 'none'
-    : '0 4px 20px rgba(0, 0, 0, 0.08)'};
 
   &::before {
     content: '';
@@ -45,16 +38,8 @@ const Container = styled.div<{ $isDark: boolean }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #ff2d55, #5856d6, #af52de, #ff2d55);
-    background-size: 300% 100%;
-    animation: gradient 3s ease infinite;
-  }
-
-  @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
   }
 `;
 
@@ -638,7 +623,7 @@ export const StakingForm: React.FC = () => {
     return (
       <Container $isDark={isDark}>
         <ConnectPrompt>
-          <ConnectIcon>🔐</ConnectIcon>
+          <ConnectIcon></ConnectIcon>
           <ConnectText $isDark={isDark}>Connect your wallet to start staking</ConnectText>
           <ConnectSubtext $isDark={isDark}>Use the connect button in the top bar</ConnectSubtext>
         </ConnectPrompt>
@@ -653,7 +638,7 @@ export const StakingForm: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
         <Title $isDark={isDark}>
-          <TitleIcon>{activeTab === 'stake' ? '💎' : '🔄'}</TitleIcon>
+          <TitleIcon>{activeTab === 'stake' ? '' : ''}</TitleIcon>
           {activeTab === 'stake' ? 'Stake' : 'Unstake'}
         </Title>
         <TabContainer $isDark={isDark}>
@@ -677,7 +662,7 @@ export const StakingForm: React.FC = () => {
       {/* Balance Display */}
       <BalanceDisplay $isDark={isDark}>
         <BalanceLabel $isDark={isDark}>
-          💰 Available {tokenSymbol}
+           Available {tokenSymbol}
           {!isRealBalance && <DemoTag>DEMO</DemoTag>}
           {isRealBalance && <DemoTag style={{ background: 'rgba(48, 209, 88, 0.2)', color: '#30d158' }}>LIVE</DemoTag>}
           {balanceLoading && <DemoTag style={{ background: 'rgba(88, 86, 214, 0.2)', color: '#5856d6' }}>...</DemoTag>}
@@ -715,7 +700,7 @@ export const StakingForm: React.FC = () => {
           </InputWrapper>
           {validation.message && (
             <ValidationMessage $type={validation.type}>
-              {validation.type === 'error' ? '⚠️' : validation.type === 'warning' ? '💡' : 'ℹ️'}
+              {validation.type === 'error' ? '' : validation.type === 'warning' ? '' : ''}
               {validation.message}
             </ValidationMessage>
           )}
@@ -725,7 +710,7 @@ export const StakingForm: React.FC = () => {
         {preview && validation.valid && (
           <PreviewBox $isDark={isDark}>
             <PreviewTitle $isDark={isDark}>
-              {activeTab === 'stake' ? '📊 You will receive' : '📊 You will get back'}
+              {activeTab === 'stake' ? ' You will receive' : ' You will get back'}
             </PreviewTitle>
             <PreviewRow>
               <PreviewLabel $isDark={isDark}>Amount</PreviewLabel>
@@ -760,7 +745,7 @@ export const StakingForm: React.FC = () => {
             </>
           ) : (
             <>
-              {activeTab === 'stake' ? '💎 Stake CSPR' : '🔄 Unstake stCSPR'}
+              {activeTab === 'stake' ? ' Stake CSPR' : ' Unstake stCSPR'}
             </>
           )}
         </SubmitButton>

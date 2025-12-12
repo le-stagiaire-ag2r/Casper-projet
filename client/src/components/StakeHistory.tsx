@@ -22,18 +22,11 @@ const fadeIn = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 24px;
   padding: 32px;
-  backdrop-filter: blur(20px);
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  box-shadow: ${props => props.$isDark
-    ? 'none'
-    : '0 4px 20px rgba(0, 0, 0, 0.08)'};
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
 const Header = styled.div`
@@ -339,9 +332,9 @@ export const StakeHistory: React.FC = () => {
   };
 
   const getIcon = (type: string) => {
-    if (type === 'stake') return '💎';
-    if (type === 'unstake') return '🔄';
-    return '📤';
+    if (type === 'stake') return '';
+    if (type === 'unstake') return '';
+    return '';
   };
 
   if (!activeAccount) {
@@ -349,12 +342,12 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon></TitleIcon>
             History
           </Title>
         </Header>
         <EmptyState>
-          <EmptyIcon>🔐</EmptyIcon>
+          <EmptyIcon></EmptyIcon>
           <EmptyText $isDark={isDark}>Connect your wallet</EmptyText>
           <EmptySubtext $isDark={isDark}>View your transaction history</EmptySubtext>
         </EmptyState>
@@ -367,7 +360,7 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon></TitleIcon>
             History
           </Title>
         </Header>
@@ -385,15 +378,15 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon></TitleIcon>
             History
           </Title>
           <RefreshButton $isDark={isDark} onClick={fetchHistory}>
-            🔄 Refresh
+             Refresh
           </RefreshButton>
         </Header>
         <EmptyState>
-          <EmptyIcon>📭</EmptyIcon>
+          <EmptyIcon></EmptyIcon>
           <EmptyText $isDark={isDark}>No transactions yet</EmptyText>
           <EmptySubtext $isDark={isDark}>Start staking to see your history</EmptySubtext>
         </EmptyState>
@@ -405,11 +398,11 @@ export const StakeHistory: React.FC = () => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          <TitleIcon>📜</TitleIcon>
+          <TitleIcon></TitleIcon>
           History
         </Title>
         <RefreshButton $isDark={isDark} onClick={fetchHistory}>
-          🔄 Refresh
+           Refresh
         </RefreshButton>
       </Header>
       <TransactionList>
@@ -448,7 +441,7 @@ export const StakeHistory: React.FC = () => {
                     onClick={() => copyToClipboard(tx.txHash)}
                     title="Copy full hash"
                   >
-                    {copiedHash === tx.txHash ? '✓' : '📋'}
+                    {copiedHash === tx.txHash ? '✓' : ''}
                   </CopyButton>
                 </HashContainer>
               )}

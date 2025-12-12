@@ -9,15 +9,11 @@ const pulse = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(255, 45, 85, 0.1) 100%)'
-    : 'linear-gradient(135deg, rgba(88, 86, 214, 0.08) 0%, rgba(255, 45, 85, 0.08) 100%)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 24px;
   padding: 32px;
-  backdrop-filter: blur(20px);
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(88, 86, 214, 0.2)'
-    : 'rgba(88, 86, 214, 0.15)'};
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   position: relative;
   overflow: hidden;
 
@@ -27,8 +23,8 @@ const Container = styled.div<{ $isDark: boolean }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #5856d6, #ff2d55, #af52de);
+    height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
   }
 `;
 
@@ -360,7 +356,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
     return (
       <Container $isDark={isDark}>
         <Title $isDark={isDark}>
-          <span>📊</span>
+          <span></span>
           Casper Network Statistics
           <LiveBadge>Loading...</LiveBadge>
         </Title>
@@ -382,14 +378,14 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
   return (
     <Container $isDark={isDark}>
       <Title $isDark={isDark}>
-        <span>📊</span>
+        <span></span>
         Casper Network Statistics
         <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
       </Title>
 
       <StatsGrid>
         <StatCard $isDark={isDark}>
-          <StatIcon>💰</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>Total Staked</StatLabel>
           <StatValue $isDark={isDark}>
             {formatNumber(stats.totalStaked)} CSPR
@@ -400,7 +396,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
         </StatCard>
 
         <StatCard $isDark={isDark}>
-          <StatIcon>✅</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>
             Active Validators
             <Tooltip
@@ -418,7 +414,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
         </StatCard>
 
         <StatCard $isDark={isDark}>
-          <StatIcon>👥</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>
             Total Delegators
             <Tooltip
@@ -436,7 +432,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
         </StatCard>
 
         <StatCard $isDark={isDark}>
-          <StatIcon>📈</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>
             Staking Ratio
             <Tooltip
@@ -456,29 +452,29 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
 
       <NetworkInfo $isDark={isDark}>
         <NetworkItem $isDark={isDark}>
-          <span>🌐</span>
+          <span></span>
           Network:
           <NetworkValue $isDark={isDark}>Casper Mainnet</NetworkValue>
         </NetworkItem>
         <NetworkItem $isDark={isDark}>
-          <span>💵</span>
+          <span></span>
           CSPR Price:
           <NetworkValue $isDark={isDark}>${stats.csprPrice.toFixed(4)}</NetworkValue>
         </NetworkItem>
         <NetworkItem $isDark={isDark}>
-          <span>🔄</span>
+          <span></span>
           Supply:
           <NetworkValue $isDark={isDark}>{formatNumber(stats.circulatingSupply)}</NetworkValue>
         </NetworkItem>
         <NetworkItem $isDark={isDark}>
-          <span>⏱️</span>
+          <span>️</span>
           Era Time:
           <NetworkValue $isDark={isDark}>~2 hours</NetworkValue>
         </NetworkItem>
       </NetworkInfo>
 
       <DataSource $isDark={isDark}>
-        📡 {isLive ? 'Live data from Casper API' : 'Fallback data from cspr.live'}
+        {isLive ? 'Live data from Casper API' : 'Fallback data from cspr.live'}
       </DataSource>
     </Container>
   );

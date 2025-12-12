@@ -7,14 +7,11 @@ const shimmer = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.02)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.1)'};
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
 `;
 
 const Header = styled.div`
@@ -88,31 +85,25 @@ const Row = styled.div<{ $isDark: boolean; $rank: number; $isCurrentUser?: boole
   border-radius: 12px;
   align-items: center;
   background: ${props => {
-    if (props.$isCurrentUser) return props.$isDark
-      ? 'rgba(88, 86, 214, 0.2)'
-      : 'rgba(88, 86, 214, 0.1)';
-    if (props.$rank === 1) return props.$isDark
-      ? 'rgba(255, 215, 0, 0.15)'
-      : 'rgba(255, 215, 0, 0.1)';
-    if (props.$rank === 2) return props.$isDark
-      ? 'rgba(192, 192, 192, 0.1)'
-      : 'rgba(192, 192, 192, 0.08)';
-    if (props.$rank === 3) return props.$isDark
-      ? 'rgba(205, 127, 50, 0.1)'
-      : 'rgba(205, 127, 50, 0.08)';
-    return props.$isDark
-      ? 'rgba(255, 255, 255, 0.03)'
-      : 'rgba(0, 0, 0, 0.02)';
+    if (props.$isCurrentUser) return 'rgba(139, 92, 246, 0.2)';
+    if (props.$rank === 1) return 'rgba(255, 215, 0, 0.12)';
+    if (props.$rank === 2) return 'rgba(192, 192, 192, 0.08)';
+    if (props.$rank === 3) return 'rgba(205, 127, 50, 0.08)';
+    return 'rgba(20, 10, 30, 0.5)';
   }};
-  border: 1px solid ${props => props.$isCurrentUser
-    ? 'rgba(88, 86, 214, 0.3)'
-    : 'transparent'};
+  border: 1px solid ${props => {
+    if (props.$isCurrentUser) return 'rgba(139, 92, 246, 0.3)';
+    if (props.$rank === 1) return 'rgba(255, 215, 0, 0.3)';
+    if (props.$rank === 2) return 'rgba(192, 192, 192, 0.2)';
+    if (props.$rank === 3) return 'rgba(205, 127, 50, 0.2)';
+    return 'rgba(255, 255, 255, 0.05)';
+  }};
+  backdrop-filter: blur(8px);
   transition: all 0.2s;
 
   &:hover {
-    background: ${props => props.$isDark
-      ? 'rgba(255, 255, 255, 0.08)'
-      : 'rgba(0, 0, 0, 0.04)'};
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
   }
 `;
 
@@ -273,9 +264,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ isDark, currentUserAdd
   };
 
   const getRankDisplay = (rank: number): React.ReactNode => {
-    if (rank === 1) return <RankMedal>🥇</RankMedal>;
-    if (rank === 2) return <RankMedal>🥈</RankMedal>;
-    if (rank === 3) return <RankMedal>🥉</RankMedal>;
+    if (rank === 1) return <RankMedal></RankMedal>;
+    if (rank === 2) return <RankMedal></RankMedal>;
+    if (rank === 3) return <RankMedal></RankMedal>;
     return <RankCell $rank={rank}>#{rank}</RankCell>;
   };
 
@@ -285,11 +276,11 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ isDark, currentUserAdd
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏆 Top Stakers
+           Top Stakers
           <Badge $isLive={false}>DEMO</Badge>
         </Title>
         <RefreshButton $isDark={isDark} onClick={fetchLeaderboard}>
-          🔄 Refresh
+           Refresh
         </RefreshButton>
       </Header>
 
