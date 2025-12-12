@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -21,64 +21,178 @@ import { colors, typography, spacing, layout, effects } from '../styles/designTo
 
 gsap.registerPlugin(ScrollTrigger);
 
-const Container = styled.div`
-  max-width: ${layout.contentWidth};
-  margin: 0 auto;
-  padding: ${spacing[8]} ${spacing[6]};
+// Page Container
+const PageContainer = styled.div`
+  min-height: 100vh;
+`;
+
+// Section Styles
+const Section = styled.section<{ $dark?: boolean }>`
+  background: ${props => props.$dark ? colors.background.secondary : colors.background.primary};
+  padding: ${spacing[16]} 0;
+  position: relative;
 
   @media (max-width: 768px) {
-    padding: ${spacing[6]} ${spacing[4]};
+    padding: ${spacing[12]} 0;
   }
 `;
 
-const Header = styled.header`
-  text-align: center;
-  margin-bottom: ${spacing[12]};
+const SectionInner = styled.div`
+  max-width: ${layout.contentWidth};
+  margin: 0 auto;
+  padding: 0 ${spacing[6]};
+
+  @media (max-width: 768px) {
+    padding: 0 ${spacing[4]};
+  }
 `;
 
-const Title = styled.h1`
+// Hero Header
+const HeroHeader = styled.header`
+  text-align: center;
+  padding: ${spacing[16]} ${spacing[6]} ${spacing[8]};
+  background: ${colors.background.primary};
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, ${colors.accent.muted} 0%, transparent 70%);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+`;
+
+const HeroLabel = styled.span`
+  display: inline-block;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.accent.primary};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.widest};
+  margin-bottom: ${spacing[4]};
+  padding: ${spacing[2]} ${spacing[4]};
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.full};
+  position: relative;
+`;
+
+const HeroTitle = styled.h1`
   font-family: ${typography.fontFamily.display};
-  font-size: clamp(${typography.fontSize['4xl']}, 6vw, ${typography.fontSize['6xl']});
+  font-size: clamp(${typography.fontSize['4xl']}, 8vw, ${typography.fontSize['7xl']});
   font-weight: ${typography.fontWeight.bold};
   color: ${colors.text.primary};
   letter-spacing: ${typography.letterSpacing.tight};
-  margin-bottom: ${spacing[3]};
+  line-height: ${typography.lineHeight.none};
+  margin-bottom: ${spacing[4]};
+  position: relative;
+
+  span {
+    display: block;
+    color: ${colors.text.tertiary};
+    font-size: 0.6em;
+    font-weight: ${typography.fontWeight.normal};
+  }
 `;
 
-const Subtitle = styled.p`
+const HeroSubtitle = styled.p`
   font-family: ${typography.fontFamily.body};
   font-size: ${typography.fontSize.lg};
   color: ${colors.text.secondary};
   max-width: 500px;
   margin: 0 auto;
+  line-height: ${typography.lineHeight.relaxed};
+  position: relative;
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${spacing[6]};
-  margin-bottom: ${spacing[8]};
+// Section Navigation
+const SectionNav = styled.nav`
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: ${colors.background.primary};
+  border-bottom: 1px solid ${colors.border.default};
+  backdrop-filter: blur(20px);
+`;
 
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
+const NavInner = styled.div`
+  max-width: ${layout.contentWidth};
+  margin: 0 auto;
+  padding: 0 ${spacing[6]};
+  display: flex;
+  gap: ${spacing[2]};
+
+  @media (max-width: 768px) {
+    padding: 0 ${spacing[4]};
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 
-const ChartsSection = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${spacing[6]};
-  margin-bottom: ${spacing[8]};
+const NavButton = styled.button<{ $active?: boolean }>`
+  padding: ${spacing[4]} ${spacing[6]};
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.medium};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.wider};
+  color: ${props => props.$active ? colors.text.primary : colors.text.tertiary};
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid ${props => props.$active ? colors.accent.primary : 'transparent'};
+  cursor: pointer;
+  transition: all ${effects.transition.fast};
+  white-space: nowrap;
 
-  @media (max-width: 1100px) {
-    grid-template-columns: 1fr;
+  &:hover {
+    color: ${colors.text.primary};
   }
 `;
 
-const FullWidthSection = styled.div`
-  margin-bottom: ${spacing[8]};
+// Section Header
+const SectionHeader = styled.div`
+  margin-bottom: ${spacing[10]};
 `;
 
+const SectionLabel = styled.span`
+  display: inline-block;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.accent.primary};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.widest};
+  margin-bottom: ${spacing[3]};
+`;
+
+const SectionTitle = styled.h2`
+  font-family: ${typography.fontFamily.display};
+  font-size: clamp(${typography.fontSize['3xl']}, 5vw, ${typography.fontSize['5xl']});
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  letter-spacing: ${typography.letterSpacing.tight};
+  margin-bottom: ${spacing[2]};
+`;
+
+const SectionDescription = styled.p`
+  font-size: ${typography.fontSize.base};
+  color: ${colors.text.secondary};
+  max-width: 600px;
+  line-height: ${typography.lineHeight.relaxed};
+`;
+
+// Info Banner
 const InfoBanner = styled.div`
   background: ${colors.accent.muted};
   border: 1px solid rgba(139, 92, 246, 0.2);
@@ -123,17 +237,36 @@ const InfoText = styled.p`
   line-height: ${typography.lineHeight.relaxed};
 `;
 
-const SectionTitle = styled.h2`
-  font-family: ${typography.fontFamily.display};
-  font-size: ${typography.fontSize['2xl']};
-  font-weight: ${typography.fontWeight.semibold};
-  color: ${colors.text.primary};
-  margin-bottom: ${spacing[6]};
-  padding-bottom: ${spacing[4]};
-  border-bottom: 1px solid ${colors.border.default};
+// Grid Layouts
+const TwoColumnGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${spacing[6]};
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-// Icon component
+const ThreeColumnGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: ${spacing[6]};
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FullWidth = styled.div`
+  margin-bottom: ${spacing[8]};
+`;
+
+// Icon
 const InfoSvgIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="12" cy="12" r="10" />
@@ -146,34 +279,43 @@ interface StakePageProps {
   isDark?: boolean;
 }
 
+type ActiveSection = 'stake' | 'analytics' | 'validators' | 'settings';
+
 export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState<ActiveSection>('stake');
+  const stakeRef = useRef<HTMLElement>(null);
+  const analyticsRef = useRef<HTMLElement>(null);
+  const validatorsRef = useRef<HTMLElement>(null);
+  const settingsRef = useRef<HTMLElement>(null);
+
+  const scrollToSection = (section: ActiveSection) => {
+    const refs: Record<ActiveSection, React.RefObject<HTMLElement | null>> = {
+      stake: stakeRef,
+      analytics: analyticsRef,
+      validators: validatorsRef,
+      settings: settingsRef,
+    };
+    refs[section].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveSection(section);
+  };
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Animate header
-      gsap.fromTo(
-        '.stake-header',
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
-      );
+      // Hero animations
+      gsap.fromTo('.hero-label', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 });
+      gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.2 });
+      gsap.fromTo('.hero-subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.4 });
 
-      // Animate info banner
-      gsap.fromTo(
-        '.info-banner',
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.6, delay: 0.2 }
-      );
-
-      // Animate sections on scroll
-      gsap.utils.toArray('.animate-section').forEach((el: any, i) => {
+      // Section animations
+      gsap.utils.toArray('.animate-on-scroll').forEach((el: any) => {
         gsap.fromTo(
           el,
-          { opacity: 0, y: 40 },
+          { opacity: 0, y: 50 },
           {
             opacity: 1,
             y: 0,
             duration: 0.8,
+            ease: 'power3.out',
             scrollTrigger: {
               trigger: el,
               start: 'top 85%',
@@ -181,90 +323,196 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
           }
         );
       });
-    }, containerRef);
+    });
 
-    return () => ctx.revert();
+    // Update active section on scroll
+    const handleScroll = () => {
+      const sections = [
+        { ref: stakeRef, name: 'stake' as const },
+        { ref: analyticsRef, name: 'analytics' as const },
+        { ref: validatorsRef, name: 'validators' as const },
+        { ref: settingsRef, name: 'settings' as const },
+      ];
+
+      for (const section of sections) {
+        if (section.ref.current) {
+          const rect = section.ref.current.getBoundingClientRect();
+          if (rect.top <= 100 && rect.bottom > 100) {
+            setActiveSection(section.name);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      ctx.revert();
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
-    <Container ref={containerRef}>
-      <Header className="stake-header">
-        <Title>Stake & Unstake</Title>
-        <Subtitle>
-          Manage your staked CSPR and stCSPR tokens
-        </Subtitle>
-      </Header>
+    <PageContainer>
+      {/* Hero Header */}
+      <HeroHeader>
+        <HeroLabel className="hero-label">Dashboard</HeroLabel>
+        <HeroTitle className="hero-title">
+          Stake & Earn
+          <span>Manage your liquid staking portfolio</span>
+        </HeroTitle>
+        <HeroSubtitle className="hero-subtitle">
+          Stake CSPR, track analytics, explore validators, and customize your experience
+        </HeroSubtitle>
+      </HeroHeader>
 
-      <InfoBanner className="info-banner">
-        <InfoIcon>
-          <InfoSvgIcon />
-        </InfoIcon>
-        <InfoContent>
-          <InfoTitle>V15 Exchange Rate</InfoTitle>
-          <InfoText>
-            This version features the exchange rate mechanism.
-            Rewards added to the pool increase the rate, making stCSPR appreciate over time.
-          </InfoText>
-        </InfoContent>
-      </InfoBanner>
+      {/* Section Navigation */}
+      <SectionNav>
+        <NavInner>
+          <NavButton
+            $active={activeSection === 'stake'}
+            onClick={() => scrollToSection('stake')}
+          >
+            Stake
+          </NavButton>
+          <NavButton
+            $active={activeSection === 'analytics'}
+            onClick={() => scrollToSection('analytics')}
+          >
+            Analytics
+          </NavButton>
+          <NavButton
+            $active={activeSection === 'validators'}
+            onClick={() => scrollToSection('validators')}
+          >
+            Validators
+          </NavButton>
+          <NavButton
+            $active={activeSection === 'settings'}
+            onClick={() => scrollToSection('settings')}
+          >
+            Settings
+          </NavButton>
+        </NavInner>
+      </SectionNav>
 
-      {/* V15 Stats Card - Exchange Rate & TVL */}
-      <FullWidthSection className="animate-section">
-        <V15StatsCard />
-      </FullWidthSection>
+      {/* STAKE SECTION */}
+      <Section ref={stakeRef} id="stake">
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>01 / Staking</SectionLabel>
+            <SectionTitle>Stake & Unstake</SectionTitle>
+            <SectionDescription>
+              Deposit CSPR to receive stCSPR tokens and start earning rewards automatically
+            </SectionDescription>
+          </SectionHeader>
 
-      <div className="animate-section">
-        <Dashboard />
-      </div>
+          <InfoBanner className="animate-on-scroll">
+            <InfoIcon>
+              <InfoSvgIcon />
+            </InfoIcon>
+            <InfoContent>
+              <InfoTitle>V15 Exchange Rate</InfoTitle>
+              <InfoText>
+                This version features the exchange rate mechanism.
+                Rewards added to the pool increase the rate, making stCSPR appreciate over time.
+              </InfoText>
+            </InfoContent>
+          </InfoBanner>
 
-      <Grid className="animate-section">
-        <StakingForm />
-        <StakeHistory />
-      </Grid>
+          <FullWidth className="animate-on-scroll">
+            <V15StatsCard />
+          </FullWidth>
 
-      {/* Admin Panel - For owner to add rewards */}
-      <FullWidthSection className="animate-section">
-        <AdminPanel isOwner={true} />
-      </FullWidthSection>
+          <div className="animate-on-scroll">
+            <Dashboard />
+          </div>
 
-      <FullWidthSection className="animate-section">
-        <SectionTitle>Staking Calculator</SectionTitle>
-        <StakingCalculator />
-      </FullWidthSection>
+          <TwoColumnGrid className="animate-on-scroll" style={{ marginTop: spacing[8] }}>
+            <StakingForm />
+            <StakeHistory />
+          </TwoColumnGrid>
 
-      <FullWidthSection className="animate-section">
-        <SectionTitle>Validator Network</SectionTitle>
-        <ValidatorRanking isDark={isDark} />
-      </FullWidthSection>
+          <FullWidth className="animate-on-scroll" style={{ marginTop: spacing[8] }}>
+            <AdminPanel isOwner={true} />
+          </FullWidth>
+        </SectionInner>
+      </Section>
 
-      <FullWidthSection className="animate-section">
-        <ValidatorComparator isDark={isDark} />
-      </FullWidthSection>
+      {/* ANALYTICS SECTION */}
+      <Section ref={analyticsRef} id="analytics" $dark>
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>02 / Analytics</SectionLabel>
+            <SectionTitle>Portfolio & Network Stats</SectionTitle>
+            <SectionDescription>
+              Track your staking performance, explore network statistics, and analyze trends
+            </SectionDescription>
+          </SectionHeader>
 
-      <FullWidthSection className="animate-section">
-        <SectionTitle>Network Statistics</SectionTitle>
-        <GlobalStats isDark={isDark} />
-      </FullWidthSection>
+          <FullWidth className="animate-on-scroll">
+            <StakingCalculator />
+          </FullWidth>
 
-      <FullWidthSection className="animate-section">
-        <SectionTitle>Leaderboard</SectionTitle>
-        <Leaderboard isDark={isDark} />
-      </FullWidthSection>
+          <FullWidth className="animate-on-scroll">
+            <GlobalStats isDark={isDark} />
+          </FullWidth>
 
-      <ChartsSection className="animate-section">
-        <TVLChart isDark={isDark} />
-        <ExportCSV isDark={isDark} />
-      </ChartsSection>
+          <TwoColumnGrid className="animate-on-scroll">
+            <TVLChart isDark={isDark} />
+            <PortfolioHistory isDark={isDark} />
+          </TwoColumnGrid>
 
-      <ChartsSection className="animate-section">
-        <PortfolioHistory isDark={isDark} />
-        <PriceAlertComponent isDark={isDark} />
-      </ChartsSection>
+          <FullWidth className="animate-on-scroll" style={{ marginTop: spacing[8] }}>
+            <Leaderboard isDark={isDark} />
+          </FullWidth>
+        </SectionInner>
+      </Section>
 
-      <div className="animate-section">
-        <SettingsPanel isDark={isDark} />
-      </div>
-    </Container>
+      {/* VALIDATORS SECTION */}
+      <Section ref={validatorsRef} id="validators">
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>03 / Validators</SectionLabel>
+            <SectionTitle>Validator Network</SectionTitle>
+            <SectionDescription>
+              Explore the validator ecosystem, compare performance, and find the best validators
+            </SectionDescription>
+          </SectionHeader>
+
+          <FullWidth className="animate-on-scroll">
+            <ValidatorRanking isDark={isDark} />
+          </FullWidth>
+
+          <FullWidth className="animate-on-scroll">
+            <ValidatorComparator isDark={isDark} />
+          </FullWidth>
+        </SectionInner>
+      </Section>
+
+      {/* SETTINGS SECTION */}
+      <Section ref={settingsRef} id="settings" $dark>
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>04 / Tools</SectionLabel>
+            <SectionTitle>Settings & Tools</SectionTitle>
+            <SectionDescription>
+              Configure alerts, export data, and customize your dashboard experience
+            </SectionDescription>
+          </SectionHeader>
+
+          <TwoColumnGrid className="animate-on-scroll">
+            <PriceAlertComponent isDark={isDark} />
+            <ExportCSV isDark={isDark} />
+          </TwoColumnGrid>
+
+          <FullWidth className="animate-on-scroll" style={{ marginTop: spacing[8] }}>
+            <SettingsPanel isDark={isDark} />
+          </FullWidth>
+        </SectionInner>
+      </Section>
+    </PageContainer>
   );
 };
 

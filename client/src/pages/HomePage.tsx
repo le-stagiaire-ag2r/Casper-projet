@@ -5,6 +5,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 import { TextMarquee } from '../components/ui/Marquee';
+import { ParallaxReveal } from '../components/ui/ParallaxReveal';
 import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -767,6 +768,14 @@ export const HomePage: React.FC<HomePageProps> = () => {
           </FeatureCard>
         </FeaturesGrid>
       </FeaturesSection>
+
+      {/* Parallax Reveal Section */}
+      <ParallaxReveal
+        backgroundWords={['STAKE', 'EARN', 'GROW', 'THRIVE']}
+        label="The Power of Liquid Staking"
+        title="Your CSPR, Amplified"
+        description="Unlock the full potential of your assets. Earn staking rewards while maintaining complete liquidity. No lockups, no compromises."
+      />
 
       {/* Marquee */}
       <MarqueeSection>

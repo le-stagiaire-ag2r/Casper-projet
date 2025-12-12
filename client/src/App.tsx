@@ -18,6 +18,7 @@ import { StakePage } from './pages/StakePage';
 import { GuidePage } from './pages/GuidePage';
 import { BalanceProvider } from './context/BalanceContext';
 import { FAQBot } from './components/FAQBot';
+import { CustomCursor } from './components/ui/CustomCursor';
 import { colors, typography, effects } from './styles/designTokens';
 
 // Get runtime config
@@ -182,6 +183,7 @@ const AppContent: React.FC<{
   return (
     <>
       <GlobalStyle />
+      <CustomCursor />
 
       <ClickUI
         themeMode={themeMode}
