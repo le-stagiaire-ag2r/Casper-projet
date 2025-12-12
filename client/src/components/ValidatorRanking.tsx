@@ -467,7 +467,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
       </Table>
 
       <DataSource $isDark={isDark}>
-        📡 Data from Casper Mainnet
+        Data from Casper Mainnet
       </DataSource>
     </Container>
   );

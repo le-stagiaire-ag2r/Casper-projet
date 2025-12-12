@@ -1,6 +1,49 @@
 import React, { useState, useMemo } from 'react';
 import styled, { keyframes, useTheme, css } from 'styled-components';
 
+// SVG Icons
+const CalculatorIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <line x1="8" y1="6" x2="16" y2="6" />
+    <line x1="8" y1="10" x2="8" y2="10.01" />
+    <line x1="12" y1="10" x2="12" y2="10.01" />
+    <line x1="16" y1="10" x2="16" y2="10.01" />
+    <line x1="8" y1="14" x2="8" y2="14.01" />
+    <line x1="12" y1="14" x2="12" y2="14.01" />
+    <line x1="16" y1="14" x2="16" y2="14.01" />
+    <line x1="8" y1="18" x2="8" y2="18.01" />
+    <line x1="12" y1="18" x2="16" y2="18" />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const BankIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 21h18" />
+    <path d="M3 10h18" />
+    <path d="M12 3l9 7H3l9-7z" />
+    <path d="M5 10v11" />
+    <path d="M19 10v11" />
+    <path d="M9 10v11" />
+    <path d="M15 10v11" />
+  </svg>
+);
+
+const TitleIconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: #8b5cf6;
+`;
+
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.02); }
@@ -480,7 +523,7 @@ export const StakingCalculator: React.FC = () => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🧮 Staking Calculator
+          <TitleIconWrapper><CalculatorIcon /></TitleIconWrapper> Staking Calculator
         </Title>
         <APYBadge>
           <span></span>
@@ -591,7 +634,7 @@ export const StakingCalculator: React.FC = () => {
           </ResultCard>
 
           <ResultCard $isDark={isDark}>
-            <ResultIcon>📅</ResultIcon>
+            <ResultIcon><CalendarIcon /></ResultIcon>
             <ResultLabel $isDark={isDark}>Monthly Average</ResultLabel>
             <ResultValue>
               +{formatNumber(calculations.monthlyAvg)}
@@ -619,7 +662,7 @@ export const StakingCalculator: React.FC = () => {
 
           <TotalCard $isDark={isDark}>
             <TotalLabel $isDark={isDark}>
-              🏦 Total Value After {getPeriodLabel()}
+              <TitleIconWrapper><BankIcon /></TitleIconWrapper> Total Value After {getPeriodLabel()}
             </TotalLabel>
             <TotalValue $isDark={isDark}>
               {formatNumber(calculations.total)} CSPR

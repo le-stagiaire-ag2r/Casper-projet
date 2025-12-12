@@ -623,7 +623,7 @@ export const StakingForm: React.FC = () => {
     return (
       <Container $isDark={isDark}>
         <ConnectPrompt>
-          <ConnectIcon>🔐</ConnectIcon>
+          <ConnectIcon></ConnectIcon>
           <ConnectText $isDark={isDark}>Connect your wallet to start staking</ConnectText>
           <ConnectSubtext $isDark={isDark}>Use the connect button in the top bar</ConnectSubtext>
         </ConnectPrompt>
@@ -700,7 +700,7 @@ export const StakingForm: React.FC = () => {
           </InputWrapper>
           {validation.message && (
             <ValidationMessage $type={validation.type}>
-              {validation.type === 'error' ? '⚠️' : validation.type === 'warning' ? '' : 'ℹ️'}
+              {validation.type === 'error' ? '' : validation.type === 'warning' ? '' : ''}
               {validation.message}
             </ValidationMessage>
           )}

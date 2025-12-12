@@ -396,7 +396,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
         </StatCard>
 
         <StatCard $isDark={isDark}>
-          <StatIcon>✅</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>
             Active Validators
             <Tooltip
@@ -414,7 +414,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
         </StatCard>
 
         <StatCard $isDark={isDark}>
-          <StatIcon>👥</StatIcon>
+          <StatIcon></StatIcon>
           <StatLabel $isDark={isDark}>
             Total Delegators
             <Tooltip
@@ -474,7 +474,7 @@ export const GlobalStats: React.FC<GlobalStatsProps> = ({ isDark }) => {
       </NetworkInfo>
 
       <DataSource $isDark={isDark}>
-        📡 {isLive ? 'Live data from Casper API' : 'Fallback data from cspr.live'}
+        {isLive ? 'Live data from Casper API' : 'Fallback data from cspr.live'}
       </DataSource>
     </Container>
   );

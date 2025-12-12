@@ -6,6 +6,21 @@ import { useCsprClick } from '../hooks/useCsprClick';
 import { api } from '../services/api';
 import { StakeRecord } from '../types';
 
+// SVG Icons
+const DownloadIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+const TitleIconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: #8b5cf6;
+`;
+
 const Container = styled.div<{ $isDark: boolean }>`
   background: rgba(20, 10, 30, 0.6);
   border-radius: 16px;
@@ -371,7 +386,7 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          📥 Export Data
+          <TitleIconWrapper><DownloadIcon /></TitleIconWrapper> Export Data
         </Title>
       </Header>
 
@@ -441,15 +456,15 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
         disabled={isExporting}
       >
         {isExporting ? (
-          <>⏳ Generating...</>
+          <>Generating...</>
         ) : (
-          <>📥 Download CSV</>
+          <><DownloadIcon /> Download CSV</>
         )}
       </ExportButton>
 
       {showSuccess && (
         <SuccessMessage>
-          ✅ Export complete! Check your downloads folder.
+          Export complete! Check your downloads folder.
         </SuccessMessage>
       )}
     </Container>

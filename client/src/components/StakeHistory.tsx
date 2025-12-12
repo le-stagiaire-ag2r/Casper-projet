@@ -334,7 +334,7 @@ export const StakeHistory: React.FC = () => {
   const getIcon = (type: string) => {
     if (type === 'stake') return '';
     if (type === 'unstake') return '';
-    return '📤';
+    return '';
   };
 
   if (!activeAccount) {
@@ -342,12 +342,12 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon></TitleIcon>
             History
           </Title>
         </Header>
         <EmptyState>
-          <EmptyIcon>🔐</EmptyIcon>
+          <EmptyIcon></EmptyIcon>
           <EmptyText $isDark={isDark}>Connect your wallet</EmptyText>
           <EmptySubtext $isDark={isDark}>View your transaction history</EmptySubtext>
         </EmptyState>
@@ -360,7 +360,7 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon></TitleIcon>
             History
           </Title>
         </Header>
@@ -378,7 +378,7 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon></TitleIcon>
             History
           </Title>
           <RefreshButton $isDark={isDark} onClick={fetchHistory}>
@@ -386,7 +386,7 @@ export const StakeHistory: React.FC = () => {
           </RefreshButton>
         </Header>
         <EmptyState>
-          <EmptyIcon>📭</EmptyIcon>
+          <EmptyIcon></EmptyIcon>
           <EmptyText $isDark={isDark}>No transactions yet</EmptyText>
           <EmptySubtext $isDark={isDark}>Start staking to see your history</EmptySubtext>
         </EmptyState>
@@ -398,7 +398,7 @@ export const StakeHistory: React.FC = () => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          <TitleIcon>📜</TitleIcon>
+          <TitleIcon></TitleIcon>
           History
         </Title>
         <RefreshButton $isDark={isDark} onClick={fetchHistory}>

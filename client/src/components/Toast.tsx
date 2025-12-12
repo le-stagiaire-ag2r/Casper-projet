@@ -147,9 +147,9 @@ const SingleToast: React.FC<{
 
   const getIcon = () => {
     switch (toast.type) {
-      case 'success': return '✅';
-      case 'error': return '❌';
-      default: return 'ℹ️';
+      case 'success': return '';
+      case 'error': return '';
+      default: return '';
     }
   };
 

@@ -341,7 +341,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '2',
       name: 'Whale',
-      icon: '🐋',
+      icon: '',
       description: 'Staked over 100,000 CSPR',
       requirement: 'Stake 100,000+ CSPR',
       rarity: 'epic',
@@ -368,7 +368,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '5',
       name: 'Validator Friend',
-      icon: '🤝',
+      icon: '',
       description: 'Delegated to 5 different validators',
       requirement: 'Use 5+ validators',
       rarity: 'rare',
@@ -395,7 +395,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '8',
       name: 'OG Staker',
-      icon: '👑',
+      icon: '',
       description: 'Staked during the beta launch period',
       requirement: 'Stake during beta',
       rarity: 'legendary',
