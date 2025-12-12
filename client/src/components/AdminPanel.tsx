@@ -5,6 +5,7 @@ import { useContractData } from '../hooks/useContractData';
 import { useToast } from './Toast';
 import { buildAddRewardsTransaction, sendTransaction, csprToMotes, motesToCspr } from '../services/transaction';
 import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
+import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 // Get config
 const config = (window as any).config || {};
@@ -21,134 +22,147 @@ const pulse = keyframes`
   50% { opacity: 0.5; }
 `;
 
-const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(255, 159, 10, 0.1) 0%, rgba(255, 45, 85, 0.05) 100%)'
-    : 'linear-gradient(135deg, rgba(255, 159, 10, 0.15) 0%, rgba(255, 45, 85, 0.08) 100%)'};
-  border-radius: 24px;
-  padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 159, 10, 0.3)'
-    : 'rgba(255, 159, 10, 0.4)'};
+const shimmer = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+const Container = styled.div`
+  background: ${colors.background.secondary};
+  border-radius: ${layout.borderRadius.xl};
+  padding: ${spacing[6]};
+  border: 1px solid ${colors.border.default};
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, ${colors.accent.primary}, #ff2d55, ${colors.accent.primary});
+    background-size: 200% 100%;
+    animation: ${shimmer} 3s linear infinite;
+  }
 `;
 
 const AdminBadge = styled.div`
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: ${spacing[4]};
+  right: ${spacing[4]};
   background: linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%);
   color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.bold};
+  padding: ${spacing[1]} ${spacing[3]};
+  border-radius: ${layout.borderRadius.full};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: ${typography.letterSpacing.wider};
 `;
 
-const Title = styled.h3<{ $isDark: boolean }>`
-  font-size: 18px;
-  font-weight: 700;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  margin-bottom: 16px;
+const Title = styled.h3`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.xl};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[4]};
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: ${spacing[3]};
 `;
 
 const TitleIcon = styled.span`
   font-size: 24px;
 `;
 
-const Description = styled.p<{ $isDark: boolean }>`
-  font-size: 13px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.6)'
-    : 'rgba(0, 0, 0, 0.6)'};
-  margin-bottom: 20px;
-  line-height: 1.5;
+const Description = styled.p`
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.secondary};
+  margin-bottom: ${spacing[6]};
+  line-height: ${typography.lineHeight.relaxed};
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: ${spacing[3]};
+  margin-bottom: ${spacing[6]};
 `;
 
-const StatCard = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.03)'};
-  border-radius: 12px;
-  padding: 12px;
+const StatCard = styled.div`
+  background: ${colors.background.elevated};
+  border: 1px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.lg};
+  padding: ${spacing[4]};
   text-align: center;
+  transition: all ${effects.transition.fast};
+
+  &:hover {
+    border-color: ${colors.accent.primary};
+    transform: translateY(-2px);
+  }
 `;
 
-const StatLabel = styled.div<{ $isDark: boolean }>`
-  font-size: 11px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
+const StatLabel = styled.div`
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.text.tertiary};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  letter-spacing: ${typography.letterSpacing.wider};
+  margin-bottom: ${spacing[2]};
 `;
 
-const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
-  font-size: 16px;
-  font-weight: 700;
-  color: ${props => props.$highlight
-    ? '#30d158'
-    : props.$isDark ? '#fff' : '#1a1a2e'};
+const StatValue = styled.div<{ $highlight?: boolean }>`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${props => props.$highlight ? colors.status.success : colors.text.primary};
 `;
 
 const InputGroup = styled.div`
-  margin-bottom: 16px;
+  margin-bottom: ${spacing[4]};
 `;
 
-const Label = styled.label<{ $isDark: boolean }>`
+const Label = styled.label`
   display: block;
-  font-size: 12px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.6)'
-    : 'rgba(0, 0, 0, 0.6)'};
-  margin-bottom: 8px;
-  font-weight: 500;
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.secondary};
+  margin-bottom: ${spacing[2]};
+  font-weight: ${typography.fontWeight.medium};
 `;
 
 const InputWrapper = styled.div`
   position: relative;
 `;
 
-const Input = styled.input<{ $isDark: boolean }>`
+const Input = styled.input`
   width: 100%;
-  padding: 14px 60px 14px 16px;
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.03)'};
-  border: 2px solid ${props => props.$isDark
-    ? 'rgba(255, 159, 10, 0.3)'
-    : 'rgba(255, 159, 10, 0.4)'};
-  border-radius: 12px;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  font-size: 18px;
-  font-weight: 600;
+  padding: ${spacing[4]} ${spacing[16]} ${spacing[4]} ${spacing[4]};
+  background: ${colors.background.elevated};
+  border: 2px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.lg};
+  color: ${colors.text.primary};
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.xl};
+  font-weight: ${typography.fontWeight.semibold};
   box-sizing: border-box;
+  transition: all ${effects.transition.fast};
 
   &::placeholder {
-    color: ${props => props.$isDark
-      ? 'rgba(255, 255, 255, 0.2)'
-      : 'rgba(0, 0, 0, 0.2)'};
-    font-weight: 400;
+    color: ${colors.text.muted};
+    font-weight: ${typography.fontWeight.normal};
   }
 
   &:focus {
     outline: none;
-    border-color: #ff9f0a;
-    box-shadow: 0 0 0 3px rgba(255, 159, 10, 0.2);
+    border-color: ${colors.accent.primary};
+    box-shadow: ${effects.shadow.glow};
   }
 
   &:disabled {
@@ -156,55 +170,53 @@ const Input = styled.input<{ $isDark: boolean }>`
   }
 `;
 
-const TokenLabel = styled.div<{ $isDark: boolean }>`
+const TokenLabel = styled.div`
   position: absolute;
-  right: 16px;
+  right: ${spacing[4]};
   top: 50%;
   transform: translateY(-50%);
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  font-size: 13px;
-  font-weight: 600;
+  color: ${colors.text.tertiary};
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.semibold};
 `;
 
-const PreviewRow = styled.div<{ $isDark: boolean }>`
+const PreviewRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-  font-size: 13px;
+  padding: ${spacing[2]} 0;
+  font-size: ${typography.fontSize.sm};
 `;
 
-const PreviewLabel = styled.span<{ $isDark: boolean }>`
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
+const PreviewLabel = styled.span`
+  color: ${colors.text.tertiary};
 `;
 
-const PreviewValue = styled.span<{ $isDark: boolean; $highlight?: boolean }>`
-  font-weight: 600;
-  color: ${props => props.$highlight
-    ? '#30d158'
-    : props.$isDark ? '#fff' : '#1a1a2e'};
+const PreviewValue = styled.span<{ $highlight?: boolean }>`
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${props => props.$highlight ? colors.status.success : colors.text.primary};
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
-  padding: 14px;
+  padding: ${spacing[4]};
   background: linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: ${layout.borderRadius.lg};
   color: #fff;
-  font-weight: 700;
-  font-size: 14px;
+  font-family: ${typography.fontFamily.body};
+  font-weight: ${typography.fontWeight.bold};
+  font-size: ${typography.fontSize.sm};
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all ${effects.transition.normal};
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 16px;
+  gap: ${spacing[2]};
+  margin-top: ${spacing[4]};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.wider};
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
@@ -227,52 +239,51 @@ const Spinner = styled.div`
 `;
 
 const SuccessMessage = styled.div`
-  margin-top: 16px;
-  padding: 12px;
+  margin-top: ${spacing[4]};
+  padding: ${spacing[3]};
   background: rgba(48, 209, 88, 0.1);
   border: 1px solid rgba(48, 209, 88, 0.3);
-  border-radius: 10px;
-  color: #30d158;
-  font-size: 13px;
+  border-radius: ${layout.borderRadius.md};
+  color: ${colors.status.success};
+  font-size: ${typography.fontSize.sm};
 `;
 
 const ExplorerLink = styled.a`
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: #30d158;
+  gap: ${spacing[1]};
+  color: ${colors.status.success};
   text-decoration: none;
-  font-weight: 600;
-  margin-top: 6px;
+  font-weight: ${typography.fontWeight.semibold};
+  margin-top: ${spacing[2]};
 
   &:hover {
     text-decoration: underline;
   }
 `;
 
-const NotOwnerMessage = styled.div<{ $isDark: boolean }>`
+const NotOwnerMessage = styled.div`
   text-align: center;
-  padding: 24px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  font-size: 14px;
+  padding: ${spacing[6]};
+  color: ${colors.text.tertiary};
+  font-size: ${typography.fontSize.sm};
 `;
 
 const LiveIndicator = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  color: #30d158;
+  gap: ${spacing[2]};
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  color: ${colors.status.success};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: ${typography.letterSpacing.wider};
 
   &::before {
     content: '';
     width: 6px;
     height: 6px;
-    background: #30d158;
+    background: ${colors.status.success};
     border-radius: 50%;
     animation: ${pulse} 2s ease-in-out infinite;
   }
@@ -416,42 +427,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
   return (
     <>
       <ToastComponent />
-      <Container $isDark={isDark}>
+      <Container>
         <AdminBadge>Admin Only</AdminBadge>
 
-        <Title $isDark={isDark}>
+        <Title>
           <TitleIcon>🔧</TitleIcon>
           Add Rewards
           <LiveIndicator>V15</LiveIndicator>
         </Title>
 
-        <Description $isDark={isDark}>
+        <Description>
           Add CSPR to the staking pool without minting new stCSPR.
           This increases the exchange rate, simulating validator rewards distribution.
         </Description>
 
         <StatsGrid>
-          <StatCard $isDark={isDark}>
-            <StatLabel $isDark={isDark}>Exchange Rate</StatLabel>
-            <StatValue $isDark={isDark} $highlight>
+          <StatCard>
+            <StatLabel>Exchange Rate</StatLabel>
+            <StatValue $highlight>
               {exchangeRate.toFixed(4)}
             </StatValue>
           </StatCard>
-          <StatCard $isDark={isDark}>
-            <StatLabel $isDark={isDark}>Total Pool</StatLabel>
-            <StatValue $isDark={isDark}>
+          <StatCard>
+            <StatLabel>Total Pool</StatLabel>
+            <StatValue>
               {formatCspr(totalPool)} CSPR
             </StatValue>
           </StatCard>
-          <StatCard $isDark={isDark}>
-            <StatLabel $isDark={isDark}>stCSPR Supply</StatLabel>
-            <StatValue $isDark={isDark}>
+          <StatCard>
+            <StatLabel>stCSPR Supply</StatLabel>
+            <StatValue>
               {formatCspr(totalStcspr)}
             </StatValue>
           </StatCard>
-          <StatCard $isDark={isDark}>
-            <StatLabel $isDark={isDark}>1 stCSPR =</StatLabel>
-            <StatValue $isDark={isDark} $highlight>
+          <StatCard>
+            <StatLabel>1 stCSPR =</StatLabel>
+            <StatValue $highlight>
               {exchangeRate.toFixed(4)} CSPR
             </StatValue>
           </StatCard>
@@ -459,10 +470,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
 
         <form onSubmit={handleSubmit}>
           <InputGroup>
-            <Label $isDark={isDark}>Reward Amount</Label>
+            <Label>Reward Amount</Label>
             <InputWrapper>
               <Input
-                $isDark={isDark}
                 type="number"
                 step="0.01"
                 min="0.01"
@@ -471,27 +481,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
                 placeholder="0.00"
                 disabled={isProcessing}
               />
-              <TokenLabel $isDark={isDark}>CSPR</TokenLabel>
+              <TokenLabel>CSPR</TokenLabel>
             </InputWrapper>
           </InputGroup>
 
           {preview && (
             <>
-              <PreviewRow $isDark={isDark}>
-                <PreviewLabel $isDark={isDark}>New Exchange Rate</PreviewLabel>
-                <PreviewValue $isDark={isDark} $highlight>
+              <PreviewRow>
+                <PreviewLabel>New Exchange Rate</PreviewLabel>
+                <PreviewValue $highlight>
                   {preview.newRate.toFixed(6)}
                 </PreviewValue>
               </PreviewRow>
-              <PreviewRow $isDark={isDark}>
-                <PreviewLabel $isDark={isDark}>Rate Increase</PreviewLabel>
-                <PreviewValue $isDark={isDark} $highlight>
+              <PreviewRow>
+                <PreviewLabel>Rate Increase</PreviewLabel>
+                <PreviewValue $highlight>
                   +{preview.percentIncrease.toFixed(2)}%
                 </PreviewValue>
               </PreviewRow>
-              <PreviewRow $isDark={isDark}>
-                <PreviewLabel $isDark={isDark}>Gas Fee</PreviewLabel>
-                <PreviewValue $isDark={isDark}>
+              <PreviewRow>
+                <PreviewLabel>Gas Fee</PreviewLabel>
+                <PreviewValue>
                   {GAS_FEE_CSPR} CSPR
                 </PreviewValue>
               </PreviewRow>

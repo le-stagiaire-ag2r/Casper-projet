@@ -45,8 +45,8 @@ const AwardIcon = () => (
 
 const SettingsButton = styled.button`
   position: fixed;
-  bottom: 96px;
-  right: 24px;
+  bottom: 24px;
+  right: 96px;
   width: 48px;
   height: 48px;
   border-radius: 50%;
