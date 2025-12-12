@@ -101,14 +101,13 @@ const HeroSubtitle = styled.p`
   position: relative;
 `;
 
-// Section Navigation
+// Section Navigation - Transparent
 const SectionNav = styled.nav`
   position: sticky;
   top: 0;
   z-index: 50;
-  background: ${colors.background.primary};
-  border-bottom: 1px solid ${colors.border.default};
-  backdrop-filter: blur(20px);
+  background: transparent;
+  border-bottom: none;
 `;
 
 const NavInner = styled.div`
@@ -292,9 +291,8 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       // Hero animations
-      gsap.fromTo('.hero-label', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 });
-      gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, delay: 0.2 });
-      gsap.fromTo('.hero-subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.4 });
+      gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 });
+      gsap.fromTo('.hero-subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.2 });
 
       // Section animations
       gsap.utils.toArray('.animate-on-scroll').forEach((el: any) => {
@@ -350,7 +348,6 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
 
       {/* Hero Header */}
       <HeroHeader>
-        <HeroLabel className="hero-label">Dashboard</HeroLabel>
         <HeroTitle className="hero-title">
           Stake & Earn
           <span>Manage your liquid staking portfolio</span>
