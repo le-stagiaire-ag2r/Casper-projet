@@ -75,8 +75,35 @@ const Title = styled.h3`
   gap: ${spacing[3]};
 `;
 
+// SVG Icons
+const WrenchIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+  </svg>
+);
+
+const GiftIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 12 20 22 4 22 4 12" />
+    <rect x="2" y="7" width="20" height="5" />
+    <line x1="12" y1="22" x2="12" y2="7" />
+    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+  </svg>
+);
+
+const BeakerIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4.5 3h15" />
+    <path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3" />
+    <path d="M6 14h12" />
+  </svg>
+);
+
 const TitleIcon = styled.span`
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  color: ${colors.accent.primary};
 `;
 
 const Description = styled.p`
@@ -431,7 +458,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
         <AdminBadge>Admin Only</AdminBadge>
 
         <Title>
-          <TitleIcon>🔧</TitleIcon>
+          <TitleIcon><WrenchIcon /></TitleIcon>
           Add Rewards
           <LiveIndicator>V15</LiveIndicator>
         </Title>
@@ -515,7 +542,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
                 Processing...
               </>
             ) : (
-              <>🎁 Add Rewards to Pool</>
+              <><GiftIcon /> Add Rewards to Pool</>
             )}
           </SubmitButton>
 
@@ -526,7 +553,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
             disabled={isProcessing || !amount || parseFloat(amount) <= 0}
             style={{ background: 'linear-gradient(135deg, #5856d6 0%, #af52de 100%)', marginTop: '8px' }}
           >
-            🧪 Simulate (Demo Mode)
+            <BeakerIcon /> Simulate (Demo Mode)
           </SubmitButton>
 
           {deployHash && (
