@@ -14,7 +14,6 @@ import { Leaderboard } from '../components/Leaderboard';
 import { TVLChart } from '../components/TVLChart';
 import { ExportCSV } from '../components/ExportCSV';
 import { ValidatorComparator } from '../components/ValidatorComparator';
-import { SettingsPanel } from '../components/SettingsPanel';
 import { V15StatsCard } from '../components/V15StatsCard';
 import { AdminPanel } from '../components/AdminPanel';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
@@ -29,9 +28,9 @@ const PageContainer = styled.div`
   overflow: hidden;
 `;
 
-// Section Styles
+// Section Styles - Transparent pour voir la galaxie
 const Section = styled.section<{ $dark?: boolean }>`
-  background: ${props => props.$dark ? colors.background.secondary : colors.background.primary};
+  background: transparent;
   padding: ${spacing[16]} 0;
   position: relative;
 
@@ -50,26 +49,13 @@ const SectionInner = styled.div`
   }
 `;
 
-// Hero Header
+// Hero Header - Transparent pour voir la galaxie
 const HeroHeader = styled.header`
   text-align: center;
   padding: ${spacing[16]} ${spacing[6]} ${spacing[8]};
-  background: ${colors.background.primary};
+  background: transparent;
   position: relative;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, ${colors.accent.muted} 0%, transparent 70%);
-    pointer-events: none;
-    opacity: 0.5;
-  }
 `;
 
 const HeroLabel = styled.span`
@@ -513,10 +499,6 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
             <PriceAlertComponent isDark={isDark} />
             <ExportCSV isDark={isDark} />
           </TwoColumnGrid>
-
-          <FullWidth className="animate-on-scroll" style={{ marginTop: spacing[8] }}>
-            <SettingsPanel isDark={isDark} />
-          </FullWidth>
         </SectionInner>
       </Section>
     </PageContainer>

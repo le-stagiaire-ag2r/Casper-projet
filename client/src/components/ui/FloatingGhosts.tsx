@@ -36,15 +36,15 @@ const moveRight = keyframes`
   }
 `;
 
-// Animation de pulsation douce
+// Animation de pulsation douce - Couleurs cyan/bleu comme les étoiles
 const glow = keyframes`
   0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));
-    opacity: 0.7;
+    filter: drop-shadow(0 0 8px rgba(0, 200, 255, 0.4));
+    opacity: 0.6;
   }
   50% {
-    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.8));
-    opacity: 0.9;
+    filter: drop-shadow(0 0 25px rgba(0, 200, 255, 0.8));
+    opacity: 0.85;
   }
 `;
 
@@ -116,9 +116,9 @@ const CasperGhost: React.FC<{ size: number; color?: string }> = ({ size, color =
       strokeLinecap="round"
       fill="none"
     />
-    {/* Joues roses */}
-    <ellipse cx="28" cy="50" rx="5" ry="3" fill="#ff6b9d" fillOpacity="0.5" />
-    <ellipse cx="72" cy="50" rx="5" ry="3" fill="#ff6b9d" fillOpacity="0.5" />
+    {/* Joues - couleur assortie */}
+    <ellipse cx="28" cy="50" rx="5" ry="3" fill="#00e5ff" fillOpacity="0.3" />
+    <ellipse cx="72" cy="50" rx="5" ry="3" fill="#00e5ff" fillOpacity="0.3" />
   </svg>
 );
 
@@ -139,16 +139,17 @@ interface FloatingGhostsProps {
 
 export const FloatingGhosts: React.FC<FloatingGhostsProps> = ({ count = 6 }) => {
   const ghosts = useMemo<GhostData[]>(() => {
-    const colors = ['#a855f7', '#8b5cf6', '#c084fc', '#e879f9', '#d946ef'];
+    // Couleurs cyan/bleu comme les étoiles de la galaxie
+    const colors = ['#00d4ff', '#00b8e6', '#00a8cc', '#1a9fff', '#00e5ff'];
 
     return Array.from({ length: count }, (_, i) => ({
       id: i,
-      size: 40 + Math.random() * 50,
-      top: 10 + Math.random() * 70,
-      duration: 20 + Math.random() * 25,
-      delay: Math.random() * 15,
+      size: 30 + Math.random() * 40,
+      top: 15 + Math.random() * 60,
+      duration: 25 + Math.random() * 30,
+      delay: Math.random() * 20,
       direction: i % 2 === 0 ? 'left' as const : 'right' as const,
-      floatDuration: 2 + Math.random() * 2,
+      floatDuration: 3 + Math.random() * 2,
       color: colors[Math.floor(Math.random() * colors.length)],
     }));
   }, [count]);
