@@ -416,7 +416,7 @@ const ErrorText = styled.p`
 `;
 
 // Admin password from environment variable (set on Vercel)
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'stakevue2024';
+const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || 'stakevue2024';
 const ADMIN_UNLOCK_KEY = 'stakevue_admin_unlocked';
 
 interface AdminPanelProps {
