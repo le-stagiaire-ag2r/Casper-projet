@@ -100,13 +100,14 @@ const HeroSubtitle = styled.p`
   position: relative;
 `;
 
-// Section Navigation - Transparent
+// Section Navigation - Glass effect
 const SectionNav = styled.nav`
   position: sticky;
   top: 0;
   z-index: 50;
-  background: transparent;
-  border-bottom: none;
+  background: rgba(20, 10, 30, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
 `;
 
 const NavInner = styled.div`

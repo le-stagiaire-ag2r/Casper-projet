@@ -48,7 +48,8 @@ const Card = styled.div`
 
   &:hover {
     transform: translateY(-4px);
-    border-color: ${colors.border.hover};
+    border-color: ${colors.accent.primary};
+    box-shadow: ${effects.shadow.glow};
 
     &::before {
       opacity: 1;

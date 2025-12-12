@@ -103,6 +103,7 @@ const Row = styled.div<{ $isDark: boolean; $rank: number; $isCurrentUser?: boole
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
   }
 `;
 

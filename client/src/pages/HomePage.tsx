@@ -318,9 +318,10 @@ const FeatureCard = styled.div<{ $purple?: boolean }>`
   }
 
   &:hover {
-    border-color: ${colors.border.hover};
+    border-color: ${colors.accent.primary};
     transform: translateY(-4px);
     background: ${props => props.$purple ? colors.glass.purpleStrong : colors.glass.dark};
+    box-shadow: ${effects.shadow.glow};
 
     &::before {
       transform: scaleX(1);
@@ -382,6 +383,7 @@ const BenefitCard = styled.div<{ $purple?: boolean }>`
     border-color: ${colors.accent.primary};
     transform: translateX(8px);
     background: ${props => props.$purple ? colors.glass.purpleStrong : colors.glass.dark};
+    box-shadow: ${effects.shadow.glow};
   }
 `;
 
