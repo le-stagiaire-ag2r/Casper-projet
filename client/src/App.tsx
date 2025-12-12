@@ -18,6 +18,7 @@ import { StakePage } from './pages/StakePage';
 import { GuidePage } from './pages/GuidePage';
 import { BalanceProvider } from './context/BalanceContext';
 import { FAQBot } from './components/FAQBot';
+import { CustomCursor } from './components/ui/CustomCursor';
 import { GalaxyBackground } from './components/ui/GalaxyBackground';
 import { colors, typography, effects } from './styles/designTokens';
 
@@ -183,6 +184,7 @@ const AppContent: React.FC<{
   return (
     <>
       <GlobalStyle />
+      <CustomCursor />
       <GalaxyBackground />
 
       <ClickUI
