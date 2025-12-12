@@ -1,345 +1,331 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
-import { useToast } from '../components/Toast';
+import styled from 'styled-components';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
+import { TextMarquee } from '../components/ui/Marquee';
 import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
-const float = keyframes`
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-`;
+gsap.registerPlugin(ScrollTrigger);
 
-const shimmer = keyframes`
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-`;
-
+// Container
 const Container = styled.div`
-  max-width: 1200px;
+  max-width: ${layout.maxWidth};
   margin: 0 auto;
-  padding: 20px;
+  overflow-x: hidden;
+`;
+
+const Section = styled.section`
+  padding: ${spacing[24]} ${spacing[6]};
+  position: relative;
+
+  @media (max-width: 768px) {
+    padding: ${spacing[16]} ${spacing[4]};
+  }
 `;
 
 // Hero Section
-const HeroSection = styled.section<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(88, 86, 214, 0.15) 0%, rgba(255, 45, 85, 0.15) 50%, rgba(175, 82, 222, 0.15) 100%)'
-    : 'linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(255, 45, 85, 0.1) 50%, rgba(175, 82, 222, 0.1) 100%)'};
-  border-radius: 32px;
-  padding: 64px 40px;
+const HeroSection = styled.section`
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
+  padding: ${spacing[20]} ${spacing[6]};
   position: relative;
-  overflow: hidden;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  margin-bottom: 48px;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #ff2d55, #5856d6, #af52de, #ff2d55);
-    background-size: 300% 100%;
-    animation: ${shimmer} 3s linear infinite;
-  }
 `;
 
-const HeroIcon = styled.div`
-  font-size: 80px;
-  margin-bottom: 24px;
-  animation: ${float} 3s ease-in-out infinite;
-  filter: drop-shadow(0 10px 20px rgba(88, 86, 214, 0.3));
+const HeroContent = styled.div`
+  max-width: 1000px;
+  z-index: 1;
+`;
+
+const HeroLabel = styled.span`
+  display: inline-block;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.accent.primary};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.widest};
+  margin-bottom: ${spacing[6]};
+  padding: ${spacing[2]} ${spacing[4]};
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.full};
 `;
 
 const HeroTitle = styled.h1`
-  font-size: 56px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #ff2d55 0%, #5856d6 50%, #af52de 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 20px;
-  letter-spacing: -2px;
+  font-family: ${typography.fontFamily.display};
+  font-size: clamp(${typography.fontSize['5xl']}, 10vw, ${typography.fontSize['9xl']});
+  font-weight: ${typography.fontWeight.black};
+  color: ${colors.text.primary};
+  line-height: ${typography.lineHeight.none};
+  letter-spacing: ${typography.letterSpacing.tighter};
+  margin-bottom: ${spacing[6]};
 
-  @media (max-width: 768px) {
-    font-size: 40px;
+  span {
+    display: block;
+    color: ${colors.text.tertiary};
+    -webkit-text-stroke: 1px ${colors.text.tertiary};
+    -webkit-text-fill-color: transparent;
   }
 `;
 
-const HeroSubtitle = styled.p<{ $isDark: boolean }>`
-  font-size: 20px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'};
-  max-width: 650px;
-  margin: 0 auto 36px;
-  line-height: 1.7;
+const HeroSubtitle = styled.p`
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.normal};
+  color: ${colors.text.secondary};
+  max-width: 600px;
+  margin: 0 auto ${spacing[10]};
+  line-height: ${typography.lineHeight.relaxed};
+
+  @media (max-width: 768px) {
+    font-size: ${typography.fontSize.base};
+  }
 `;
 
 const HeroButtons = styled.div`
   display: flex;
-  gap: 16px;
+  gap: ${spacing[4]};
   justify-content: center;
   flex-wrap: wrap;
 `;
 
 const PrimaryButton = styled.button`
-  padding: 18px 48px;
-  font-size: 18px;
-  font-weight: 700;
-  color: white;
-  background: linear-gradient(135deg, #ff2d55, #5856d6);
+  padding: ${spacing[4]} ${spacing[8]};
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.semibold};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.wider};
+  color: ${colors.text.primary};
+  background: ${colors.accent.primary};
   border: none;
-  border-radius: 16px;
+  border-radius: ${layout.borderRadius.full};
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 30px rgba(88, 86, 214, 0.4);
+  transition: all ${effects.transition.normal};
+  box-shadow: ${effects.shadow.glow};
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(88, 86, 214, 0.5);
+    transform: translateY(-2px);
+    box-shadow: ${effects.shadow.glowStrong};
   }
 `;
 
-const SecondaryButton = styled.button<{ $isDark: boolean }>`
-  padding: 18px 48px;
-  font-size: 18px;
-  font-weight: 700;
-  color: ${props => props.$isDark ? '#fff' : '#5856d6'};
+const SecondaryButton = styled.button`
+  padding: ${spacing[4]} ${spacing[8]};
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${typography.fontWeight.semibold};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.wider};
+  color: ${colors.text.secondary};
   background: transparent;
-  border: 2px solid ${props => props.$isDark ? 'rgba(255,255,255,0.3)' : '#5856d6'};
-  border-radius: 16px;
+  border: 1px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.full};
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all ${effects.transition.normal};
 
   &:hover {
-    background: ${props => props.$isDark ? 'rgba(255,255,255,0.1)' : 'rgba(88, 86, 214, 0.1)'};
-    transform: translateY(-3px);
+    color: ${colors.text.primary};
+    border-color: ${colors.text.primary};
   }
 `;
 
-// Stats Row
-const StatsRow = styled.div`
+const ScrollIndicator = styled.div`
+  position: absolute;
+  bottom: ${spacing[10]};
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${spacing[2]};
+  color: ${colors.text.muted};
+  font-size: ${typography.fontSize.xs};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.widest};
+
+  &::after {
+    content: '';
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, ${colors.text.muted}, transparent);
+    animation: scrollLine 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollLine {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.5); }
+    50% { opacity: 1; transform: scaleY(1); }
+  }
+`;
+
+// Stats Section
+const StatsSection = styled(Section)`
+  background: ${colors.background.secondary};
+`;
+
+const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 56px;
+  gap: ${spacing[1]};
+  max-width: ${layout.contentWidth};
+  margin: 0 auto;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (max-width: 500px) {
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const StatCard = styled.div<{ $isDark: boolean; $gradient: string }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.9)'};
-  border-radius: 24px;
-  padding: 28px;
+const StatCard = styled.div`
+  padding: ${spacing[10]} ${spacing[6]};
   text-align: center;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  backdrop-filter: blur(20px);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s ease;
+  background: ${colors.background.tertiary};
+  border: 1px solid ${colors.border.default};
+  transition: all ${effects.transition.normal};
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: ${props => props.$gradient};
+  &:first-child {
+    border-radius: ${layout.borderRadius.xl} 0 0 ${layout.borderRadius.xl};
+  }
+
+  &:last-child {
+    border-radius: 0 ${layout.borderRadius.xl} ${layout.borderRadius.xl} 0;
+  }
+
+  @media (max-width: 1024px) {
+    &:first-child {
+      border-radius: ${layout.borderRadius.xl} 0 0 0;
+    }
+    &:nth-child(2) {
+      border-radius: 0 ${layout.borderRadius.xl} 0 0;
+    }
+    &:nth-child(3) {
+      border-radius: 0 0 0 ${layout.borderRadius.xl};
+    }
+    &:last-child {
+      border-radius: 0 0 ${layout.borderRadius.xl} 0;
+    }
+  }
+
+  @media (max-width: 640px) {
+    &:first-child {
+      border-radius: ${layout.borderRadius.xl} ${layout.borderRadius.xl} 0 0;
+    }
+    &:nth-child(2), &:nth-child(3) {
+      border-radius: 0;
+    }
+    &:last-child {
+      border-radius: 0 0 ${layout.borderRadius.xl} ${layout.borderRadius.xl};
+    }
   }
 
   &:hover {
-    transform: translateY(-6px);
+    background: ${colors.background.elevated};
   }
 `;
 
-const StatIcon = styled.div`
-  font-size: 36px;
-  margin-bottom: 12px;
+const StatValue = styled.div`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize['4xl']};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[2]};
+
+  @media (max-width: 768px) {
+    font-size: ${typography.fontSize['3xl']};
+  }
 `;
 
-const StatValue = styled.div<{ $color: string }>`
-  font-size: 32px;
-  font-weight: 800;
-  color: ${props => props.$color};
-  margin-bottom: 4px;
-`;
-
-const StatLabel = styled.div<{ $isDark: boolean }>`
-  font-size: 14px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
+const StatLabel = styled.div`
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.text.tertiary};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
+  letter-spacing: ${typography.letterSpacing.wider};
 `;
 
-const pulse = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-`;
-
-const LiveStatsSection = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(48, 209, 88, 0.05)'
-    : 'rgba(48, 209, 88, 0.08)'};
-  border: 1px solid rgba(48, 209, 88, 0.2);
-  border-radius: 24px;
-  padding: 24px;
-  margin-bottom: 56px;
-`;
-
-const LiveStatsHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 20px;
-`;
-
-const LiveStatsTitle = styled.h3<{ $isDark: boolean }>`
-  font-size: 16px;
-  font-weight: 700;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  margin: 0;
-`;
-
-const LiveBadge = styled.span<{ $isLive?: boolean }>`
+const StatIndicator = styled.span<{ $live?: boolean }>`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: ${props => props.$isLive !== false
-    ? 'rgba(48, 209, 88, 0.2)'
-    : 'rgba(255, 159, 10, 0.2)'};
-  color: ${props => props.$isLive !== false ? '#30d158' : '#ff9f0a'};
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 20px;
+  gap: ${spacing[1]};
+  font-size: ${typography.fontSize.xs};
+  color: ${props => props.$live ? colors.status.success : colors.text.muted};
+  margin-left: ${spacing[2]};
 
   &::before {
     content: '';
     width: 6px;
     height: 6px;
-    background: #30d158;
+    background: ${props => props.$live ? colors.status.success : colors.text.muted};
     border-radius: 50%;
-    animation: ${pulse} 1.5s infinite;
   }
 `;
 
-const LiveStatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 500px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const LiveStatCard = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.9)'};
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-`;
-
-const LiveStatValue = styled.div<{ $isDark: boolean }>`
-  font-size: 24px;
-  font-weight: 800;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  margin-bottom: 4px;
-`;
-
-const LiveStatLabel = styled.div<{ $isDark: boolean }>`
-  font-size: 12px;
-  color: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.5)'
-    : 'rgba(0, 0, 0, 0.5)'};
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
-const LoadingStat = styled.div<{ $isDark: boolean }>`
-  height: 24px;
-  width: 80px;
-  margin: 0 auto 4px;
-  background: ${props => props.$isDark
-    ? 'linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%)'
-    : 'linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.03) 75%)'};
-  background-size: 200% 100%;
-  animation: ${shimmer} 1.5s infinite;
-  border-radius: 6px;
-`;
-
-// Section
-const Section = styled.section`
-  margin-bottom: 64px;
+// Features Section
+const FeaturesSection = styled(Section)`
+  background: ${colors.background.primary};
 `;
 
 const SectionHeader = styled.div`
   text-align: center;
-  margin-bottom: 40px;
+  max-width: 700px;
+  margin: 0 auto ${spacing[16]};
 `;
 
-const SectionTitle = styled.h2<{ $isDark: boolean }>`
-  font-size: 36px;
-  font-weight: 800;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  margin-bottom: 12px;
+const SectionLabel = styled.span`
+  display: inline-block;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.accent.primary};
+  text-transform: uppercase;
+  letter-spacing: ${typography.letterSpacing.widest};
+  margin-bottom: ${spacing[4]};
 `;
 
-const SectionSubtitle = styled.p<{ $isDark: boolean }>`
-  font-size: 18px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};
+const SectionTitle = styled.h2`
+  font-family: ${typography.fontFamily.display};
+  font-size: clamp(${typography.fontSize['3xl']}, 5vw, ${typography.fontSize['6xl']});
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  line-height: ${typography.lineHeight.tight};
+  letter-spacing: ${typography.letterSpacing.tight};
+  margin-bottom: ${spacing[4]};
 `;
 
-// Steps
-const StepsGrid = styled.div`
+const SectionSubtitle = styled.p`
+  font-size: ${typography.fontSize.lg};
+  color: ${colors.text.secondary};
+  line-height: ${typography.lineHeight.relaxed};
+`;
+
+const FeaturesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  position: relative;
+  gap: ${spacing[6]};
+  max-width: ${layout.contentWidth};
+  margin: 0 auto;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    gap: ${spacing[4]};
   }
 `;
 
-const StepCard = styled.div<{ $isDark: boolean; $step: number }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.9)'};
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  border-radius: 24px;
-  padding: 36px 28px;
-  text-align: center;
-  transition: all 0.3s ease;
+const FeatureCard = styled.div`
+  padding: ${spacing[10]};
+  background: ${colors.background.secondary};
+  border: 1px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.xl};
+  transition: all ${effects.transition.normal};
   position: relative;
   overflow: hidden;
 
@@ -349,231 +335,179 @@ const StepCard = styled.div<{ $isDark: boolean; $step: number }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: ${props => {
-      const colors = [
-        'linear-gradient(90deg, #ff2d55, #ff6b8a)',
-        'linear-gradient(90deg, #5856d6, #7a78e6)',
-        'linear-gradient(90deg, #30d158, #5ae67e)',
-      ];
-      return colors[props.$step - 1] || colors[0];
-    }};
+    height: 2px;
+    background: ${colors.accent.primary};
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform ${effects.transition.normal};
   }
 
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    border-color: ${colors.border.hover};
+    transform: translateY(-4px);
+
+    &::before {
+      transform: scaleX(1);
+    }
   }
 `;
 
-const StepNumber = styled.div<{ $step: number }>`
-  width: 64px;
-  height: 64px;
-  background: ${props => {
-    const colors = [
-      'linear-gradient(135deg, #ff2d55, #ff6b8a)',
-      'linear-gradient(135deg, #5856d6, #7a78e6)',
-      'linear-gradient(135deg, #30d158, #5ae67e)',
-    ];
-    return colors[props.$step - 1] || colors[0];
-  }};
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 800;
-  color: white;
-  margin: 0 auto 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+const FeatureNumber = styled.span`
+  display: block;
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.xs};
+  font-weight: ${typography.fontWeight.medium};
+  color: ${colors.accent.primary};
+  margin-bottom: ${spacing[6]};
 `;
 
-const StepIcon = styled.div`
-  font-size: 52px;
-  margin-bottom: 20px;
+const FeatureTitle = styled.h3`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize['2xl']};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[4]};
 `;
 
-const StepTitle = styled.h3<{ $isDark: boolean }>`
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+const FeatureDescription = styled.p`
+  font-size: ${typography.fontSize.base};
+  color: ${colors.text.secondary};
+  line-height: ${typography.lineHeight.relaxed};
 `;
 
-const StepDescription = styled.p<{ $isDark: boolean }>`
-  font-size: 15px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
-  line-height: 1.7;
+// Benefits Section
+const BenefitsSection = styled(Section)`
+  background: ${colors.background.secondary};
 `;
 
-// Benefits
 const BenefitsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: ${spacing[6]};
+  max-width: ${layout.contentWidth};
+  margin: 0 auto;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const BenefitCard = styled.div<{ $isDark: boolean; $color: string }>`
+const BenefitCard = styled.div`
   display: flex;
-  gap: 20px;
-  padding: 28px;
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.9)'};
-  border-radius: 20px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: ${props => props.$color};
-  }
+  gap: ${spacing[5]};
+  padding: ${spacing[8]};
+  background: ${colors.background.tertiary};
+  border: 1px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.lg};
+  transition: all ${effects.transition.normal};
 
   &:hover {
+    border-color: ${colors.accent.primary};
     transform: translateX(8px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const BenefitIconBox = styled.div<{ $bg: string }>`
-  width: 56px;
-  height: 56px;
-  background: ${props => props.$bg};
-  border-radius: 16px;
+const BenefitIcon = styled.div`
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  background: ${colors.accent.muted};
+  border-radius: ${layout.borderRadius.md};
+  color: ${colors.accent.primary};
   flex-shrink: 0;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
 `;
 
 const BenefitContent = styled.div``;
 
-const BenefitTitle = styled.h4<{ $isDark: boolean }>`
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
+const BenefitTitle = styled.h4`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[2]};
 `;
 
-const BenefitDescription = styled.p<{ $isDark: boolean }>`
-  font-size: 14px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'};
-  line-height: 1.6;
-`;
-
-// Example Box
-const ExampleBox = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(88, 86, 214, 0.15), rgba(175, 82, 222, 0.1))'
-    : 'linear-gradient(135deg, rgba(88, 86, 214, 0.1), rgba(175, 82, 222, 0.05))'};
-  border: 2px solid ${props => props.$isDark
-    ? 'rgba(88, 86, 214, 0.3)'
-    : 'rgba(88, 86, 214, 0.2)'};
-  border-radius: 24px;
-  padding: 40px;
-  margin-top: 48px;
-  text-align: center;
-`;
-
-const ExampleTitle = styled.h3<{ $isDark: boolean }>`
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  color: ${props => props.$isDark ? '#fff' : '#1a1a2e'};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-`;
-
-const ExampleFlow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-`;
-
-const ExampleStep = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 24px;
-  background: ${props => props.$highlight
-    ? 'linear-gradient(135deg, #30d158, #34c759)'
-    : props.$isDark
-      ? 'rgba(255, 255, 255, 0.1)'
-      : 'rgba(0, 0, 0, 0.05)'};
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 16px;
-  color: ${props => props.$highlight ? '#fff' : (props.$isDark ? '#fff' : '#1a1a2e')};
-`;
-
-const Arrow = styled.span`
-  font-size: 24px;
-  color: #5856d6;
+const BenefitDescription = styled.p`
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.secondary};
+  line-height: ${typography.lineHeight.relaxed};
 `;
 
 // CTA Section
-const CTASection = styled.div`
-  background: linear-gradient(135deg, #ff2d55 0%, #5856d6 50%, #af52de 100%);
-  border-radius: 32px;
-  padding: 56px 40px;
+const CTASection = styled(Section)`
   text-align: center;
-  position: relative;
-  overflow: hidden;
+  padding: ${spacing[32]} ${spacing[6]};
 `;
 
 const CTATitle = styled.h2`
-  font-size: 36px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 16px;
-`;
+  font-family: ${typography.fontFamily.display};
+  font-size: clamp(${typography.fontSize['4xl']}, 8vw, ${typography.fontSize['7xl']});
+  font-weight: ${typography.fontWeight.bold};
+  color: ${colors.text.primary};
+  line-height: ${typography.lineHeight.tight};
+  letter-spacing: ${typography.letterSpacing.tight};
+  margin-bottom: ${spacing[6]};
 
-const CTASubtitle = styled.p`
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 32px;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-`;
-
-const CTAButton = styled.button`
-  padding: 20px 56px;
-  background: #fff;
-  border: none;
-  border-radius: 16px;
-  color: #5856d6;
-  font-size: 20px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  span {
+    color: ${colors.accent.primary};
   }
 `;
 
+const CTASubtitle = styled.p`
+  font-size: ${typography.fontSize.lg};
+  color: ${colors.text.secondary};
+  max-width: 500px;
+  margin: 0 auto ${spacing[10]};
+  line-height: ${typography.lineHeight.relaxed};
+`;
+
+// Marquee Section
+const MarqueeSection = styled.div`
+  padding: ${spacing[16]} 0;
+`;
+
+// Icons as SVG components
+const ArrowIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </svg>
+);
+
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const TrendingIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M23 6l-9.5 9.5-5-5L1 18" />
+    <path d="M17 6h6v6" />
+  </svg>
+);
+
+const UnlockIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+  </svg>
+);
+
+const ZapIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+  </svg>
+);
+
 interface HomePageProps {
-  isDark: boolean;
+  isDark?: boolean;
 }
 
 interface NetworkStats {
@@ -583,56 +517,117 @@ interface NetworkStats {
   csprPrice: number;
 }
 
-// Fallback stats when API fails - Updated from cspr.live Dec 2024
 const FALLBACK_STATS: NetworkStats = {
-  totalStaked: 6_971_726_448, // From cspr.live
-  activeValidators: 88, // Current active validators
-  totalDelegators: 27000, // Approximate
-  csprPrice: 0.0057, // From cspr.live
+  totalStaked: 6_971_726_448,
+  activeValidators: 88,
+  totalDelegators: 27000,
+  csprPrice: 0.0057,
 };
 
-export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
+export const HomePage: React.FC<HomePageProps> = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<NetworkStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
-  const { info, ToastComponent } = useToast();
 
-  // Show data transparency notice once
+  // Refs for GSAP animations
+  const heroRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+
+  // GSAP animations
   useEffect(() => {
-    const hasSeenNotice = localStorage.getItem('stakevue_data_notice_v2');
-    if (!hasSeenNotice) {
-      setTimeout(() => {
-        info(
-          '📊 About the Data',
-          'Most stats come from real Casper APIs (LIVE badge). Due to API limits, some data may show estimates (DEMO badge). This is normal, not a bug!'
-        );
-        localStorage.setItem('stakevue_data_notice_v2', 'true');
-      }, 2000);
-    }
-  }, [info]);
+    const ctx = gsap.context(() => {
+      // Hero animations
+      gsap.fromTo(
+        '.hero-label',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.8, delay: 0.2 }
+      );
+      gsap.fromTo(
+        '.hero-title',
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 1, delay: 0.4 }
+      );
+      gsap.fromTo(
+        '.hero-subtitle',
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8, delay: 0.7 }
+      );
+      gsap.fromTo(
+        '.hero-buttons',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.8, delay: 0.9 }
+      );
 
-  // Fetch stats from CSPR.cloud via proxy
+      // Stats scroll animation
+      gsap.fromTo(
+        '.stat-card',
+        { opacity: 0, y: 60 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          stagger: 0.1,
+          scrollTrigger: {
+            trigger: statsRef.current,
+            start: 'top 80%',
+          },
+        }
+      );
+
+      // Features scroll animation
+      gsap.fromTo(
+        '.feature-card',
+        { opacity: 0, y: 80 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          stagger: 0.15,
+          scrollTrigger: {
+            trigger: featuresRef.current,
+            start: 'top 75%',
+          },
+        }
+      );
+
+      // Benefits scroll animation
+      gsap.fromTo(
+        '.benefit-card',
+        { opacity: 0, x: -40 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.8,
+          stagger: 0.1,
+          scrollTrigger: {
+            trigger: '.benefits-grid',
+            start: 'top 80%',
+          },
+        }
+      );
+    });
+
+    return () => ctx.revert();
+  }, []);
+
+  // Fetch stats
   const fetchFromCsprCloud = useCallback(async () => {
-    if (!isProxyAvailable()) {
-      return null;
-    }
+    if (!isProxyAvailable()) return null;
 
     try {
-      // Fetch auction metrics (TVL, validator count)
       const metricsResponse = await csprCloudApi.getAuctionMetrics();
       const metrics = metricsResponse.data;
 
-      // Fetch price
       let csprPrice = FALLBACK_STATS.csprPrice;
       try {
         const rateResponse = await csprCloudApi.getCurrentRate(1);
         csprPrice = rateResponse.data.amount;
-      } catch (e) {
-        console.log('Price fetch failed, using fallback');
+      } catch {
+        console.log('Price fetch failed');
       }
 
-      // Get validators to count delegators
       let totalDelegators = FALLBACK_STATS.totalDelegators;
       try {
         const validatorsResponse = await csprCloudApi.getValidators(metrics.current_era_id, 100);
@@ -640,76 +635,32 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
           (sum, v) => sum + (v.delegators_number || 0),
           0
         );
-      } catch (e) {
-        console.log('Validators fetch failed for delegators count');
+      } catch {
+        console.log('Validators fetch failed');
       }
 
-      const totalStaked = motesToCSPR(metrics.total_active_era_stake);
-
       return {
-        totalStaked,
+        totalStaked: motesToCSPR(metrics.total_active_era_stake),
         activeValidators: metrics.active_validator_number,
         totalDelegators,
         csprPrice,
       };
-    } catch (error) {
-      console.error('CSPR.cloud fetch failed:', error);
+    } catch {
       return null;
     }
   }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
-      // First try CSPR.cloud via proxy (real live data)
       const cloudData = await fetchFromCsprCloud();
       if (cloudData) {
         setStats(cloudData);
         setIsLive(true);
-        setLoading(false);
-        return;
-      }
-
-      // Fallback to local API proxy
-      try {
-        const validatorsRes = await fetch('/api/validators?limit=100');
-        const priceRes = await fetch('/api/price?days=1');
-
-        let validatorStats = null;
-        let priceData = null;
-
-        if (validatorsRes.ok) {
-          const data = await validatorsRes.json();
-          if (data.stats) {
-            validatorStats = data.stats;
-          }
-        }
-
-        if (priceRes.ok) {
-          const data = await priceRes.json();
-          if (data.prices?.length > 0) {
-            priceData = data.prices[data.prices.length - 1][1];
-          }
-        }
-
-        if (validatorStats) {
-          setStats({
-            totalStaked: validatorStats.totalStaked,
-            activeValidators: validatorStats.activeValidators,
-            totalDelegators: validatorStats.totalDelegators,
-            csprPrice: priceData || FALLBACK_STATS.csprPrice,
-          });
-          setIsLive(true);
-        } else {
-          setStats(FALLBACK_STATS);
-        }
-      } catch (error) {
-        console.log('Using fallback network stats');
+      } else {
         setStats(FALLBACK_STATS);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
-
     fetchStats();
   }, [fetchFromCsprCloud]);
 
@@ -723,220 +674,179 @@ export const HomePage: React.FC<HomePageProps> = ({ isDark }) => {
   return (
     <Container>
       {/* Hero */}
-      <HeroSection $isDark={isDark}>
-        <HeroIcon>💎</HeroIcon>
-        <HeroTitle>StakeVue</HeroTitle>
-        <HeroSubtitle $isDark={isDark}>
-          The liquid staking protocol on Casper Network.
-          Stake CSPR, receive stCSPR tokens, and earn ~17% APY
-          while keeping full liquidity.
-        </HeroSubtitle>
-        <HeroButtons>
-          <PrimaryButton onClick={() => navigate('/stake')}>
-            🚀 Start Staking
-          </PrimaryButton>
-          <SecondaryButton $isDark={isDark} onClick={() => navigate('/guide')}>
-            📖 Learn More
-          </SecondaryButton>
-        </HeroButtons>
+      <HeroSection ref={heroRef}>
+        <HeroContent>
+          <HeroLabel className="hero-label">Liquid Staking on Casper</HeroLabel>
+          <HeroTitle className="hero-title">
+            Stake CSPR.
+            <span>Earn Rewards.</span>
+          </HeroTitle>
+          <HeroSubtitle className="hero-subtitle">
+            The liquid staking protocol that lets you earn ~17% APY while keeping
+            full liquidity. Stake your CSPR, receive stCSPR, and use it anywhere.
+          </HeroSubtitle>
+          <HeroButtons className="hero-buttons">
+            <PrimaryButton onClick={() => navigate('/stake')} data-cursor-hover>
+              Start Staking
+            </PrimaryButton>
+            <SecondaryButton onClick={() => navigate('/guide')} data-cursor-hover>
+              Learn More
+            </SecondaryButton>
+          </HeroButtons>
+        </HeroContent>
+        <ScrollIndicator>Scroll</ScrollIndicator>
       </HeroSection>
 
       {/* Stats */}
-      <StatsRow>
-        <StatCard $isDark={isDark} $gradient="linear-gradient(90deg, #30d158, #34c759)">
-          <StatIcon>📈</StatIcon>
-          <StatValue $color="#30d158">~17%</StatValue>
-          <StatLabel $isDark={isDark}>APY Rewards</StatLabel>
-        </StatCard>
-        <StatCard $isDark={isDark} $gradient="linear-gradient(90deg, #5856d6, #7a78e6)">
-          <StatIcon>⚡</StatIcon>
-          <StatValue $color="#5856d6">Instant</StatValue>
-          <StatLabel $isDark={isDark}>stCSPR Minting</StatLabel>
-        </StatCard>
-        <StatCard $isDark={isDark} $gradient="linear-gradient(90deg, #ff9f0a, #ffb84d)">
-          <StatIcon>🔓</StatIcon>
-          <StatValue $color="#ff9f0a">No Lock</StatValue>
-          <StatLabel $isDark={isDark}>Unstake Anytime</StatLabel>
-        </StatCard>
-        <StatCard $isDark={isDark} $gradient="linear-gradient(90deg, #ff2d55, #ff6b8a)">
-          <StatIcon>🛡️</StatIcon>
-          <StatValue $color="#ff2d55">Secure</StatValue>
-          <StatLabel $isDark={isDark}>Open Source</StatLabel>
-        </StatCard>
-      </StatsRow>
-
-      {/* Live Network Stats */}
-      <LiveStatsSection $isDark={isDark}>
-        <LiveStatsHeader>
-          <LiveStatsTitle $isDark={isDark}>Casper Network Stats</LiveStatsTitle>
-          <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
-        </LiveStatsHeader>
-        <LiveStatsGrid>
-          <LiveStatCard $isDark={isDark}>
-            {loading ? (
-              <LoadingStat $isDark={isDark} />
-            ) : (
-              <LiveStatValue $isDark={isDark}>
-                {formatNumber(stats?.totalStaked || 0)} CSPR
-              </LiveStatValue>
-            )}
-            <LiveStatLabel $isDark={isDark}>Total Staked</LiveStatLabel>
-          </LiveStatCard>
-
-          <LiveStatCard $isDark={isDark}>
-            {loading ? (
-              <LoadingStat $isDark={isDark} />
-            ) : (
-              <LiveStatValue $isDark={isDark}>
-                {stats?.activeValidators || 0}
-              </LiveStatValue>
-            )}
-            <LiveStatLabel $isDark={isDark}>Active Validators</LiveStatLabel>
-          </LiveStatCard>
-
-          <LiveStatCard $isDark={isDark}>
-            {loading ? (
-              <LoadingStat $isDark={isDark} />
-            ) : (
-              <LiveStatValue $isDark={isDark}>
-                {formatNumber(stats?.totalDelegators || 0)}
-              </LiveStatValue>
-            )}
-            <LiveStatLabel $isDark={isDark}>Delegators</LiveStatLabel>
-          </LiveStatCard>
-
-          <LiveStatCard $isDark={isDark}>
-            {loading ? (
-              <LoadingStat $isDark={isDark} />
-            ) : (
-              <LiveStatValue $isDark={isDark}>
-                ${stats?.csprPrice.toFixed(4) || '0.00'}
-              </LiveStatValue>
-            )}
-            <LiveStatLabel $isDark={isDark}>CSPR Price</LiveStatLabel>
-          </LiveStatCard>
-        </LiveStatsGrid>
-      </LiveStatsSection>
+      <StatsSection ref={statsRef}>
+        <StatsGrid>
+          <StatCard className="stat-card">
+            <StatValue>~17%</StatValue>
+            <StatLabel>
+              APY Rewards
+              <StatIndicator $live>Live</StatIndicator>
+            </StatLabel>
+          </StatCard>
+          <StatCard className="stat-card">
+            <StatValue>{loading ? '...' : formatNumber(stats?.totalStaked || 0)}</StatValue>
+            <StatLabel>
+              Total Staked
+              <StatIndicator $live={isLive}>{isLive ? 'Live' : 'Est'}</StatIndicator>
+            </StatLabel>
+          </StatCard>
+          <StatCard className="stat-card">
+            <StatValue>{loading ? '...' : stats?.activeValidators || 0}</StatValue>
+            <StatLabel>
+              Validators
+              <StatIndicator $live={isLive}>{isLive ? 'Live' : 'Est'}</StatIndicator>
+            </StatLabel>
+          </StatCard>
+          <StatCard className="stat-card">
+            <StatValue>${loading ? '...' : stats?.csprPrice.toFixed(4) || '0.00'}</StatValue>
+            <StatLabel>
+              CSPR Price
+              <StatIndicator $live={isLive}>{isLive ? 'Live' : 'Est'}</StatIndicator>
+            </StatLabel>
+          </StatCard>
+        </StatsGrid>
+      </StatsSection>
 
       {/* How it works */}
-      <Section>
+      <FeaturesSection ref={featuresRef}>
         <SectionHeader>
-          <SectionTitle $isDark={isDark}>How Does It Work?</SectionTitle>
-          <SectionSubtitle $isDark={isDark}>Three simple steps to start earning rewards</SectionSubtitle>
+          <SectionLabel>How it works</SectionLabel>
+          <SectionTitle>Three Steps to Start Earning</SectionTitle>
+          <SectionSubtitle>
+            Simple, secure, and transparent liquid staking
+          </SectionSubtitle>
         </SectionHeader>
-        <StepsGrid>
-          <StepCard $isDark={isDark} $step={1}>
-            <StepNumber $step={1}>1</StepNumber>
-            <StepIcon>🔗</StepIcon>
-            <StepTitle $isDark={isDark}>Connect Wallet</StepTitle>
-            <StepDescription $isDark={isDark}>
-              Connect your Casper wallet via CSPR.click.
-              Compatible with Casper Wallet, Ledger, and more.
-            </StepDescription>
-          </StepCard>
-
-          <StepCard $isDark={isDark} $step={2}>
-            <StepNumber $step={2}>2</StepNumber>
-            <StepIcon>💰</StepIcon>
-            <StepTitle $isDark={isDark}>Stake CSPR</StepTitle>
-            <StepDescription $isDark={isDark}>
-              Deposit any amount of CSPR. Instantly receive
-              stCSPR tokens at 1:1 ratio.
-            </StepDescription>
-          </StepCard>
-
-          <StepCard $isDark={isDark} $step={3}>
-            <StepNumber $step={3}>3</StepNumber>
-            <StepIcon>🚀</StepIcon>
-            <StepTitle $isDark={isDark}>Earn Rewards</StepTitle>
-            <StepDescription $isDark={isDark}>
-              Your CSPR earns ~17% APY. Use your stCSPR
+        <FeaturesGrid>
+          <FeatureCard className="feature-card">
+            <FeatureNumber>01</FeatureNumber>
+            <FeatureTitle>Connect Wallet</FeatureTitle>
+            <FeatureDescription>
+              Connect your Casper wallet via CSPR.click. Compatible with
+              Casper Wallet, Ledger, and more.
+            </FeatureDescription>
+          </FeatureCard>
+          <FeatureCard className="feature-card">
+            <FeatureNumber>02</FeatureNumber>
+            <FeatureTitle>Stake CSPR</FeatureTitle>
+            <FeatureDescription>
+              Deposit any amount of CSPR. Instantly receive stCSPR tokens
+              at 1:1 ratio representing your stake.
+            </FeatureDescription>
+          </FeatureCard>
+          <FeatureCard className="feature-card">
+            <FeatureNumber>03</FeatureNumber>
+            <FeatureTitle>Earn Rewards</FeatureTitle>
+            <FeatureDescription>
+              Your CSPR earns ~17% APY automatically. Use your stCSPR
               freely in DeFi or unstake anytime.
-            </StepDescription>
-          </StepCard>
-        </StepsGrid>
+            </FeatureDescription>
+          </FeatureCard>
+        </FeaturesGrid>
+      </FeaturesSection>
 
-        <ExampleBox $isDark={isDark}>
-          <ExampleTitle $isDark={isDark}>
-            💡 Real Example
-          </ExampleTitle>
-          <ExampleFlow>
-            <ExampleStep $isDark={isDark}>1000 CSPR</ExampleStep>
-            <Arrow>→</Arrow>
-            <ExampleStep $isDark={isDark}>Stake</ExampleStep>
-            <Arrow>→</Arrow>
-            <ExampleStep $isDark={isDark}>1000 stCSPR</ExampleStep>
-            <Arrow>→</Arrow>
-            <ExampleStep $isDark={isDark} $highlight>+170 CSPR/year</ExampleStep>
-          </ExampleFlow>
-        </ExampleBox>
-      </Section>
+      {/* Marquee */}
+      <MarqueeSection>
+        <TextMarquee text="StakeVue" outline duration={25} />
+      </MarqueeSection>
 
       {/* Benefits */}
-      <Section>
+      <BenefitsSection>
         <SectionHeader>
-          <SectionTitle $isDark={isDark}>Why StakeVue?</SectionTitle>
-          <SectionSubtitle $isDark={isDark}>The best liquid staking experience on Casper</SectionSubtitle>
+          <SectionLabel>Why StakeVue</SectionLabel>
+          <SectionTitle>Built for the Casper Ecosystem</SectionTitle>
+          <SectionSubtitle>
+            The most advanced liquid staking solution
+          </SectionSubtitle>
         </SectionHeader>
-        <BenefitsGrid>
-          <BenefitCard $isDark={isDark} $color="#30d158">
-            <BenefitIconBox $bg="rgba(48, 209, 88, 0.15)">🔓</BenefitIconBox>
+        <BenefitsGrid className="benefits-grid">
+          <BenefitCard className="benefit-card">
+            <BenefitIcon><UnlockIcon /></BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>Full Liquidity</BenefitTitle>
-              <BenefitDescription $isDark={isDark}>
+              <BenefitTitle>Full Liquidity</BenefitTitle>
+              <BenefitDescription>
                 Your stCSPR tokens are fully liquid. Trade, transfer, or use in DeFi
                 while earning staking rewards.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
-
-          <BenefitCard $isDark={isDark} $color="#5856d6">
-            <BenefitIconBox $bg="rgba(88, 86, 214, 0.15)">📈</BenefitIconBox>
+          <BenefitCard className="benefit-card">
+            <BenefitIcon><TrendingIcon /></BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>~17% APY Returns</BenefitTitle>
-              <BenefitDescription $isDark={isDark}>
+              <BenefitTitle>~17% APY Returns</BenefitTitle>
+              <BenefitDescription>
                 Earn automatic staking rewards without any effort.
                 Watch your balance grow over time.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
-
-          <BenefitCard $isDark={isDark} $color="#ff2d55">
-            <BenefitIconBox $bg="rgba(255, 45, 85, 0.15)">🛡️</BenefitIconBox>
+          <BenefitCard className="benefit-card">
+            <BenefitIcon><ShieldIcon /></BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>Secure & Transparent</BenefitTitle>
-              <BenefitDescription $isDark={isDark}>
+              <BenefitTitle>Secure & Transparent</BenefitTitle>
+              <BenefitDescription>
                 Smart contract follows Casper security best practices.
-                Open source and fully verifiable on GitHub.
+                Open source and fully verifiable.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
-
-          <BenefitCard $isDark={isDark} $color="#ff9f0a">
-            <BenefitIconBox $bg="rgba(255, 159, 10, 0.15)">⚡</BenefitIconBox>
+          <BenefitCard className="benefit-card">
+            <BenefitIcon><ZapIcon /></BenefitIcon>
             <BenefitContent>
-              <BenefitTitle $isDark={isDark}>Multi-Validator</BenefitTitle>
-              <BenefitDescription $isDark={isDark}>
+              <BenefitTitle>Multi-Validator</BenefitTitle>
+              <BenefitDescription>
                 Automatic distribution across top validators to
                 minimize risk and maximize returns.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
         </BenefitsGrid>
-      </Section>
+      </BenefitsSection>
 
       {/* CTA */}
       <CTASection>
-        <CTATitle>Ready to Start Earning?</CTATitle>
+        <CTATitle>
+          Ready to <span>Start Earning</span>?
+        </CTATitle>
         <CTASubtitle>
-          Join thousands of CSPR holders earning passive income with StakeVue
+          Join the Casper community earning passive income with StakeVue
         </CTASubtitle>
-        <CTAButton onClick={() => navigate('/stake')}>
-          🚀 Start Staking Now
-        </CTAButton>
+        <PrimaryButton onClick={() => navigate('/stake')} data-cursor-hover>
+          Start Staking Now
+        </PrimaryButton>
       </CTASection>
 
-      <ToastComponent />
+      {/* Footer Marquee */}
+      <TextMarquee
+        text="Liquid Staking"
+        duration={30}
+        direction="right"
+      />
     </Container>
   );
 };
+
+export default HomePage;
