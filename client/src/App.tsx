@@ -55,6 +55,50 @@ const GlobalStyle = createGlobalStyle`
     overflow-x: hidden;
   }
 
+  /* Fix CSPR Click dropdown hover issue */
+  [class*="AccountMenu"],
+  [class*="Dropdown"],
+  [class*="Popover"],
+  [class*="click-ui"] {
+    pointer-events: auto !important;
+    z-index: 9999 !important;
+  }
+
+  /* Ensure dropdown menu stays open on hover */
+  [class*="AccountMenu"] > div,
+  [class*="MenuList"],
+  [class*="MenuItem"],
+  [class*="click-ui"] * {
+    pointer-events: auto !important;
+  }
+
+  /* Add padding to prevent gap between trigger and dropdown */
+  [class*="AccountMenu"]::before,
+  [class*="Dropdown"]::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: -10px;
+    right: -10px;
+    height: 15px;
+    pointer-events: auto;
+  }
+
+  /* Ensure CSPR Click top bar and dropdowns are above everything */
+  [class*="TopBar"],
+  [class*="click-ui"],
+  #cspr-click-ui {
+    z-index: 9999 !important;
+    position: relative;
+  }
+
+  /* Fix dropdown overflow and ensure full visibility */
+  [class*="AccountMenu"] ul,
+  [class*="MenuList"] {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
   /* Selection */
   ::selection {
     background: ${colors.accent.primary};
