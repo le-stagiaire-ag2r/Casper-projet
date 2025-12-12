@@ -100,26 +100,25 @@ const HeroSubtitle = styled.p`
   position: relative;
 `;
 
-// Section Navigation - Glass effect
+// Section Navigation - Transparent, just floating pills
 const SectionNav = styled.nav`
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(20, 10, 30, 0.8);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  background: transparent;
+  padding: ${spacing[4]} 0;
 `;
 
 const NavInner = styled.div`
   max-width: ${layout.contentWidth};
   margin: 0 auto;
-  padding: ${spacing[3]} ${spacing[6]};
+  padding: 0 ${spacing[6]};
   display: flex;
   justify-content: center;
-  gap: ${spacing[3]};
+  gap: ${spacing[2]};
 
   @media (max-width: 768px) {
-    padding: ${spacing[3]} ${spacing[4]};
+    padding: 0 ${spacing[4]};
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 
@@ -137,17 +136,18 @@ const NavButton = styled.button<{ $active?: boolean }>`
   text-transform: uppercase;
   letter-spacing: ${typography.letterSpacing.wider};
   color: ${props => props.$active ? colors.text.primary : colors.text.tertiary};
-  background: ${props => props.$active ? 'rgba(139, 92, 246, 0.2)' : 'transparent'};
-  border: 1px solid ${props => props.$active ? 'rgba(139, 92, 246, 0.4)' : 'transparent'};
+  background: ${props => props.$active ? 'rgba(139, 92, 246, 0.25)' : 'rgba(20, 10, 30, 0.6)'};
+  border: 1px solid ${props => props.$active ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
   border-radius: ${layout.borderRadius.full};
+  backdrop-filter: blur(8px);
   cursor: pointer;
   transition: all ${effects.transition.fast};
   white-space: nowrap;
 
   &:hover {
     color: ${colors.text.primary};
-    background: rgba(139, 92, 246, 0.1);
-    border-color: rgba(139, 92, 246, 0.2);
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.3);
   }
 `;
 
