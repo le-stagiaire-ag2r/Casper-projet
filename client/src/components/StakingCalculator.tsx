@@ -33,8 +33,8 @@ const Container = styled.div<{ $isDark: boolean }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #30d158, #5856d6, #ff9f0a);
+    height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
   }
 `;
 
@@ -268,13 +268,12 @@ const SliderLabel = styled.span<{ $isDark: boolean }>`
 `;
 
 const ResultsSection = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(48, 209, 88, 0.08)'
-    : 'rgba(48, 209, 88, 0.05)'};
-  border: 1px solid rgba(48, 209, 88, 0.2);
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
   border-radius: 20px;
   padding: 24px;
   margin-top: 24px;
+  backdrop-filter: blur(10px);
 `;
 
 const ResultsHeader = styled.div`
@@ -302,18 +301,17 @@ const ResultsGrid = styled.div`
 `;
 
 const ResultCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 16px;
   padding: 20px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 
   ${props => props.$highlight && css`
-    background: linear-gradient(135deg, rgba(48, 209, 88, 0.15), rgba(88, 86, 214, 0.1));
-    border: 1px solid rgba(48, 209, 88, 0.3);
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.25);
     animation: ${pulse} 2s ease-in-out infinite;
   `}
 `;

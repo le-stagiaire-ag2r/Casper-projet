@@ -9,15 +9,11 @@ const pulse = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'linear-gradient(135deg, rgba(88, 86, 214, 0.1) 0%, rgba(255, 45, 85, 0.1) 100%)'
-    : 'linear-gradient(135deg, rgba(88, 86, 214, 0.08) 0%, rgba(255, 45, 85, 0.08) 100%)'};
+  background: rgba(139, 92, 246, 0.06);
   border-radius: 24px;
   padding: 32px;
-  backdrop-filter: blur(20px);
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(88, 86, 214, 0.2)'
-    : 'rgba(88, 86, 214, 0.15)'};
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(139, 92, 246, 0.15);
   position: relative;
   overflow: hidden;
 
@@ -27,8 +23,8 @@ const Container = styled.div<{ $isDark: boolean }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #5856d6, #ff2d55, #af52de);
+    height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
   }
 `;
 

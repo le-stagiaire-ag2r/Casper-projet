@@ -4,10 +4,19 @@
 export const colors = {
   // Primary palette - Deep dark with single accent
   background: {
-    primary: '#0a0a0a',
-    secondary: '#111111',
-    tertiary: '#1a1a1a',
-    elevated: '#1f1f1f',
+    primary: 'transparent',
+    secondary: 'rgba(255, 255, 255, 0.03)',
+    tertiary: 'rgba(255, 255, 255, 0.05)',
+    elevated: 'rgba(255, 255, 255, 0.08)',
+  },
+
+  // Glass effect backgrounds - see through to galaxy
+  glass: {
+    light: 'rgba(255, 255, 255, 0.03)',
+    medium: 'rgba(255, 255, 255, 0.05)',
+    dark: 'rgba(255, 255, 255, 0.08)',
+    purple: 'rgba(139, 92, 246, 0.08)',
+    purpleStrong: 'rgba(139, 92, 246, 0.12)',
   },
 
   // Text colors - High contrast
