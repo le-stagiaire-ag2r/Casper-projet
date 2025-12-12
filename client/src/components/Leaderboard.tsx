@@ -35,8 +35,8 @@ const Title = styled.h3<{ $isDark: boolean }>`
 
 const Badge = styled.span<{ $isLive?: boolean }>`
   background: ${props => props.$isLive
-    ? 'linear-gradient(135deg, #a78bfa, #8b5cf6)'
-    : 'linear-gradient(135deg, #c4b5fd, #ffaa00)'};
+    ? 'linear-gradient(135deg, #30d158, #28a745)'
+    : 'linear-gradient(135deg, #ff9f0a, #ffaa00)'};
   color: ${props => props.$isLive ? '#fff' : '#1a1a2e'};
   font-size: 0.7rem;
   padding: 4px 8px;
@@ -165,7 +165,7 @@ const YouBadge = styled.span`
 
 const AmountCell = styled.div<{ $isDark: boolean }>`
   font-weight: 600;
-  color: ${props => props.$isDark ? '#a78bfa' : '#8b5cf6'};
+  color: ${props => props.$isDark ? '#30d158' : '#28a745'};
   text-align: right;
 `;
 

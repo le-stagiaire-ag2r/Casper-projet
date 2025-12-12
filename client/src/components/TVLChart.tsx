@@ -35,8 +35,8 @@ const Title = styled.h3<{ $isDark: boolean }>`
 
 const LiveBadge = styled.span<{ $isLive?: boolean }>`
   background: ${props => props.$isLive
-    ? 'linear-gradient(135deg, #a78bfa, #8b5cf6)'
-    : 'linear-gradient(135deg, #c4b5fd, #ffaa00)'};
+    ? 'linear-gradient(135deg, #30d158, #28a745)'
+    : 'linear-gradient(135deg, #ff9f0a, #ffaa00)'};
   color: ${props => props.$isLive ? 'white' : '#1a1a2e'};
   font-size: 0.65rem;
   padding: 3px 8px;
@@ -53,12 +53,12 @@ const LiveBadge = styled.span<{ $isLive?: boolean }>`
 const TVLValue = styled.div<{ $isDark: boolean }>`
   font-size: 1.8rem;
   font-weight: 700;
-  color: ${props => props.$isDark ? '#a78bfa' : '#8b5cf6'};
+  color: ${props => props.$isDark ? '#30d158' : '#28a745'};
 `;
 
 const TVLChange = styled.span<{ $positive: boolean }>`
   font-size: 0.9rem;
-  color: ${props => props.$positive ? '#a78bfa' : '#f472b6'};
+  color: ${props => props.$positive ? '#30d158' : '#ff3b30'};
   margin-left: 8px;
 `;
 

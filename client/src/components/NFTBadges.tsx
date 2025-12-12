@@ -70,7 +70,7 @@ const BadgeCard = styled.div<{ $isDark: boolean; $unlocked: boolean; $rarity: st
       case 'legendary': return '#ffcc00';
       case 'epic': return '#af52de';
       case 'rare': return '#5856d6';
-      default: return '#a78bfa';
+      default: return '#30d158';
     }
   }};
   opacity: ${props => props.$unlocked ? 1 : 0.5};
@@ -99,7 +99,7 @@ const BadgeIconWrapper = styled.div<{ $unlocked: boolean; $rarity: string }>`
       case 'legendary': return 'linear-gradient(135deg, #ffcc00, #ff9500)';
       case 'epic': return 'linear-gradient(135deg, #af52de, #5856d6)';
       case 'rare': return 'linear-gradient(135deg, #5856d6, #007aff)';
-      default: return 'linear-gradient(135deg, #a78bfa, #8b5cf6)';
+      default: return 'linear-gradient(135deg, #30d158, #34c759)';
     }
   }};
   animation: ${props => props.$unlocked ? float : 'none'} 3s ease-in-out infinite;
@@ -135,7 +135,7 @@ const RarityBadge = styled.span<{ $rarity: string }>`
       case 'legendary': return 'linear-gradient(90deg, #ffcc00, #ff9500, #ffcc00)';
       case 'epic': return 'linear-gradient(90deg, #af52de, #5856d6, #af52de)';
       case 'rare': return 'linear-gradient(90deg, #5856d6, #007aff, #5856d6)';
-      default: return '#a78bfa';
+      default: return '#30d158';
     }
   }};
   background-size: 200% auto;
@@ -252,7 +252,7 @@ const ModalContent = styled.div<{ $isDark: boolean; $rarity: string }>`
       case 'legendary': return '#ffcc00';
       case 'epic': return '#af52de';
       case 'rare': return '#5856d6';
-      default: return '#a78bfa';
+      default: return '#30d158';
     }
   }};
 `;
@@ -271,7 +271,7 @@ const ModalBadge = styled.div<{ $rarity: string }>`
       case 'legendary': return 'linear-gradient(135deg, #ffcc00, #ff9500)';
       case 'epic': return 'linear-gradient(135deg, #af52de, #5856d6)';
       case 'rare': return 'linear-gradient(135deg, #5856d6, #007aff)';
-      default: return 'linear-gradient(135deg, #a78bfa, #8b5cf6)';
+      default: return 'linear-gradient(135deg, #30d158, #34c759)';
     }
   }};
   animation: ${float} 3s ease-in-out infinite;

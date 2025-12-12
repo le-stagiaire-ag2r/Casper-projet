@@ -129,8 +129,8 @@ const TransactionIcon = styled.div<{ type: string }>`
   justify-content: center;
   font-size: 20px;
   background: ${(props) => {
-    if (props.type === 'stake') return 'rgba(167, 139, 250, 0.15)';
-    if (props.type === 'unstake') return 'rgba(196, 181, 253, 0.15)';
+    if (props.type === 'stake') return 'rgba(48, 209, 88, 0.15)';
+    if (props.type === 'unstake') return 'rgba(255, 159, 10, 0.15)';
     return 'rgba(88, 86, 214, 0.15)';
   }};
 `;
@@ -160,8 +160,8 @@ const TransactionAmount = styled.div<{ type: string }>`
   font-size: 16px;
   font-weight: 700;
   color: ${(props) => {
-    if (props.type === 'stake') return '#a78bfa';
-    if (props.type === 'unstake') return '#c4b5fd';
+    if (props.type === 'stake') return '#30d158';
+    if (props.type === 'unstake') return '#ff9f0a';
     return '#5856d6';
   }};
   margin-bottom: 4px;
@@ -190,12 +190,12 @@ const TransactionHash = styled.a<{ $isDark: boolean }>`
 
 const CopyButton = styled.button<{ $isDark: boolean; $copied: boolean }>`
   background: ${props => props.$copied
-    ? 'rgba(167, 139, 250, 0.2)'
+    ? 'rgba(48, 209, 88, 0.2)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.05)'
       : 'rgba(0, 0, 0, 0.05)'};
   border: 1px solid ${props => props.$copied
-    ? 'rgba(167, 139, 250, 0.3)'
+    ? 'rgba(48, 209, 88, 0.3)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.1)'
       : 'rgba(0, 0, 0, 0.1)'};
@@ -203,7 +203,7 @@ const CopyButton = styled.button<{ $isDark: boolean; $copied: boolean }>`
   padding: 4px 8px;
   font-size: 11px;
   color: ${props => props.$copied
-    ? '#a78bfa'
+    ? '#30d158'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.5)'
       : 'rgba(0, 0, 0, 0.5)'};
@@ -215,11 +215,11 @@ const CopyButton = styled.button<{ $isDark: boolean; $copied: boolean }>`
 
   &:hover {
     background: ${props => props.$copied
-      ? 'rgba(167, 139, 250, 0.3)'
+      ? 'rgba(48, 209, 88, 0.3)'
       : props.$isDark
         ? 'rgba(255, 255, 255, 0.1)'
         : 'rgba(0, 0, 0, 0.1)'};
-    color: ${props => props.$copied ? '#a78bfa' : '#5856d6'};
+    color: ${props => props.$copied ? '#30d158' : '#5856d6'};
   }
 `;
 

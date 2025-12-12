@@ -34,7 +34,7 @@ const Container = styled.div<{ $isDark: boolean }>`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #a78bfa, #5856d6, #c4b5fd);
+    background: linear-gradient(90deg, #30d158, #5856d6, #ff9f0a);
   }
 `;
 
@@ -56,7 +56,7 @@ const Title = styled.h3<{ $isDark: boolean }>`
 `;
 
 const APYBadge = styled.div`
-  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+  background: linear-gradient(135deg, #30d158, #34c759);
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
@@ -65,7 +65,7 @@ const APYBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 15px rgba(167, 139, 250, 0.3);
+  box-shadow: 0 4px 15px rgba(48, 209, 88, 0.3);
 `;
 
 const InputSection = styled.div`
@@ -212,7 +212,7 @@ const SliderFill = styled.div<{ $percent: number }>`
   top: 0;
   height: 100%;
   width: ${props => props.$percent}%;
-  background: linear-gradient(90deg, #a78bfa, #5856d6);
+  background: linear-gradient(90deg, #30d158, #5856d6);
   border-radius: 4px;
   transition: width 0.1s ease;
 `;
@@ -269,9 +269,9 @@ const SliderLabel = styled.span<{ $isDark: boolean }>`
 
 const ResultsSection = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
-    ? 'rgba(167, 139, 250, 0.08)'
-    : 'rgba(167, 139, 250, 0.05)'};
-  border: 1px solid rgba(167, 139, 250, 0.2);
+    ? 'rgba(48, 209, 88, 0.08)'
+    : 'rgba(48, 209, 88, 0.05)'};
+  border: 1px solid rgba(48, 209, 88, 0.2);
   border-radius: 20px;
   padding: 24px;
   margin-top: 24px;
@@ -312,8 +312,8 @@ const ResultCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   overflow: hidden;
 
   ${props => props.$highlight && css`
-    background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(88, 86, 214, 0.1));
-    border: 1px solid rgba(167, 139, 250, 0.3);
+    background: linear-gradient(135deg, rgba(48, 209, 88, 0.15), rgba(88, 86, 214, 0.1));
+    border: 1px solid rgba(48, 209, 88, 0.3);
     animation: ${pulse} 2s ease-in-out infinite;
   `}
 `;
@@ -337,9 +337,9 @@ const ResultLabel = styled.div<{ $isDark: boolean }>`
 const ResultValue = styled.div<{ $highlight?: boolean }>`
   font-size: 24px;
   font-weight: 800;
-  color: ${props => props.$highlight ? '#a78bfa' : 'inherit'};
+  color: ${props => props.$highlight ? '#30d158' : 'inherit'};
   background: ${props => props.$highlight
-    ? 'linear-gradient(135deg, #a78bfa, #8b5cf6)'
+    ? 'linear-gradient(135deg, #30d158, #34c759)'
     : 'none'};
   -webkit-background-clip: ${props => props.$highlight ? 'text' : 'none'};
   -webkit-text-fill-color: ${props => props.$highlight ? 'transparent' : 'inherit'};
@@ -402,7 +402,7 @@ const TotalValue = styled.div<{ $isDark: boolean }>`
 
 const TotalProfit = styled.span`
   font-size: 18px;
-  color: #a78bfa;
+  color: #30d158;
   font-weight: 700;
 `;
 
@@ -410,10 +410,10 @@ const Disclaimer = styled.div<{ $isDark: boolean }>`
   margin-top: 20px;
   padding: 14px 16px;
   background: ${props => props.$isDark
-    ? 'rgba(196, 181, 253, 0.1)'
-    : 'rgba(196, 181, 253, 0.08)'};
+    ? 'rgba(255, 159, 10, 0.1)'
+    : 'rgba(255, 159, 10, 0.08)'};
   border-radius: 12px;
-  border: 1px solid rgba(196, 181, 253, 0.2);
+  border: 1px solid rgba(255, 159, 10, 0.2);
   font-size: 12px;
   color: ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.7)'
@@ -504,8 +504,8 @@ export const StakingCalculator: React.FC = () => {
           </Label>
         </SliderHeader>
         <SliderTrack $isDark={isDark}>
-          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #a78bfa, #c4b5fd)' }} />
-          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)' }} />
+          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #30d158, #ff9f0a)' }} />
+          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #30d158, #34c759)' }} />
           <Slider
             type="range"
             min="1"
