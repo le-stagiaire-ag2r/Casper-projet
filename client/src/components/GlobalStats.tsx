@@ -47,9 +47,9 @@ const LiveBadge = styled.span<{ $isLive?: boolean }>`
   align-items: center;
   gap: 6px;
   background: ${props => props.$isLive !== false
-    ? 'rgba(167, 139, 250, 0.15)'
-    : 'rgba(196, 181, 253, 0.15)'};
-  color: ${props => props.$isLive !== false ? '#a78bfa' : '#c4b5fd'};
+    ? 'rgba(48, 209, 88, 0.15)'
+    : 'rgba(255, 159, 10, 0.15)'};
+  color: ${props => props.$isLive !== false ? '#30d158' : '#ff9f0a'};
   font-size: 11px;
   font-weight: 700;
   padding: 4px 10px;
@@ -60,7 +60,7 @@ const LiveBadge = styled.span<{ $isLive?: boolean }>`
     content: '';
     width: 6px;
     height: 6px;
-    background: ${props => props.$isLive !== false ? '#a78bfa' : '#c4b5fd'};
+    background: ${props => props.$isLive !== false ? '#30d158' : '#ff9f0a'};
     border-radius: 50%;
     animation: ${pulse} 1.5s infinite;
   }
@@ -110,7 +110,7 @@ const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   font-size: 28px;
   font-weight: 800;
   color: ${props => props.$highlight
-    ? '#a78bfa'
+    ? '#30d158'
     : props.$isDark ? '#fff' : '#1a1a2e'};
   letter-spacing: -1px;
 `;
@@ -118,7 +118,7 @@ const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
 const StatSubtext = styled.div<{ $isDark: boolean; $positive?: boolean }>`
   font-size: 12px;
   color: ${props => props.$positive
-    ? '#a78bfa'
+    ? '#30d158'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.4)'
       : 'rgba(0, 0, 0, 0.4)'};

@@ -38,8 +38,8 @@ const Title = styled.h3<{ $isDark: boolean }>`
 
 const LiveBadge = styled.span`
   font-size: 10px;
-  background: rgba(167, 139, 250, 0.15);
-  color: #a78bfa;
+  background: rgba(48, 209, 88, 0.15);
+  color: #30d158;
   padding: 3px 8px;
   border-radius: 10px;
   font-weight: 600;
@@ -199,7 +199,7 @@ const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   font-size: 13px;
   font-weight: 600;
   color: ${props => props.$highlight
-    ? '#a78bfa'
+    ? '#30d158'
     : props.$isDark ? '#fff' : '#1a1a2e'};
   text-align: right;
 
@@ -218,9 +218,9 @@ const StatusBadge = styled.span<{ $active: boolean }>`
   padding: 4px 8px;
   border-radius: 6px;
   background: ${props => props.$active
-    ? 'rgba(167, 139, 250, 0.2)'
-    : 'rgba(244, 114, 182, 0.2)'};
-  color: ${props => props.$active ? '#a78bfa' : '#f472b6'};
+    ? 'rgba(48, 209, 88, 0.2)'
+    : 'rgba(255, 69, 58, 0.2)'};
+  color: ${props => props.$active ? '#30d158' : '#ff453a'};
 
   &::before {
     content: '';

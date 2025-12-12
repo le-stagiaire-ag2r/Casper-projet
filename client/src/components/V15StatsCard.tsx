@@ -40,7 +40,7 @@ const VersionBadge = styled.div`
 const LiveDot = styled.span`
   width: 6px;
   height: 6px;
-  background: #a78bfa;
+  background: #30d158;
   border-radius: 50%;
   animation: ${pulse} 2s ease-in-out infinite;
 `;
@@ -72,15 +72,15 @@ const StatsGrid = styled.div`
 const StatCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   background: ${props => props.$highlight
     ? props.$isDark
-      ? 'linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(88, 86, 214, 0.1) 100%)'
-      : 'linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(88, 86, 214, 0.12) 100%)'
+      ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.15) 0%, rgba(88, 86, 214, 0.1) 100%)'
+      : 'linear-gradient(135deg, rgba(48, 209, 88, 0.2) 0%, rgba(88, 86, 214, 0.12) 100%)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.03)'
       : 'rgba(0, 0, 0, 0.02)'};
   border-radius: 16px;
   padding: 16px;
   border: 1px solid ${props => props.$highlight
-    ? 'rgba(167, 139, 250, 0.3)'
+    ? 'rgba(48, 209, 88, 0.3)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.05)'
       : 'rgba(0, 0, 0, 0.05)'};
@@ -118,10 +118,10 @@ const RateChangeIndicator = styled.span<{ $positive: boolean }>`
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: ${props => props.$positive ? '#a78bfa' : '#f472b6'};
+  color: ${props => props.$positive ? '#30d158' : '#ff453a'};
   background: ${props => props.$positive
-    ? 'rgba(167, 139, 250, 0.15)'
-    : 'rgba(244, 114, 182, 0.15)'};
+    ? 'rgba(48, 209, 88, 0.15)'
+    : 'rgba(255, 69, 58, 0.15)'};
   padding: 2px 8px;
   border-radius: 6px;
   margin-left: 8px;
@@ -173,8 +173,8 @@ export const V15StatsCard: React.FC = () => {
 
   return (
     <Container $isDark={isDark}>
-      <VersionBadge style={{ background: isLive ? 'linear-gradient(135deg, #a78bfa 0%, #5856d6 100%)' : 'linear-gradient(135deg, #c4b5fd 0%, #ff2d55 100%)' }}>
-        <LiveDot style={{ background: isLive ? '#a78bfa' : '#c4b5fd' }} />
+      <VersionBadge style={{ background: isLive ? 'linear-gradient(135deg, #30d158 0%, #5856d6 100%)' : 'linear-gradient(135deg, #ff9f0a 0%, #ff2d55 100%)' }}>
+        <LiveDot style={{ background: isLive ? '#30d158' : '#ff9f0a' }} />
         {isLive ? 'LIVE' : 'CACHED'}
       </VersionBadge>
 
@@ -203,7 +203,7 @@ export const V15StatsCard: React.FC = () => {
           <StatLabel $isDark={isDark}>
             Exchange Rate
           </StatLabel>
-          <StatValue $isDark={isDark} $color="#a78bfa">
+          <StatValue $isDark={isDark} $color="#30d158">
             {exchangeRate.toFixed(4)}
             {rateChange !== 0 && (
               <RateChangeIndicator $positive={rateChange > 0}>

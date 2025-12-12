@@ -50,9 +50,9 @@ const StatusBadge = styled.div<{ $enabled: boolean }>`
   align-items: center;
   gap: 6px;
   background: ${props => props.$enabled
-    ? 'rgba(167, 139, 250, 0.15)'
+    ? 'rgba(48, 209, 88, 0.15)'
     : 'rgba(255, 59, 48, 0.15)'};
-  color: ${props => props.$enabled ? '#a78bfa' : '#f472b6'};
+  color: ${props => props.$enabled ? '#30d158' : '#ff3b30'};
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -63,7 +63,7 @@ const StatusDot = styled.span<{ $enabled: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${props => props.$enabled ? '#a78bfa' : '#f472b6'};
+  background: ${props => props.$enabled ? '#30d158' : '#ff3b30'};
   animation: ${props => props.$enabled ? pulse : 'none'} 2s infinite;
 `;
 
