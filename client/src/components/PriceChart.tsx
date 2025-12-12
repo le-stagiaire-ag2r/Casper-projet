@@ -48,8 +48,8 @@ const Title = styled.h3<{ $isDark: boolean }>`
 
 const Badge = styled.span<{ $isLive?: boolean }>`
   background: ${props => props.$isLive
-    ? 'linear-gradient(135deg, #30d158, #28a745)'
-    : 'linear-gradient(135deg, #ff9f0a, #ffaa00)'};
+    ? 'linear-gradient(135deg, #a78bfa, #8b5cf6)'
+    : 'linear-gradient(135deg, #c4b5fd, #ffaa00)'};
   color: ${props => props.$isLive ? '#fff' : '#1a1a2e'};
   font-size: 0.7rem;
   padding: 4px 8px;
@@ -109,7 +109,7 @@ const CurrentPrice = styled.div<{ $isDark: boolean }>`
 const PriceChange = styled.div<{ $positive: boolean }>`
   font-size: 14px;
   font-weight: 600;
-  color: ${props => props.$positive ? '#30d158' : '#ff453a'};
+  color: ${props => props.$positive ? '#a78bfa' : '#f472b6'};
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -130,7 +130,7 @@ const ChartSVG = styled.svg`
 
 const ChartPath = styled.path<{ $positive: boolean }>`
   fill: none;
-  stroke: ${props => props.$positive ? '#30d158' : '#ff453a'};
+  stroke: ${props => props.$positive ? '#a78bfa' : '#f472b6'};
   stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -150,7 +150,7 @@ const GridLine = styled.line<{ $isDark: boolean }>`
 `;
 
 const DataPoint = styled.circle<{ $positive: boolean }>`
-  fill: ${props => props.$positive ? '#30d158' : '#ff453a'};
+  fill: ${props => props.$positive ? '#a78bfa' : '#f472b6'};
   stroke: #fff;
   stroke-width: 2;
   opacity: 0;
@@ -270,7 +270,7 @@ const HoverLine = styled.line<{ $isDark: boolean }>`
 `;
 
 const HoverDot = styled.circle<{ $positive: boolean }>`
-  fill: ${props => props.$positive ? '#30d158' : '#ff453a'};
+  fill: ${props => props.$positive ? '#a78bfa' : '#f472b6'};
   stroke: #fff;
   stroke-width: 2;
 `;
@@ -410,8 +410,8 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
           >
             <defs>
               <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor={isPositive ? '#30d158' : '#ff453a'} stopOpacity="0.4" />
-                <stop offset="100%" stopColor={isPositive ? '#30d158' : '#ff453a'} stopOpacity="0" />
+                <stop offset="0%" stopColor={isPositive ? '#a78bfa' : '#f472b6'} stopOpacity="0.4" />
+                <stop offset="100%" stopColor={isPositive ? '#a78bfa' : '#f472b6'} stopOpacity="0" />
               </linearGradient>
             </defs>
 
@@ -512,7 +512,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ isDark }) => {
         </StatItem>
         <StatItem>
           <StatLabel $isDark={isDark}>{selectedTimeframe.label} Change</StatLabel>
-          <StatValue $isDark={isDark} style={{ color: isPositive ? '#30d158' : '#ff453a' }}>
+          <StatValue $isDark={isDark} style={{ color: isPositive ? '#a78bfa' : '#f472b6' }}>
             {isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%
           </StatValue>
         </StatItem>

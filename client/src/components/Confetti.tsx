@@ -43,12 +43,12 @@ const ConfettiPiece = styled.div<{
 const COLORS = [
   '#ff2d55', // Pink
   '#5856d6', // Purple
-  '#30d158', // Green
-  '#ff9f0a', // Orange
+  '#a78bfa', // Light purple
+  '#c4b5fd', // Soft purple
   '#af52de', // Magenta
-  '#007aff', // Blue
-  '#ffcc00', // Yellow
-  '#00c7be', // Teal
+  '#8b5cf6', // Violet
+  '#f472b6', // Pink
+  '#9333ea', // Deep purple
 ];
 
 interface ConfettiProps {

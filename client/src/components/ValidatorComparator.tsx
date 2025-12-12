@@ -108,15 +108,15 @@ const ComparisonGrid = styled.div`
 const ValidatorCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   background: ${props => props.$highlight
     ? props.$isDark
-      ? 'rgba(48, 209, 88, 0.1)'
-      : 'rgba(48, 209, 88, 0.08)'
+      ? 'rgba(167, 139, 250, 0.1)'
+      : 'rgba(167, 139, 250, 0.08)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.03)'
       : 'rgba(0, 0, 0, 0.02)'};
   border-radius: 16px;
   padding: 20px;
   border: 1px solid ${props => props.$highlight
-    ? 'rgba(48, 209, 88, 0.3)'
+    ? 'rgba(167, 139, 250, 0.3)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.1)'
       : 'rgba(0, 0, 0, 0.08)'};
@@ -198,8 +198,8 @@ const StatRow = styled.div<{ $isDark: boolean; $isWinner?: boolean }>`
   padding: 10px 12px;
   background: ${props => props.$isWinner
     ? props.$isDark
-      ? 'rgba(48, 209, 88, 0.1)'
-      : 'rgba(48, 209, 88, 0.08)'
+      ? 'rgba(167, 139, 250, 0.1)'
+      : 'rgba(167, 139, 250, 0.08)'
     : 'transparent'};
   border-radius: 8px;
 `;
@@ -215,7 +215,7 @@ const StatValue = styled.span<{ $isDark: boolean; $highlight?: boolean }>`
   font-weight: 600;
   font-size: 0.95rem;
   color: ${props => props.$highlight
-    ? '#30d158'
+    ? '#a78bfa'
     : props.$isDark ? '#fff' : '#1a1a2e'};
 `;
 
@@ -266,9 +266,9 @@ const LiveBadge = styled.span<{ $isLive: boolean }>`
   margin-left: 8px;
   font-weight: 600;
   background: ${props => props.$isLive
-    ? 'rgba(48, 209, 88, 0.15)'
-    : 'rgba(255, 159, 10, 0.15)'};
-  color: ${props => props.$isLive ? '#30d158' : '#ff9f0a'};
+    ? 'rgba(167, 139, 250, 0.15)'
+    : 'rgba(196, 181, 253, 0.15)'};
+  color: ${props => props.$isLive ? '#a78bfa' : '#c4b5fd'};
 `;
 
 interface Validator {
@@ -298,11 +298,11 @@ const getColorFromKey = (key: string): string => {
   const colors = [
     'linear-gradient(135deg, #5856d6, #af52de)',
     'linear-gradient(135deg, #ff2d55, #ff9500)',
-    'linear-gradient(135deg, #30d158, #34c759)',
+    'linear-gradient(135deg, #a78bfa, #34c759)',
     'linear-gradient(135deg, #007aff, #5ac8fa)',
     'linear-gradient(135deg, #ffcc00, #ff9500)',
     'linear-gradient(135deg, #af52de, #ff2d55)',
-    'linear-gradient(135deg, #00c7be, #30d158)',
+    'linear-gradient(135deg, #00c7be, #a78bfa)',
     'linear-gradient(135deg, #ff375f, #ff6b6b)',
   ];
   const hash = key.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
@@ -535,7 +535,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
         </Title>
         <Subtitle $isDark={isDark}>
           Compare Casper validators side-by-side
-          {!isLive && <span style={{ color: '#ff9f0a' }}> (fallback data)</span>}
+          {!isLive && <span style={{ color: '#c4b5fd' }}> (fallback data)</span>}
         </Subtitle>
       </Header>
 

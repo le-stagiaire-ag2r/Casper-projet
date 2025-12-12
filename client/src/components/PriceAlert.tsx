@@ -55,7 +55,7 @@ const PriceValue = styled.span`
 const LiveDot = styled.span`
   width: 6px;
   height: 6px;
-  background: #30d158;
+  background: #a78bfa;
   border-radius: 50%;
   animation: ${pulse} 1.5s infinite;
 `;
@@ -184,12 +184,12 @@ const AlertItem = styled.div<{ $isDark: boolean; $triggered?: boolean }>`
   align-items: center;
   padding: 14px 16px;
   background: ${props => props.$triggered
-    ? 'rgba(48, 209, 88, 0.1)'
+    ? 'rgba(167, 139, 250, 0.1)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.03)'
       : 'rgba(0, 0, 0, 0.02)'};
   border: 1px solid ${props => props.$triggered
-    ? 'rgba(48, 209, 88, 0.3)'
+    ? 'rgba(167, 139, 250, 0.3)'
     : props.$isDark
       ? 'rgba(255, 255, 255, 0.05)'
       : 'rgba(0, 0, 0, 0.05)'};
@@ -234,8 +234,8 @@ const DeleteButton = styled.button<{ $isDark: boolean }>`
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(255, 69, 58, 0.1);
-    color: #ff453a;
+    background: rgba(244, 114, 182, 0.1);
+    color: #f472b6;
   }
 `;
 
@@ -249,8 +249,8 @@ const EmptyState = styled.div<{ $isDark: boolean }>`
 `;
 
 const TriggeredBadge = styled.span`
-  background: rgba(48, 209, 88, 0.2);
-  color: #30d158;
+  background: rgba(167, 139, 250, 0.2);
+  color: #a78bfa;
   font-size: 10px;
   font-weight: 700;
   padding: 3px 8px;

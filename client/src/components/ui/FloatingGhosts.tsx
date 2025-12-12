@@ -36,27 +36,27 @@ const moveRight = keyframes`
   }
 `;
 
-// Animation de pulsation douce - Couleurs cyan/bleu comme les étoiles
+// Animation de pulsation douce - Couleurs violet/purple
 const glow = keyframes`
   0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(0, 200, 255, 0.4));
-    opacity: 0.6;
+    filter: drop-shadow(0 0 12px rgba(167, 139, 250, 0.6));
+    opacity: 0.7;
   }
   50% {
-    filter: drop-shadow(0 0 25px rgba(0, 200, 255, 0.8));
-    opacity: 0.85;
+    filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.9));
+    opacity: 0.95;
   }
 `;
 
 const Container = styled.div`
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 `;
 
 interface GhostProps {
@@ -78,7 +78,7 @@ const Ghost = styled.div<GhostProps>`
     ${float} ${props => props.$floatDuration}s ease-in-out infinite,
     ${glow} 3s ease-in-out infinite;
   animation-delay: ${props => props.$delay}s;
-  opacity: 0.7;
+  opacity: 0.85;
 
   ${props => props.$direction === 'left' ? css`
     right: -150px;
@@ -116,9 +116,9 @@ const CasperGhost: React.FC<{ size: number; color?: string }> = ({ size, color =
       strokeLinecap="round"
       fill="none"
     />
-    {/* Joues - couleur assortie */}
-    <ellipse cx="28" cy="50" rx="5" ry="3" fill="#00e5ff" fillOpacity="0.3" />
-    <ellipse cx="72" cy="50" rx="5" ry="3" fill="#00e5ff" fillOpacity="0.3" />
+    {/* Joues - couleur assortie violet */}
+    <ellipse cx="28" cy="50" rx="5" ry="3" fill="#c4b5fd" fillOpacity="0.4" />
+    <ellipse cx="72" cy="50" rx="5" ry="3" fill="#c4b5fd" fillOpacity="0.4" />
   </svg>
 );
 
@@ -137,10 +137,10 @@ interface FloatingGhostsProps {
   count?: number;
 }
 
-export const FloatingGhosts: React.FC<FloatingGhostsProps> = ({ count = 6 }) => {
+export const FloatingGhosts: React.FC<FloatingGhostsProps> = ({ count = 8 }) => {
   const ghosts = useMemo<GhostData[]>(() => {
-    // Couleurs cyan/bleu comme les étoiles de la galaxie
-    const colors = ['#00d4ff', '#00b8e6', '#00a8cc', '#1a9fff', '#00e5ff'];
+    // Couleurs violet/purple pour le thème
+    const colors = ['#a78bfa', '#8b5cf6', '#c4b5fd', '#9333ea', '#a855f7'];
 
     return Array.from({ length: count }, (_, i) => ({
       id: i,

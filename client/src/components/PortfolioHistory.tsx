@@ -47,7 +47,7 @@ const BalanceRow = styled.div`
 const BalanceItem = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.$highlight ? '#30d158' : (props.$isDark ? '#fff' : '#1a1a2e')};
+  color: ${props => props.$highlight ? '#a78bfa' : (props.$isDark ? '#fff' : '#1a1a2e')};
 `;
 
 const BalanceLabel = styled.span<{ $isDark: boolean }>`
@@ -297,8 +297,8 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
         <ChartSVG viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="csprAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#ff9f0a" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#ff9f0a" stopOpacity="0" />
+              <stop offset="0%" stopColor="#c4b5fd" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#c4b5fd" stopOpacity="0" />
             </linearGradient>
           </defs>
 
@@ -318,8 +318,8 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
           <AreaPath d={createAreaPath(csprPoints)} fill="url(#csprAreaGradient)" />
 
           {/* Lines - separate for each token */}
-          <ChartPath d={createPath(csprPoints)} stroke="#ff9f0a" />
-          <ChartPath d={createPath(stCsprPoints)} stroke="#30d158" />
+          <ChartPath d={createPath(csprPoints)} stroke="#c4b5fd" />
+          <ChartPath d={createPath(stCsprPoints)} stroke="#a78bfa" />
 
           {/* Data points for CSPR */}
           {csprPoints.map((p, i) => (
@@ -328,7 +328,7 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
               cx={p.x}
               cy={p.y}
               r={3}
-              fill="#ff9f0a"
+              fill="#c4b5fd"
               stroke="#fff"
               strokeWidth={1.5}
             />
@@ -341,7 +341,7 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
               cx={p.x}
               cy={p.y}
               r={3}
-              fill="#30d158"
+              fill="#a78bfa"
               stroke="#fff"
               strokeWidth={1.5}
             />
@@ -378,11 +378,11 @@ export const PortfolioHistory: React.FC<PortfolioHistoryProps> = ({ isDark }) =>
 
       <Legend>
         <LegendItem $isDark={isDark}>
-          <LegendLine color="#ff9f0a" />
+          <LegendLine color="#c4b5fd" />
           CSPR (wallet)
         </LegendItem>
         <LegendItem $isDark={isDark}>
-          <LegendLine color="#30d158" />
+          <LegendLine color="#a78bfa" />
           stCSPR (staked)
         </LegendItem>
       </Legend>
