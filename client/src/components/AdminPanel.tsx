@@ -613,7 +613,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
         <Title>
           <TitleIcon><WrenchIcon /></TitleIcon>
           Add Rewards
-          <LiveIndicator>V17</LiveIndicator>
+          <LiveIndicator>V18</LiveIndicator>
         </Title>
 
         <Description>

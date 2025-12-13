@@ -403,7 +403,7 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
               <InfoSvgIcon />
             </InfoIcon>
             <InfoContent>
-              <InfoTitle>V17 Multi-Validator Staking</InfoTitle>
+              <InfoTitle>V18 Multi-Validator Staking</InfoTitle>
               <InfoText>
                 Choose your validator, stake min 500 CSPR, and earn rewards!
                 Unstaking queues a withdrawal (~7 eras unbonding).
