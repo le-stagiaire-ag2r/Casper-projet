@@ -55,13 +55,25 @@ const GlobalStyle = createGlobalStyle`
     overflow-x: hidden;
   }
 
-  /* Fix CSPR Click dropdown hover issue - MINIMAL FIX */
+  /* Fix CSPR Click dropdown - escape all stacking contexts */
 
-  /* High z-index for wallet UI */
+  /* Force ClickUI to be above everything */
+  #cspr-click-topbar,
   [class*="TopBar"],
   [class*="click-ui"],
   #cspr-click-ui {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
+    position: relative !important;
+  }
+
+  /* Force dropdown/popover to use fixed positioning */
+  [class*="Popover"],
+  [class*="popover"],
+  [data-radix-popper-content-wrapper],
+  [class*="AccountMenu"] > div[style*="position"],
+  [class*="click-ui"] [role="menu"],
+  [class*="click-ui"] [role="listbox"] {
+    z-index: 9999999 !important;
   }
 
   /* Ensure menu items are clickable */

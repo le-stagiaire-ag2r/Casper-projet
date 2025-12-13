@@ -101,10 +101,11 @@ const HeroSubtitle = styled.p`
 `;
 
 // Section Navigation - Transparent, just floating pills
+// NOTE: z-index must be lower than CSPR.click dropdown (999999)
 const SectionNav = styled.nav`
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 10;
   background: transparent;
   padding: ${spacing[4]} 0;
 `;
