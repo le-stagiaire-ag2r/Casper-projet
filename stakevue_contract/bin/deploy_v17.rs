@@ -18,8 +18,8 @@ fn main() {
     let owner = env.caller();
     println!("Owner: {:?}", owner);
 
-    // Set gas for deployment
-    env.set_gas(200_000_000_000u64); // 200 CSPR
+    // Set gas for deployment (600 CSPR like V16)
+    env.set_gas(600_000_000_000u64); // 600 CSPR
 
     // Deploy V17 contract
     println!("\nDeploying contract...");
