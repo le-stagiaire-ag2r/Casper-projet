@@ -7,7 +7,8 @@ window.config = {
   // Features: stake(validator), request_unstake(amount, validator), claim_withdrawal(request_id)
   // Min stake: 500 CSPR for first delegation to a validator
   contract_hash: "c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747",
-  contract_package_hash: "2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985",
+  // V17 package hash - MUST match contract hash for new Odra deployments
+  contract_package_hash: "c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747",
 
   // Contract owner address (for admin features)
   owner_account_hash: "2f63ef2c9db78bcf2288529e2217cd8e70614f0b1aad4f8ef8871acd39ac2f7e",
