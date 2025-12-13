@@ -1,6 +1,9 @@
 # 🌌 StakeVue
 
-### Liquid Staking Protocol for Casper Network
+![Casper Network](https://img.shields.io/badge/Casper-2.0_Testnet-blue)
+![Status](https://img.shields.io/badge/Status-V17_Multi--Validator-brightgreen)
+![Framework](https://img.shields.io/badge/Framework-Odra_2.4.0-purple)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 <p align="center">
   <img src="https://img.shields.io/badge/Casper-2.0_Testnet-00D4FF?style=for-the-badge"/>
@@ -15,106 +18,186 @@
 
 --- Please note that when reading this, the site is constantly evolving. This readme may not be up-to-date, some figures may have changed, or the logic may have been altered. In short, nothing technically serious, but be aware.
 
-## 🤔 What is StakeVue?
+**V17 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747)
+
+---
 
 You have **CSPR**. You want to earn rewards (~15-17% APY). But traditional staking **locks your tokens** for days...
 
 **StakeVue fixes that:**
 
 ```
-❌ Traditional Staking:
-   100 CSPR ──▶ Validator ──▶ 🔒 LOCKED 
-                              You can't use them!
++---------------------------------------------------------------------+
+|  TRADITIONAL STAKING                                                |
+|                                                                     |
+|  Your 100 CSPR --> Validator --> LOCKED for days/weeks              |
+|                                  You can't use them!                |
++---------------------------------------------------------------------+
 
-✅ StakeVue:
-   100 CSPR ──▶ StakeVue ──▶ 💎 100 stCSPR (usable immediately!)
-                             📈 Your stCSPR earns rewards
-                             🔓 Withdraw anytime
++---------------------------------------------------------------------+
+|  LIQUID STAKING (StakeVue)                                          |
+|                                                                     |
+|  Your 500 CSPR --> StakeVue --> You get 500 stCSPR                  |
+|                                                                     |
+|  With your stCSPR you can:                                          |
+|  +-- Trade on DEX                                                   |
+|  +-- Use as collateral in DeFi                                      |
+|  +-- Transfer to anyone                                             |
+|  +-- Unstake anytime to get CSPR back (with rewards!)               |
++---------------------------------------------------------------------+
 ```
 
 That's **liquid staking**. Your tokens work for you AND stay liquid. 🚀
 
----
+## V17 - Multi-Validator Delegation
 
-## ⚙️ How Does It Work?
+### New Features
 
-### 1️⃣ You Stake
-
-```
-You send:    100 CSPR
-You receive: ~87 stCSPR (at current rate 1.15)
-
-📐 Formula: stCSPR = CSPR ÷ exchange_rate
-```
-
-### 2️⃣ Your stCSPR Appreciates
+V17 introduces **real network delegation** with multi-validator support:
 
 ```
-📅 Day 1:   Rate = 1.0   ──▶ 100 stCSPR = 100 CSPR
-📅 Day 30:  Rate = 1.15  ──▶ 100 stCSPR = 115 CSPR  (+15%! 🎉)
-📅 Day 60:  Rate = 1.30  ──▶ 100 stCSPR = 130 CSPR  (+30%! 🚀)
-
-The rate increases as rewards flow into the pool.
-Your stCSPR count stays the same, but its VALUE grows!
++---------------------------------------------------------------------+
+|  V17 MULTI-VALIDATOR                                                |
+|                                                                     |
+|  User stakes 500 CSPR                                               |
+|       |                                                             |
+|       v                                                             |
+|  +-- StakeVue Contract --+                                          |
+|  |                       |                                          |
+|  |  Choose validator:    |                                          |
+|  |  [x] MAKE (10%)       |                                          |
+|  |  [ ] CasperCommunity  |                                          |
+|  |  [ ] Era Guardian     |                                          |
+|  |  [ ] Bit Cat          |                                          |
+|  |  ... 9 validators     |                                          |
+|  +-----------+-----------+                                          |
+|              |                                                      |
+|              v                                                      |
+|  +-- Casper Auction Pool --+                                        |
+|  |  Real network staking   |                                        |
+|  |  Earn validator rewards |                                        |
+|  +--------------------------+                                       |
++---------------------------------------------------------------------+
 ```
 
-### 3️⃣ You Unstake (Whenever You Want!)
+### Key V17 Features
+
+| Feature | Description |
+|---------|-------------|
+| **Multi-Validator** | Choose from 9+ approved validators |
+| **Real Delegation** | Stakes go to Casper Auction Pool |
+| **Withdrawal Queue** | Request unstake → 7 era unbonding → Claim |
+| **Min Stake 500 CSPR** | Casper network delegation requirement |
+| **Validator Info** | APY, Commission, Performance displayed |
+
+### Stake Flow (V17)
 
 ```
-You burn:    100 stCSPR  🔥
-You receive: 115 CSPR    💰
+User (500 CSPR) --> StakeVue --> Validator Stakes --> Auction Pool
+                        |
+                        v
+                 Mint 500 stCSPR
+```
 
-📐 Formula: CSPR = stCSPR × exchange_rate
+### Unstake Flow (V17)
+
+```
+1. request_unstake(amount, validator)
+   --> Queues withdrawal
+   --> Burns stCSPR
+   --> Starts 7-era unbonding
+
+2. [Wait 7 eras (~14 hours testnet)]
+
+3. claim_withdrawal(request_id)
+   --> Receive CSPR back
 ```
 
 **No lock-up period. No waiting. Your money, your choice.** ✨
 
 ---
 
-## 💡 The Exchange Rate (The Magic)
+## V16.1 - UX Visual Refont
 
-This is the core innovation. Real example:
+### Validator Selector (Accordion Style)
 
 ```
-🏊 Pool starts with:
-   Total CSPR:   100
-   Total stCSPR: 100
-   Rate: 100/100 = 1.0
-
-💰 Rewards are added (+20 CSPR):
-   Total CSPR:   120       ⬆️ (+20)
-   Total stCSPR: 100       ➡️ (unchanged!)
-   Rate: 120/100 = 1.2     📈
-
-🎯 Result:
-   Your 100 stCSPR is now worth 120 CSPR!
-   You gained +20% without doing anything! 🎉
++-----------------------------------------------------+
+| Choisir un validateur                           v   |
+| 9 disponibles                                       |
++-----------------------------------------------------+
+           |
+           | (click to expand)
+           v
++-----------------------------------------------------+
+| Trier par: [Meilleur APY v]                         |
++-------------------------+---------------------------+
+| MAKE #1                 | CasperCommunity #3        |
+| APY 15.3% Comm 10%      | APY 15.3% Comm 10%        |
+| Perf 100%               | Perf 100%                 |
++-------------------------+---------------------------+
+| Era Guardian #4         | Bit Cat #96               |
+| APY 15.3% Comm 10%      | APY 15.3% Comm 10%        |
+| Perf 100%               | Perf 100%                 |
++-------------------------+---------------------------+
 ```
 
-**The magic:** pool grows, supply stays constant, rate increases. 📈
+### Features
+- **Collapsible accordion** - Click to expand/collapse
+- **Grid layout** - 2 columns desktop, 1 column mobile
+- **Real-time data** - APY, Commission, Performance from CSPR.cloud
+- **Sort options** - By APY, Commission, Performance, Popularity
+- **Auto-close** - Closes when validator selected
 
 ---
 
-## 🎮 Try It!
+## V15 - Exchange Rate Mechanism
 
-### 🌐 Live Demo
+### How stCSPR Appreciates
 
-**👉 https://casper-projet.vercel.app**
+V15 implements a **dynamic exchange rate** that increases over time as rewards accumulate:
 
-1. 🔗 Connect your Casper wallet (testnet)
-2. 🚰 Get test CSPR from [faucet.casper.network](https://faucet.casper.network)
-3. 💰 Stake some CSPR
-4. 👀 Watch your stCSPR balance
+```
++---------------------------------------------------------------------+
+|  EXCHANGE RATE APPRECIATION                                         |
+|                                                                     |
+|  Day 1: Stake 500 CSPR --> Get 500 stCSPR (rate = 1.0)              |
+|                                                                     |
+|  Day 30: Rewards added to pool                                      |
+|          Pool: 575 CSPR / Supply: 500 stCSPR                        |
+|          Rate = 1.15 (1 stCSPR = 1.15 CSPR)                         |
+|                                                                     |
+|  Day 30: Unstake 500 stCSPR --> Get 575 CSPR (+15% profit!)         |
++---------------------------------------------------------------------+
+```
 
-### ✨ What You'll See
+---
 
-| Feature | Description |
-|---------|-------------|
-| 🌌 Galaxy Background | 3D animation with 15,000 particles |
-| 🪟 Glass UI | Transparent cards with blur effect |
-| 💜 Purple Theme | Cosmic violet accent throughout |
-| 📊 Live Stats | Real-time exchange rate |
-| 📜 History | All your transactions |
+## Contract Details
+
+### V17 Contract
+
+| Property | Value |
+|----------|-------|
+| **Contract Hash** | `c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747` |
+| **Network** | casper-test |
+| **Framework** | Odra 2.4.0 |
+| **Token Standard** | CEP-18 (integrated stCSPR) |
+| **Min Stake** | 500 CSPR |
+| **Gas Fee** | 15 CSPR |
+
+### Entry Points (V17)
+
+| Function | Type | Description |
+|----------|------|-------------|
+| `stake(validator)` | Payable | Stake CSPR to chosen validator |
+| `request_unstake(amount, validator)` | Public | Queue withdrawal (burns stCSPR) |
+| `claim_withdrawal(request_id)` | Public | Claim after unbonding period |
+| `harvest_rewards()` | Owner | Auto-compound validator rewards |
+| `add_approved_validator(pk)` | Owner | Add validator to whitelist |
+| `remove_approved_validator(pk)` | Owner | Remove from whitelist |
+| `get_exchange_rate()` | View | Current rate (9 decimals) |
+| `get_approved_validators()` | View | List of approved validators |
 
 ---
 
@@ -123,62 +206,36 @@ This is the core innovation. Real example:
 Deployed on **Casper 2.0 Testnet**:
 
 ```
-📦 Package: 2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985
-```
-
-🔍 [View on Explorer](https://testnet.cspr.live/contract-package/2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985)
-
-### 🎯 Entry Points
-
-| Function | Description |
-|----------|-------------|
-| `stake()` | 💰 Send CSPR, receive stCSPR |
-| `unstake(amount)` | 🔥 Burn stCSPR, get CSPR back |
-| `add_rewards()` | ➕ Add rewards to pool (owner only) |
-| `get_exchange_rate()` | 📊 Current rate (9 decimals) |
-
-### 🏗️ Architecture
-
-```rust
-pub struct StakeVue {
-    token: SubModule<Cep18>,      // 💎 stCSPR (CEP-18 standard)
-    total_cspr_pool: Var<U512>,   // 🏊 All CSPR in the contract
-}
-
-// 📐 Rate = total_cspr_pool / token.total_supply()
-```
-
-Built with [Odra Framework](https://odra.dev) 🛠️
-
----
-
-## 📁 Project Structure
-
-```
 Casper-projet/
-│
-├── 🎨 client/                  # React frontend
-│   ├── src/
-│   │   ├── components/         # UI components
-│   │   ├── pages/              # Home, Stake, Guide
-│   │   └── hooks/              # useStaking, useCsprClick
-│   └── api/
-│       └── contract-stats.js   # Vercel serverless (reads blockchain)
-│
-├── 🦀 stakevue_contract/       # Odra smart contract
-│   ├── src/lib.rs              # Contract code
-│   └── bin/                    # Deploy & test scripts
-│
-├── 🔧 scripts/                 # Node.js utilities
-├── 📦 archive/                 # Old versions (V1-V14)
-│
-├── 📖 README.md                # You are here!
-└── 📋 RELEASE_NOTES_V16.md     # Detailed changelog V8→V16
++-- client/                      # React frontend
+|   +-- public/
+|   |   +-- config.js            # V17 contract config
+|   |   +-- proxy_caller.wasm    # Odra proxy for browser
+|   +-- src/
+|   |   +-- components/
+|   |   |   +-- stake/
+|   |   |       +-- ValidatorSelector.tsx  # Accordion selector
+|   |   |       +-- ValidatorSelector.css
+|   |   +-- hooks/useStaking.ts  # Stake/unstake logic
+|   |   +-- services/
+|   |       +-- transaction.ts   # V17 transaction builder
+|   |       +-- validatorService.ts  # CSPR.cloud API
+|   +-- api/
+|       +-- contract-stats.js    # Live RPC API
++-- stakevue_contract/           # Odra smart contract
+|   +-- src/lib.rs               # V17 contract code
+|   +-- Cargo.toml               # v17.0.0
+|   +-- bin/
+|       +-- deploy_v17.rs
+|       +-- add_validators_v17.rs
+|       +-- test_stake_v17.rs
+|       +-- test_unstake_v17.rs
++-- README.md
 ```
 
 ---
 
-## 🚀 Run Locally
+## Quick Start
 
 ### Frontend
 
@@ -192,50 +249,92 @@ npm start        # 🌐 http://localhost:3000
 
 ```bash
 cd stakevue_contract
-cargo odra build                              # 🔨 Compile
-cargo test                                    # ✅ Tests
-cargo run --bin deploy_v15 --features livenet # 🚀 Deploy
+
+# Build
+cargo odra build
+
+# Deploy V17 to testnet
+cargo run --bin deploy_v17 --features livenet
+
+# Add approved validators
+cargo run --bin add_validators_v17 --features livenet
+
+# Test stake
+cargo run --bin test_stake_v17 --features livenet
+
+# Test unstake
+cargo run --bin test_unstake_v17 --features livenet
 ```
 
 ---
 
-## 📜 Version History
+## Validator Selection Guide
 
-| Version | What's New |
-|---------|------------|
-| **🎨 V16** | Visual overhaul - Galaxy, glass UI, SVG icons |
-| **🌐 V15.1** | Live API - Real-time contract stats |
-| **📈 V15** | Exchange rate - stCSPR appreciation |
-| **💎 V14** | Integrated CEP-18 token (finally works!) |
-| **🧪 V13** | Minimal payable test |
-| **❌ V12** | CEP-18 attempt (package conflict) |
-| **🔍 V11** | External token debugging |
-| **🔄 V10** | Integration attempts |
-| **🔗 V9** | External token reference (broken) |
-| **🔐 V8.2** | Ownable + Pauseable modules |
-| **⭐ V8.0** | First real staking with Odra |
-| **📊 V7.x** | APY slider, charts, CSV export |
-| **🔔 V6.x** | Price alerts, portfolio history |
-| **🛡️ V5.0** | Security hardening (A+ score) |
-| **👥 V4.0** | Multi-validator support |
-| **🪙 V3.0** | stCSPR token concept |
-| **👤 V2.0** | Per-user tracking |
-| **🎯 V1.0** | Basic stake/unstake |
+| Metric | What it means | Ideal |
+|--------|---------------|-------|
+| **Commission** | % validator takes from rewards | Lower = better for you |
+| **Performance** | Uptime score | 100% = perfect |
+| **APY** | Your estimated yearly return | Higher = better |
+| **Delegators** | Number of stakers | More = popular |
 
-📋 **Full details:** [RELEASE_NOTES_V16.md](./RELEASE_NOTES_V16.md)
+**Example:**
+- Validator A: 5% commission, 100% perf → APY ~16.1%
+- Validator B: 10% commission, 100% perf → APY ~15.3%
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| 🦀 Smart Contract | Rust, Odra 2.4.0, CEP-18 |
-| ⚛️ Frontend | React 18, TypeScript, styled-components |
-| 🎮 3D Graphics | Three.js, React Three Fiber |
-| 👛 Wallet | CSPR.click |
-| 🌐 API | Vercel Serverless, Casper RPC |
-| 🚀 Deployment | Vercel + Casper Testnet |
+| Component | Technology |
+|-----------|------------|
+| Smart Contract | Rust, Odra 2.4.0, CEP-18 |
+| Frontend | React 18, TypeScript, styled-components |
+| Wallet | CSPR.click |
+| Validator Data | CSPR.cloud API |
+| Deployment | Vercel (frontend), Casper 2.0 Testnet |
+
+---
+
+## Roadmap
+
+### Completed
+- [x] V15 Exchange rate mechanism
+- [x] V16.1 UX Visual Refont (accordion validator selector)
+- [x] **V17 Multi-validator delegation**
+- [x] **Real Casper Auction Pool staking**
+- [x] **Withdrawal queue (7 era unbonding)**
+- [x] **9 approved validators with real data**
+- [x] **Live on Vercel testnet**
+
+### Next Steps
+- [ ] Test unstake flow end-to-end
+- [ ] Test claim_withdrawal after unbonding
+- [ ] harvest_rewards automation
+- [ ] Security audit
+- [ ] Mainnet deployment
+
+---
+
+## Version History
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| **V17** | Dec 2025 | **Multi-validator delegation** - Real Auction Pool staking, withdrawal queue, 9 validators |
+| **V16.1** | Dec 2025 | **UX Visual Refont** - Accordion validator selector, grid layout, real-time data |
+| **V16** | Dec 2025 | UI improvements, dark theme |
+| **V15.1** | Dec 2025 | Live RPC API - Real-time contract stats |
+| **V15** | Dec 2025 | Exchange rate mechanism - stCSPR appreciation |
+| **V14** | Dec 2025 | Production-ready with integrated CEP-18 |
+| **V1-V13** | Nov-Dec 2025 | Development iterations |
+
+---
+
+## Links
+
+- **Live Demo:** https://casper-projet.vercel.app
+- **V17 Contract:** https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747
+- **Odra Framework:** https://odra.dev
+- **Casper Network:** https://casper.network
 
 ---
 
