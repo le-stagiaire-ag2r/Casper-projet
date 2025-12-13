@@ -68,6 +68,22 @@ required-features = ["livenet"]
 test = false
 
 # ============================================================================
+# V18 SCRIPTS (Multi-Validator + Withdrawal Queue + Delegation Debug)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v18"
+path = "bin/deploy_v18.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "add_validators_v18"
+path = "bin/add_validators_v18.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
 # V16 SCRIPTS (Validator Delegation - Single Validator)
 # ============================================================================
 
