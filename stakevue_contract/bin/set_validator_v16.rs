@@ -2,8 +2,8 @@
 //! Run with: cargo run --bin set_validator_v16 --features livenet
 
 use std::str::FromStr;
-use odra::casper_types::PublicKey;
-use odra::host::{HostRef, HostRefLoader};
+use odra::casper_types::{AsymmetricType, PublicKey};
+use odra::host::HostRefLoader;
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
