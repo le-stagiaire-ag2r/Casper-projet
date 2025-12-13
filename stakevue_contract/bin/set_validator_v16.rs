@@ -10,9 +10,9 @@ use stakevue_contract::StakeVue;
 // V16 Contract Address - UPDATE THIS AFTER DEPLOY (with 'hash-' prefix)
 const CONTRACT_HASH: &str = "hash-bfcaf222f20c620d16297acf702d1ba46b4e1b95264fb02f1bcc154dc93923b2";
 
-// Testnet validator public key - 1% commission
+// Testnet validator public key - MAKE (10% commission, 100% performance)
 // Find more at: https://testnet.cspr.live/validators
-const VALIDATOR_PUBLIC_KEY: &str = "01c377281132044bd3278b039925eeb3efdb9d99dd5f46d9ec6a764add34581af7";
+const VALIDATOR_PUBLIC_KEY: &str = "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca";
 
 fn main() {
     let env = odra_casper_livenet_env::env();
