@@ -7,8 +7,8 @@ use odra::host::{HostRef, HostRefLoader};
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
-// V17 Contract Address
-const CONTRACT_HASH: &str = "hash-8725e658c44512f4ab44a3bc3009e17382ae9f83743270219cc4a9e2dd4b21ff";
+// V17 Contract Address (final deploy with correct WASM)
+const CONTRACT_HASH: &str = "hash-c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747";
 
 // MAKE validator - default for testing
 const VALIDATOR_PUBLIC_KEY: &str = "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca";
