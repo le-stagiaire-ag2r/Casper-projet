@@ -24,7 +24,8 @@ gsap.registerPlugin(ScrollTrigger);
 const PageContainer = styled.div`
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
 `;
 
 // Section Styles - Transparent pour voir la galaxie
@@ -54,7 +55,6 @@ const HeroHeader = styled.header`
   padding: ${spacing[16]} ${spacing[6]} ${spacing[8]};
   background: transparent;
   position: relative;
-  overflow: hidden;
 `;
 
 const HeroLabel = styled.span`
