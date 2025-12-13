@@ -55,88 +55,29 @@ const GlobalStyle = createGlobalStyle`
     overflow-x: hidden;
   }
 
-  /* Fix CSPR Click dropdown hover issue - AGGRESSIVE FIX */
+  /* Fix CSPR Click dropdown hover issue - MINIMAL FIX */
 
-  /* Make the entire top bar area have high z-index */
+  /* High z-index for wallet UI */
   [class*="TopBar"],
   [class*="click-ui"],
-  #cspr-click-ui,
-  [data-testid*="click"],
-  [class*="csprclick"] {
+  #cspr-click-ui {
     z-index: 99999 !important;
-    position: relative;
   }
 
-  /* Target all dropdown/menu containers */
+  /* Ensure menu items are clickable */
   [class*="AccountMenu"],
-  [class*="Dropdown"],
-  [class*="Popover"],
   [class*="Menu"],
-  [class*="click-ui"] [role="menu"],
-  [class*="click-ui"] [role="listbox"],
-  [class*="click-ui"] ul {
-    pointer-events: auto !important;
-    z-index: 99999 !important;
-  }
-
-  /* Ensure ALL children of menus are clickable */
-  [class*="AccountMenu"] *,
-  [class*="Dropdown"] *,
-  [class*="Menu"] li,
   [class*="MenuItem"],
+  [class*="click-ui"] ul,
+  [class*="click-ui"] li,
   [class*="click-ui"] button,
-  [class*="click-ui"] a,
-  [class*="click-ui"] [role="menuitem"] {
+  [class*="click-ui"] a {
     pointer-events: auto !important;
   }
 
-  /* Create invisible bridge between trigger and dropdown */
-  [class*="AccountMenu"]::after,
-  [class*="Dropdown"]::after,
-  [class*="Menu"][class*="open"]::after,
-  [class*="click-ui"] [aria-expanded="true"]::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: -20px;
-    right: -20px;
-    height: 30px;
-    pointer-events: auto;
-    background: transparent;
-  }
-
-  /* Add safe padding around dropdown menus */
-  [class*="MenuList"],
-  [class*="click-ui"] ul[role="menu"],
-  [class*="AccountMenu"] > div:last-child {
-    padding-top: 8px !important;
-    margin-top: -8px !important;
-    overflow: visible !important;
-    max-height: none !important;
-  }
-
-  /* Ensure dropdown container extends for hover area */
-  [class*="AccountMenu"],
-  [class*="click-ui"] [class*="dropdown"] {
-    padding-bottom: 10px;
-    margin-bottom: -10px;
-  }
-
-  /* Fix for the account button dropdown specifically */
-  [class*="AccountButton"],
-  [class*="click-ui"] button[aria-haspopup] {
-    position: relative;
-  }
-
-  [class*="AccountButton"]::after,
-  [class*="click-ui"] button[aria-haspopup]::after {
-    content: '';
-    position: absolute;
-    bottom: -15px;
-    left: 0;
-    right: 0;
-    height: 20px;
-    pointer-events: auto;
+  /* Extend hover area at bottom of dropdown */
+  [class*="AccountMenu"] {
+    padding-bottom: 15px !important;
   }
 
   /* Selection */
