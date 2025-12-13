@@ -1,328 +1,114 @@
-/* ValidatorSelector Styles */
+/* ValidatorSelector Dropdown Styles - V19 */
 
-.validator-selector {
+.validator-dropdown-container {
+  margin-bottom: 16px;
+}
+
+.validator-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.validator-select {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.validator-selector.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.validator-selector.loading,
-.validator-selector.error,
-.validator-selector.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  text-align: center;
-}
-
-.validator-selector .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #00d395;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Header */
-.validator-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.validator-header h3 {
-  margin: 0;
-  font-size: 1.2rem;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   color: #fff;
-}
-
-.validator-header .controls {
-  display: flex;
-  gap: 10px;
-}
-
-.validator-header select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: #1a1a2e;
-  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s ease;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
+  background-position: right 16px center;
 }
 
-.validator-header select option {
+.validator-select:hover:not(:disabled) {
+  border-color: rgba(139, 92, 246, 0.5);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.validator-select:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.validator-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.validator-select option {
   background: #1a1a2e;
   color: #fff;
-  padding: 10px;
+  padding: 12px;
 }
 
-.validator-header select:focus {
-  outline: none;
-  border-color: #00d395;
-}
-
-.validator-header .filter-toggle {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.validator-dropdown {
+  padding: 14px 16px;
   background: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.validator-header .filter-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* Filters Panel */
-.filters-panel {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  padding: 15px;
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.filter-item label {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.filter-item input[type="range"] {
-  width: 100%;
-  accent-color: #00d395;
-}
-
-.filter-item input[type="checkbox"] {
-  accent-color: #00d395;
-}
-
-/* Validator List */
-.validator-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Validator Card */
-.validator-card {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.validator-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(0, 211, 149, 0.3);
-  transform: translateY(-2px);
-}
-
-.validator-card.selected {
-  background: rgba(0, 211, 149, 0.1);
-  border-color: #00d395;
-}
-
-.validator-card.recommended {
-  position: relative;
-  background: rgba(0, 211, 149, 0.05);
-  border-color: rgba(0, 211, 149, 0.3);
-  margin-bottom: 20px;
-}
-
-.recommended-badge {
-  position: absolute;
-  top: -10px;
-  left: 16px;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #00d395, #00a878);
-  color: #000;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 20px;
-}
-
-/* Card Content */
-.card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Validator Identity */
-.validator-identity {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.validator-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.validator-logo.placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff;
-  font-weight: bold;
-  font-size: 1.2rem;
-}
-
-.validator-name {
-  display: flex;
-  flex-direction: column;
-}
-
-.validator-name strong {
-  font-size: 1rem;
-  color: #fff;
-}
-
-.validator-name .rank {
-  font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
 }
 
-/* Stats Grid */
-.validator-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 12px;
+.validator-dropdown.loading {
+  color: rgba(139, 92, 246, 0.8);
 }
 
-.validator-stats .stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
+.validator-dropdown.error {
+  border-color: rgba(255, 69, 58, 0.3);
+  color: #ff453a;
 }
 
-.validator-stats .stat.highlight {
-  background: rgba(0, 211, 149, 0.1);
+/* Selected validator info */
+.selected-validator-info {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 10px;
 }
 
-.validator-stats .stat .label {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.validator-stats .stat .value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-.validator-stats .stat .value.green {
-  color: #00d395;
-}
-
-.validator-stats .stat .value.red {
-  color: #ff6b6b;
-}
-
-/* Badges */
-.validator-badges {
+.validator-stats-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
 }
 
-.validator-badges .badge {
-  padding: 4px 8px;
-  font-size: 0.7rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+.validator-stats-row .stat {
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.8);
 }
 
-.validator-badges .badge.perf {
-  background: rgba(255, 215, 0, 0.1);
-  color: #ffd700;
-}
-
-.validator-badges .badge.fee {
-  background: rgba(0, 211, 149, 0.1);
-  color: #00d395;
-}
-
-.validator-badges .badge.rank {
-  background: rgba(138, 43, 226, 0.1);
-  color: #a855f7;
-}
-
-.validator-badges .badge.inactive {
-  background: rgba(255, 107, 107, 0.1);
-  color: #ff6b6b;
-}
-
-/* No Results */
-.no-results {
-  text-align: center;
-  padding: 30px;
+.validator-stats-row .stat strong {
   color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.validator-stats-row .stat .green {
+  color: #30d158;
+  font-weight: 600;
 }
 
 /* Responsive */
-@media (max-width: 600px) {
-  .validator-header {
-    flex-direction: column;
-    align-items: stretch;
+@media (max-width: 480px) {
+  .validator-stats-row {
+    gap: 10px;
   }
 
-  .validator-header .controls {
-    justify-content: space-between;
-  }
-
-  .validator-stats {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .validator-identity {
-    flex-direction: column;
-    text-align: center;
+  .validator-stats-row .stat {
+    font-size: 12px;
   }
 }
