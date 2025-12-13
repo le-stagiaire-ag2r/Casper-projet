@@ -332,7 +332,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '1',
       name: 'Early Adopter',
-      icon: '🌟',
+      icon: '',
       description: 'One of the first 1000 users to stake on StakeVue',
       requirement: 'Be among first 1000 stakers',
       rarity: 'legendary',
@@ -341,7 +341,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '2',
       name: 'Whale',
-      icon: '🐋',
+      icon: '',
       description: 'Staked over 100,000 CSPR',
       requirement: 'Stake 100,000+ CSPR',
       rarity: 'epic',
@@ -350,7 +350,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '3',
       name: 'Diamond Hands',
-      icon: '💎',
+      icon: '',
       description: 'Held stake for over 6 months',
       requirement: 'Stake for 6+ months',
       rarity: 'epic',
@@ -359,7 +359,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '4',
       name: 'Consistent Staker',
-      icon: '📈',
+      icon: '',
       description: 'Staked for 30 consecutive days',
       requirement: '30 days continuous staking',
       rarity: 'rare',
@@ -368,7 +368,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '5',
       name: 'Validator Friend',
-      icon: '🤝',
+      icon: '',
       description: 'Delegated to 5 different validators',
       requirement: 'Use 5+ validators',
       rarity: 'rare',
@@ -377,7 +377,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '6',
       name: 'Reward Hunter',
-      icon: '🏆',
+      icon: '',
       description: 'Earned over 1,000 CSPR in rewards',
       requirement: 'Earn 1,000+ CSPR rewards',
       rarity: 'common',
@@ -386,7 +386,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '7',
       name: 'First Stake',
-      icon: '🎯',
+      icon: '',
       description: 'Completed your first stake transaction',
       requirement: 'Make first stake',
       rarity: 'common',
@@ -395,7 +395,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     {
       id: '8',
       name: 'OG Staker',
-      icon: '👑',
+      icon: '',
       description: 'Staked during the beta launch period',
       requirement: 'Stake during beta',
       rarity: 'legendary',
@@ -416,7 +416,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🏅 Achievement Badges
+           Achievement Badges
         </Title>
         <Subtitle $isDark={isDark}>
           Collect exclusive NFT badges for your staking achievements
@@ -425,7 +425,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
 
       <ProgressSection $isDark={isDark}>
         <ProgressTitle $isDark={isDark}>
-          🎯 Collection Progress
+           Collection Progress
         </ProgressTitle>
         <ProgressBar $isDark={isDark}>
           <ProgressFill $percent={progress} />
@@ -445,7 +445,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
             $rarity={badge.rarity}
             onClick={() => handleBadgeClick(badge)}
           >
-            {!badge.unlocked && <LockedOverlay>🔒</LockedOverlay>}
+            {!badge.unlocked && <LockedOverlay></LockedOverlay>}
             <BadgeIconWrapper $unlocked={badge.unlocked} $rarity={badge.rarity}>
               {badge.icon}
             </BadgeIconWrapper>
@@ -459,7 +459,7 @@ export const NFTBadges: React.FC<NFTBadgesProps> = ({ isDark }) => {
       </BadgeGrid>
 
       <ClaimButton $isDark={isDark} disabled={unlockedCount === 0}>
-        🎁 Claim Badges as NFTs (Coming Soon)
+         Claim Badges as NFTs (Coming Soon)
       </ClaimButton>
 
       <Modal $isDark={isDark} $isOpen={selectedBadge !== null} onClick={() => setSelectedBadge(null)}>

@@ -1,26 +1,30 @@
-# StakeVue - Liquid Staking Protocol for Casper Network
+# 🌌 StakeVue
 
 ![Casper Network](https://img.shields.io/badge/Casper-2.0_Testnet-blue)
 ![Status](https://img.shields.io/badge/Status-V17_Multi--Validator-brightgreen)
 ![Framework](https://img.shields.io/badge/Framework-Odra_2.4.0-purple)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**Hackathon:** Casper Hackathon 2025 on DoraHacks
-**Track:** DeFi - Liquid Staking
+<p align="center">
+  <img src="https://img.shields.io/badge/Casper-2.0_Testnet-00D4FF?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Version-16-8B5CF6?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Odra-2.4.0-FF6B35?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge"/>
+</p>
 
----
+<p align="center">
+  <b>🎯 Casper Hackathon 2025</b> • <b>💰 DeFi Track</b> • <b>🏆 DoraHacks</b>
+</p>
 
-## Live Demo
-
-**Web App:** [https://casper-projet.vercel.app](https://casper-projet.vercel.app)
+--- Please note that when reading this, the site is constantly evolving. This readme may not be up-to-date, some figures may have changed, or the logic may have been altered. In short, nothing technically serious, but be aware.
 
 **V17 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747)
 
 ---
 
-## What is Liquid Staking?
+You have **CSPR**. You want to earn rewards (~15-17% APY). But traditional staking **locks your tokens** for days...
 
-Traditional staking locks your tokens. **Liquid staking** lets you stake AND keep your liquidity!
+**StakeVue fixes that:**
 
 ```
 +---------------------------------------------------------------------+
@@ -43,7 +47,7 @@ Traditional staking locks your tokens. **Liquid staking** lets you stake AND kee
 +---------------------------------------------------------------------+
 ```
 
----
+That's **liquid staking**. Your tokens work for you AND stay liquid. 🚀
 
 ## V17 - Multi-Validator Delegation
 
@@ -108,6 +112,8 @@ User (500 CSPR) --> StakeVue --> Validator Stakes --> Auction Pool
 3. claim_withdrawal(request_id)
    --> Receive CSPR back
 ```
+
+**No lock-up period. No waiting. Your money, your choice.** ✨
 
 ---
 
@@ -195,7 +201,9 @@ V15 implements a **dynamic exchange rate** that increases over time as rewards a
 
 ---
 
-## Project Structure
+## 📜 The Smart Contract
+
+Deployed on **Casper 2.0 Testnet**:
 
 ```
 Casper-projet/
@@ -234,7 +242,7 @@ Casper-projet/
 ```bash
 cd client
 npm install
-npm start
+npm start        # 🌐 http://localhost:3000
 ```
 
 ### Smart Contract
@@ -330,12 +338,22 @@ cargo run --bin test_unstake_v17 --features livenet
 
 ---
 
-## License
+## 🔗 Links
 
-MIT License
+| | |
+|---|---|
+| 🌐 **Live Demo** | https://casper-projet.vercel.app |
+| 📜 **Contract** | [View on Testnet](https://testnet.cspr.live/contract-package/2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985) |
+| 🛠️ **Odra Framework** | https://odra.dev |
+| 🌍 **Casper Network** | https://casper.network |
+| 🚰 **Testnet Faucet** | https://faucet.casper.network |
 
 ---
 
-**Built for Casper Hackathon 2025**
+<p align="center">
+  <b>🏆 Casper Hackathon 2025</b> • <b>DoraHacks</b> • <b>DeFi Track</b>
+</p>
 
-**StakeVue - Liquid Staking Made Simple**
+<p align="center">
+  <i>Stake smart. Stay liquid.</i> 💎
+</p>

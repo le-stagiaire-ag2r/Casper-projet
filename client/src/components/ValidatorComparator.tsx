@@ -2,15 +2,36 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
+// SVG Icons
+const ScaleIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="3" x2="12" y2="21" />
+    <polyline points="1 7 12 3 23 7" />
+    <path d="M5 7l-4 9h8L5 7z" />
+    <path d="M19 7l-4 9h8l-4-9z" />
+  </svg>
+);
+
+const BuildingIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+    <path d="M9 22v-4h6v4" />
+    <path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01" />
+  </svg>
+);
+
+const TitleIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: #8b5cf6;
+`;
+
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.02)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.1)'};
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
 `;
 
 const Header = styled.div`
@@ -309,17 +330,9 @@ const getColorFromKey = (key: string): string => {
   return colors[hash % colors.length];
 };
 
-// Get icon based on validator name or rank
-const getValidatorIcon = (name: string, index: number): string => {
-  const nameLower = name.toLowerCase();
-  if (nameLower.includes('casper') || nameLower.includes('labs')) return '🏛️';
-  if (nameLower.includes('make')) return '🔧';
-  if (nameLower.includes('bit') || nameLower.includes('coin')) return '💰';
-  if (nameLower.includes('stake') || nameLower.includes('node')) return '🔷';
-  if (nameLower.includes('valid')) return '✅';
-
-  const icons = ['🌐', '⚡', '🎯', '💎', '🚀', '🔥', '⭐', '🏆'];
-  return icons[index % icons.length];
+// Get icon based on validator name or rank - returns JSX element
+const getValidatorIcon = (name: string, index: number): React.ReactNode => {
+  return <BuildingIcon />;
 };
 
 export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark }) => {
@@ -436,11 +449,11 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
     if (!validator1 || !validator2) return { metrics: {} as Record<string, MetricData>, v1Wins: 0, v2Wins: 0 };
 
     const metrics: Record<string, MetricData> = {
-      totalStake: { label: '💰 Total Stake', v1: validator1.totalStake, v2: validator2.totalStake, higherBetter: true },
-      fee: { label: '💸 Fee', v1: validator1.fee, v2: validator2.fee, higherBetter: false },
-      delegatorsCount: { label: '👥 Delegators', v1: validator1.delegatorsCount, v2: validator2.delegatorsCount, higherBetter: true },
-      selfStake: { label: '🔒 Self-Stake', v1: validator1.selfStake, v2: validator2.selfStake, higherBetter: true },
-      networkShare: { label: '📊 Network Share', v1: validator1.networkShare, v2: validator2.networkShare, higherBetter: false },
+      totalStake: { label: ' Total Stake', v1: validator1.totalStake, v2: validator2.totalStake, higherBetter: true },
+      fee: { label: ' Fee', v1: validator1.fee, v2: validator2.fee, higherBetter: false },
+      delegatorsCount: { label: 'Delegators', v1: validator1.delegatorsCount, v2: validator2.delegatorsCount, higherBetter: true },
+      selfStake: { label: ' Self-Stake', v1: validator1.selfStake, v2: validator2.selfStake, higherBetter: true },
+      networkShare: { label: ' Network Share', v1: validator1.networkShare, v2: validator2.networkShare, higherBetter: false },
     };
 
     let v1Wins = 0;
@@ -504,7 +517,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
     return (
       <Container $isDark={isDark}>
         <Header>
-          <Title $isDark={isDark}>⚖️ Validator Comparator</Title>
+          <Title $isDark={isDark}><TitleIcon><ScaleIcon /></TitleIcon> Validator Comparator</Title>
         </Header>
         <LoadingState $isDark={isDark}>
           Loading real validator data from Casper Network... ⏳
@@ -517,7 +530,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
     return (
       <Container $isDark={isDark}>
         <Header>
-          <Title $isDark={isDark}>⚖️ Validator Comparator</Title>
+          <Title $isDark={isDark}><TitleIcon><ScaleIcon /></TitleIcon> Validator Comparator</Title>
         </Header>
         <LoadingState $isDark={isDark}>
           Not enough validators to compare.
@@ -530,7 +543,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          ⚖️ Validator Comparator
+          <TitleIcon><ScaleIcon /></TitleIcon> Validator Comparator
           <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
         </Title>
         <Subtitle $isDark={isDark}>
@@ -587,7 +600,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
                     onClick={() => copyToClipboard(validator1.publicKey)}
                     title="Copy full address"
                   >
-                    {copiedKey === validator1.publicKey ? '✓' : '📋'}
+                    {copiedKey === validator1.publicKey ? '✓' : ''}
                   </CopyButton>
                 )}
               </ValidatorAddress>
@@ -622,7 +635,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
                     onClick={() => copyToClipboard(validator2.publicKey)}
                     title="Copy full address"
                   >
-                    {copiedKey === validator2.publicKey ? '✓' : '📋'}
+                    {copiedKey === validator2.publicKey ? '✓' : ''}
                   </CopyButton>
                 )}
               </ValidatorAddress>
@@ -645,7 +658,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
 
       <SummarySection $isDark={isDark}>
         <SummaryTitle $isDark={isDark}>
-          💡 Recommendation
+           Recommendation
         </SummaryTitle>
         <SummaryText $isDark={isDark}>
           {getSummary()}
@@ -653,7 +666,7 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
       </SummarySection>
 
       <DataSource $isDark={isDark}>
-        {isLive ? '📡 Live data from Casper Mainnet' : '⚠️ Demo data - API unavailable'}
+        {isLive ? 'Live data from Casper Mainnet' : 'Demo data - API unavailable'}
       </DataSource>
     </Container>
   );

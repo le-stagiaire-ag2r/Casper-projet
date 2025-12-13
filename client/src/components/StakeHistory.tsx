@@ -2,6 +2,65 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 
+// SVG Icons for transaction types
+const StakeIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v18" />
+    <path d="M5 10l7-7 7 7" />
+  </svg>
+);
+
+const UnstakeIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v18" />
+    <path d="M5 14l7 7 7-7" />
+  </svg>
+);
+
+const HistoryIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);
+
+const LockIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const InboxIcon = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 4 23 10 17 10" />
+    <polyline points="1 20 1 14 7 14" />
+    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+  </svg>
+);
+
+const TxIconWrapper = styled.span<{ $type: 'stake' | 'unstake' }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: ${props => props.$type === 'stake'
+    ? 'rgba(139, 92, 246, 0.2)'
+    : 'rgba(255, 149, 0, 0.2)'};
+  color: ${props => props.$type === 'stake'
+    ? '#8b5cf6'
+    : '#ff9500'};
+`;
+
 interface LocalTransaction {
   id: string;
   txHash: string;
@@ -22,18 +81,11 @@ const fadeIn = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 24px;
   padding: 32px;
-  backdrop-filter: blur(20px);
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  box-shadow: ${props => props.$isDark
-    ? 'none'
-    : '0 4px 20px rgba(0, 0, 0, 0.08)'};
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
 const Header = styled.div`
@@ -338,10 +390,10 @@ export const StakeHistory: React.FC = () => {
     return date.toLocaleDateString();
   };
 
-  const getIcon = (type: string) => {
-    if (type === 'stake') return '💎';
-    if (type === 'unstake') return '🔄';
-    return '📤';
+  const getIcon = (type: string): React.ReactNode => {
+    if (type === 'stake') return <TxIconWrapper $type="stake"><StakeIcon /></TxIconWrapper>;
+    if (type === 'unstake') return <TxIconWrapper $type="unstake"><UnstakeIcon /></TxIconWrapper>;
+    return null;
   };
 
   if (!activeAccount) {
@@ -349,12 +401,12 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon><HistoryIcon /></TitleIcon>
             History
           </Title>
         </Header>
         <EmptyState>
-          <EmptyIcon>🔐</EmptyIcon>
+          <EmptyIcon><LockIcon /></EmptyIcon>
           <EmptyText $isDark={isDark}>Connect your wallet</EmptyText>
           <EmptySubtext $isDark={isDark}>View your transaction history</EmptySubtext>
         </EmptyState>
@@ -367,7 +419,7 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon><HistoryIcon /></TitleIcon>
             History
           </Title>
         </Header>
@@ -385,15 +437,15 @@ export const StakeHistory: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
           <Title $isDark={isDark}>
-            <TitleIcon>📜</TitleIcon>
+            <TitleIcon><HistoryIcon /></TitleIcon>
             History
           </Title>
           <RefreshButton $isDark={isDark} onClick={fetchHistory}>
-            🔄 Refresh
+            <RefreshIcon /> Refresh
           </RefreshButton>
         </Header>
         <EmptyState>
-          <EmptyIcon>📭</EmptyIcon>
+          <EmptyIcon><InboxIcon /></EmptyIcon>
           <EmptyText $isDark={isDark}>No transactions yet</EmptyText>
           <EmptySubtext $isDark={isDark}>Start staking to see your history</EmptySubtext>
         </EmptyState>
@@ -405,11 +457,11 @@ export const StakeHistory: React.FC = () => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          <TitleIcon>📜</TitleIcon>
+          <TitleIcon><HistoryIcon /></TitleIcon>
           History
         </Title>
         <RefreshButton $isDark={isDark} onClick={fetchHistory}>
-          🔄 Refresh
+          <RefreshIcon /> Refresh
         </RefreshButton>
       </Header>
       <TransactionList>
@@ -448,7 +500,7 @@ export const StakeHistory: React.FC = () => {
                     onClick={() => copyToClipboard(tx.txHash)}
                     title="Copy full hash"
                   >
-                    {copiedHash === tx.txHash ? '✓' : '📋'}
+                    {copiedHash === tx.txHash ? '✓' : ''}
                   </CopyButton>
                 </HashContainer>
               )}

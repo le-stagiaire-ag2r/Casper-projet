@@ -6,15 +6,27 @@ import { useCsprClick } from '../hooks/useCsprClick';
 import { api } from '../services/api';
 import { StakeRecord } from '../types';
 
+// SVG Icons
+const DownloadIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+const TitleIconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: #8b5cf6;
+`;
+
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.02)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.1)'};
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
 `;
 
 const Header = styled.div`
@@ -230,10 +242,10 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
   const isWalletConnected = !!activeAccount?.publicKey;
 
   const exportOptions = [
-    { type: 'transactions' as ExportType, icon: '📋', title: 'Transactions', desc: isWalletConnected ? `${userStakes.length} real transactions` : 'Connect wallet' },
-    { type: 'portfolio' as ExportType, icon: '📊', title: 'Portfolio', desc: isWalletConnected ? 'Your real balances' : 'Connect wallet' },
-    { type: 'price_history' as ExportType, icon: '📈', title: 'Price History', desc: 'CSPR price data' },
-    { type: 'rewards' as ExportType, icon: '💰', title: 'Rewards', desc: 'Estimated rewards' },
+    { type: 'transactions' as ExportType, icon: '', title: 'Transactions', desc: isWalletConnected ? `${userStakes.length} real transactions` : 'Connect wallet' },
+    { type: 'portfolio' as ExportType, icon: '', title: 'Portfolio', desc: isWalletConnected ? 'Your real balances' : 'Connect wallet' },
+    { type: 'price_history' as ExportType, icon: '', title: 'Price History', desc: 'CSPR price data' },
+    { type: 'rewards' as ExportType, icon: '', title: 'Rewards', desc: 'Estimated rewards' },
   ];
 
   const daysOptions = [
@@ -374,7 +386,7 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          📥 Export Data
+          <TitleIconWrapper><DownloadIcon /></TitleIconWrapper> Export Data
         </Title>
       </Header>
 
@@ -444,15 +456,15 @@ export const ExportCSV: React.FC<ExportCSVProps> = ({ isDark }) => {
         disabled={isExporting}
       >
         {isExporting ? (
-          <>⏳ Generating...</>
+          <>Generating...</>
         ) : (
-          <>📥 Download CSV</>
+          <><DownloadIcon /> Download CSV</>
         )}
       </ExportButton>
 
       {showSuccess && (
         <SuccessMessage>
-          ✅ Export complete! Check your downloads folder.
+          Export complete! Check your downloads folder.
         </SuccessMessage>
       )}
     </Container>

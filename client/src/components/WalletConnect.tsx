@@ -64,7 +64,7 @@ export const WalletConnect: React.FC = () => {
     return (
       <Container>
         <AccountInfo>
-          <span>🔗</span>
+          <span></span>
           <AccountText>
             {activeAccount.publicKey.substring(0, 8)}...
             {activeAccount.publicKey.substring(activeAccount.publicKey.length - 6)}

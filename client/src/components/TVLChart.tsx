@@ -3,14 +3,11 @@ import styled from 'styled-components';
 import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.05)'
-    : 'rgba(0, 0, 0, 0.02)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.1)'
-    : 'rgba(0, 0, 0, 0.1)'};
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
 `;
 
 const Header = styled.div`
@@ -311,7 +308,7 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
       <Header>
         <TitleSection>
           <Title $isDark={isDark}>
-            📈 Total Value Locked
+             Total Value Locked
             <LiveBadge $isLive={isLive}>{isLive ? 'LIVE' : 'DEMO'}</LiveBadge>
           </Title>
           <TVLValue $isDark={isDark}>

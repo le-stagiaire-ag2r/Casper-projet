@@ -138,7 +138,7 @@ const SecondaryButton = styled.button`
 
 // Stats Section
 const StatsSection = styled(Section)`
-  background: ${colors.background.secondary};
+  background: transparent;
 `;
 
 const StatsGrid = styled.div`
@@ -160,8 +160,9 @@ const StatsGrid = styled.div`
 const StatCard = styled.div`
   padding: ${spacing[10]} ${spacing[6]};
   text-align: center;
-  background: ${colors.background.tertiary};
+  background: ${colors.glass.medium};
   border: 1px solid ${colors.border.default};
+  backdrop-filter: blur(10px);
   transition: all ${effects.transition.normal};
 
   &:first-child {
@@ -200,7 +201,7 @@ const StatCard = styled.div`
   }
 
   &:hover {
-    background: ${colors.background.elevated};
+    background: ${colors.glass.dark};
   }
 `;
 
@@ -244,7 +245,7 @@ const StatIndicator = styled.span<{ $live?: boolean }>`
 
 // Features Section
 const FeaturesSection = styled(Section)`
-  background: ${colors.background.primary};
+  background: transparent;
 `;
 
 const SectionHeader = styled.div`
@@ -293,11 +294,12 @@ const FeaturesGrid = styled.div`
   }
 `;
 
-const FeatureCard = styled.div`
+const FeatureCard = styled.div<{ $purple?: boolean }>`
   padding: ${spacing[10]};
-  background: ${colors.background.secondary};
-  border: 1px solid ${colors.border.default};
+  background: ${props => props.$purple ? colors.glass.purple : colors.glass.medium};
+  border: 1px solid ${props => props.$purple ? 'rgba(139, 92, 246, 0.2)' : colors.border.default};
   border-radius: ${layout.borderRadius.xl};
+  backdrop-filter: blur(10px);
   transition: all ${effects.transition.normal};
   position: relative;
   overflow: hidden;
@@ -316,8 +318,10 @@ const FeatureCard = styled.div`
   }
 
   &:hover {
-    border-color: ${colors.border.hover};
+    border-color: ${colors.accent.primary};
     transform: translateY(-4px);
+    background: ${props => props.$purple ? colors.glass.purpleStrong : colors.glass.dark};
+    box-shadow: ${effects.shadow.glow};
 
     &::before {
       transform: scaleX(1);
@@ -350,7 +354,7 @@ const FeatureDescription = styled.p`
 
 // Benefits Section
 const BenefitsSection = styled(Section)`
-  background: ${colors.background.secondary};
+  background: transparent;
 `;
 
 const BenefitsGrid = styled.div`
@@ -365,18 +369,21 @@ const BenefitsGrid = styled.div`
   }
 `;
 
-const BenefitCard = styled.div`
+const BenefitCard = styled.div<{ $purple?: boolean }>`
   display: flex;
   gap: ${spacing[5]};
   padding: ${spacing[8]};
-  background: ${colors.background.tertiary};
-  border: 1px solid ${colors.border.default};
+  background: ${props => props.$purple ? colors.glass.purple : colors.glass.medium};
+  border: 1px solid ${props => props.$purple ? 'rgba(139, 92, 246, 0.2)' : colors.border.default};
   border-radius: ${layout.borderRadius.lg};
+  backdrop-filter: blur(10px);
   transition: all ${effects.transition.normal};
 
   &:hover {
     border-color: ${colors.accent.primary};
     transform: translateX(8px);
+    background: ${props => props.$purple ? colors.glass.purpleStrong : colors.glass.dark};
+    box-shadow: ${effects.shadow.glow};
   }
 `;
 
@@ -721,7 +728,7 @@ export const HomePage: React.FC<HomePageProps> = () => {
               Casper Wallet, Ledger, and more.
             </FeatureDescription>
           </FeatureCard>
-          <FeatureCard className="feature-card">
+          <FeatureCard className="feature-card" $purple>
             <FeatureNumber>02</FeatureNumber>
             <FeatureTitle>Stake CSPR</FeatureTitle>
             <FeatureDescription>
@@ -773,7 +780,7 @@ export const HomePage: React.FC<HomePageProps> = () => {
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
-          <BenefitCard className="benefit-card">
+          <BenefitCard className="benefit-card" $purple>
             <BenefitIcon><TrendingIcon /></BenefitIcon>
             <BenefitContent>
               <BenefitTitle>~17% APY Returns</BenefitTitle>
@@ -783,7 +790,7 @@ export const HomePage: React.FC<HomePageProps> = () => {
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
-          <BenefitCard className="benefit-card">
+          <BenefitCard className="benefit-card" $purple>
             <BenefitIcon><ShieldIcon /></BenefitIcon>
             <BenefitContent>
               <BenefitTitle>Secure & Transparent</BenefitTitle>

@@ -3,21 +3,37 @@ import styled, { keyframes } from 'styled-components';
 import { useCsprPrice } from '../hooks/useBalance';
 import { playSuccessSound } from '../utils/notificationSound';
 
+// SVG Icons
+const BellIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const TitleIconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: #8b5cf6;
+`;
+
 const pulse = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 20px;
   padding: 24px;
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
 `;
 
 const Header = styled.div`
@@ -370,7 +386,7 @@ export const PriceAlertComponent: React.FC<PriceAlertProps> = ({ isDark }) => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          <span>🔔</span> Price Alerts
+          <TitleIconWrapper><BellIcon /></TitleIconWrapper> Price Alerts
         </Title>
         <CurrentPrice $isDark={isDark}>
           <LiveDot />
@@ -420,7 +436,7 @@ export const PriceAlertComponent: React.FC<PriceAlertProps> = ({ isDark }) => {
           <AlertItem key={alert.id} $isDark={isDark}>
             <AlertInfo>
               <AlertIcon $type={alert.type}>
-                {alert.type === 'above' ? '📈' : '📉'}
+                {alert.type === 'above' ? '' : ''}
               </AlertIcon>
               <AlertDetails>
                 <AlertPrice $isDark={isDark}>${alert.targetPrice.toFixed(4)}</AlertPrice>
@@ -438,7 +454,7 @@ export const PriceAlertComponent: React.FC<PriceAlertProps> = ({ isDark }) => {
         {triggeredAlerts.map(alert => (
           <AlertItem key={alert.id} $isDark={isDark} $triggered>
             <AlertInfo>
-              <AlertIcon $type={alert.type}>✅</AlertIcon>
+              <AlertIcon $type={alert.type}><CheckIcon /></AlertIcon>
               <AlertDetails>
                 <AlertPrice $isDark={isDark}>
                   ${alert.targetPrice.toFixed(4)}

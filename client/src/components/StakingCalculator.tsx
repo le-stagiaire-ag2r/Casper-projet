@@ -1,6 +1,49 @@
 import React, { useState, useMemo } from 'react';
 import styled, { keyframes, useTheme, css } from 'styled-components';
 
+// SVG Icons
+const CalculatorIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <line x1="8" y1="6" x2="16" y2="6" />
+    <line x1="8" y1="10" x2="8" y2="10.01" />
+    <line x1="12" y1="10" x2="12" y2="10.01" />
+    <line x1="16" y1="10" x2="16" y2="10.01" />
+    <line x1="8" y1="14" x2="8" y2="14.01" />
+    <line x1="12" y1="14" x2="12" y2="14.01" />
+    <line x1="16" y1="14" x2="16" y2="14.01" />
+    <line x1="8" y1="18" x2="8" y2="18.01" />
+    <line x1="12" y1="18" x2="16" y2="18" />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+
+const BankIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 21h18" />
+    <path d="M3 10h18" />
+    <path d="M12 3l9 7H3l9-7z" />
+    <path d="M5 10v11" />
+    <path d="M19 10v11" />
+    <path d="M9 10v11" />
+    <path d="M15 10v11" />
+  </svg>
+);
+
+const TitleIconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: #8b5cf6;
+`;
+
 const pulse = keyframes`
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.02); }
@@ -12,18 +55,11 @@ const shimmer = keyframes`
 `;
 
 const Container = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.9)'};
+  background: rgba(20, 10, 30, 0.6);
   border-radius: 24px;
   padding: 28px;
-  backdrop-filter: blur(20px);
-  border: 1px solid ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.08)'
-    : 'rgba(0, 0, 0, 0.08)'};
-  box-shadow: ${props => props.$isDark
-    ? 'none'
-    : '0 4px 20px rgba(0, 0, 0, 0.08)'};
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
 
@@ -33,8 +69,8 @@ const Container = styled.div<{ $isDark: boolean }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #30d158, #5856d6, #ff9f0a);
+    height: 2px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
   }
 `;
 
@@ -56,7 +92,7 @@ const Title = styled.h3<{ $isDark: boolean }>`
 `;
 
 const APYBadge = styled.div`
-  background: linear-gradient(135deg, #30d158, #34c759);
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
   color: white;
   padding: 6px 14px;
   border-radius: 20px;
@@ -65,7 +101,7 @@ const APYBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 4px 15px rgba(48, 209, 88, 0.3);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 `;
 
 const InputSection = styled.div`
@@ -212,7 +248,7 @@ const SliderFill = styled.div<{ $percent: number }>`
   top: 0;
   height: 100%;
   width: ${props => props.$percent}%;
-  background: linear-gradient(90deg, #30d158, #5856d6);
+  background: linear-gradient(90deg, #8b5cf6, #5856d6);
   border-radius: 4px;
   transition: width 0.1s ease;
 `;
@@ -268,13 +304,12 @@ const SliderLabel = styled.span<{ $isDark: boolean }>`
 `;
 
 const ResultsSection = styled.div<{ $isDark: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(48, 209, 88, 0.08)'
-    : 'rgba(48, 209, 88, 0.05)'};
-  border: 1px solid rgba(48, 209, 88, 0.2);
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
   border-radius: 20px;
   padding: 24px;
   margin-top: 24px;
+  backdrop-filter: blur(10px);
 `;
 
 const ResultsHeader = styled.div`
@@ -302,18 +337,17 @@ const ResultsGrid = styled.div`
 `;
 
 const ResultCard = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
-  background: ${props => props.$isDark
-    ? 'rgba(255, 255, 255, 0.03)'
-    : 'rgba(255, 255, 255, 0.8)'};
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 16px;
   padding: 20px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(10px);
 
   ${props => props.$highlight && css`
-    background: linear-gradient(135deg, rgba(48, 209, 88, 0.15), rgba(88, 86, 214, 0.1));
-    border: 1px solid rgba(48, 209, 88, 0.3);
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.25);
     animation: ${pulse} 2s ease-in-out infinite;
   `}
 `;
@@ -337,9 +371,9 @@ const ResultLabel = styled.div<{ $isDark: boolean }>`
 const ResultValue = styled.div<{ $highlight?: boolean }>`
   font-size: 24px;
   font-weight: 800;
-  color: ${props => props.$highlight ? '#30d158' : 'inherit'};
+  color: ${props => props.$highlight ? '#8b5cf6' : 'inherit'};
   background: ${props => props.$highlight
-    ? 'linear-gradient(135deg, #30d158, #34c759)'
+    ? 'linear-gradient(135deg, #8b5cf6, #a78bfa)'
     : 'none'};
   -webkit-background-clip: ${props => props.$highlight ? 'text' : 'none'};
   -webkit-text-fill-color: ${props => props.$highlight ? 'transparent' : 'inherit'};
@@ -402,7 +436,7 @@ const TotalValue = styled.div<{ $isDark: boolean }>`
 
 const TotalProfit = styled.span`
   font-size: 18px;
-  color: #30d158;
+  color: #8b5cf6;
   font-weight: 700;
 `;
 
@@ -489,10 +523,10 @@ export const StakingCalculator: React.FC = () => {
     <Container $isDark={isDark}>
       <Header>
         <Title $isDark={isDark}>
-          🧮 Staking Calculator
+          <TitleIconWrapper><CalculatorIcon /></TitleIconWrapper> Staking Calculator
         </Title>
         <APYBadge>
-          <span>📈</span>
+          <span></span>
           {selectedAPY}% APY
         </APYBadge>
       </Header>
@@ -504,8 +538,8 @@ export const StakingCalculator: React.FC = () => {
           </Label>
         </SliderHeader>
         <SliderTrack $isDark={isDark}>
-          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #30d158, #ff9f0a)' }} />
-          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #30d158, #34c759)' }} />
+          <SliderFill $percent={apySliderPercent} style={{ background: 'linear-gradient(90deg, #8b5cf6, #ff9f0a)' }} />
+          <SliderThumb $percent={apySliderPercent} style={{ background: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' }} />
           <Slider
             type="range"
             min="1"
@@ -583,13 +617,13 @@ export const StakingCalculator: React.FC = () => {
 
       <ResultsSection $isDark={isDark}>
         <ResultsHeader>
-          <span style={{ fontSize: '24px' }}>💰</span>
+          <span style={{ fontSize: '24px' }}></span>
           <ResultsTitle $isDark={isDark}>Estimated Rewards</ResultsTitle>
         </ResultsHeader>
 
         <ResultsGrid>
           <ResultCard $isDark={isDark} $highlight>
-            <ResultIcon>🎁</ResultIcon>
+            <ResultIcon></ResultIcon>
             <ResultLabel $isDark={isDark}>Total Earnings</ResultLabel>
             <ResultValue $highlight>
               +{formatNumber(calculations.earnings)}
@@ -600,7 +634,7 @@ export const StakingCalculator: React.FC = () => {
           </ResultCard>
 
           <ResultCard $isDark={isDark}>
-            <ResultIcon>📅</ResultIcon>
+            <ResultIcon><CalendarIcon /></ResultIcon>
             <ResultLabel $isDark={isDark}>Monthly Average</ResultLabel>
             <ResultValue>
               +{formatNumber(calculations.monthlyAvg)}
@@ -609,7 +643,7 @@ export const StakingCalculator: React.FC = () => {
           </ResultCard>
 
           <ResultCard $isDark={isDark}>
-            <ResultIcon>⚡</ResultIcon>
+            <ResultIcon></ResultIcon>
             <ResultLabel $isDark={isDark}>Daily Average</ResultLabel>
             <ResultValue>
               +{formatNumber(calculations.dailyAvg, 4)}
@@ -618,7 +652,7 @@ export const StakingCalculator: React.FC = () => {
           </ResultCard>
 
           <ResultCard $isDark={isDark}>
-            <ResultIcon>📊</ResultIcon>
+            <ResultIcon></ResultIcon>
             <ResultLabel $isDark={isDark}>Total Return</ResultLabel>
             <ResultValue $highlight>
               +{formatNumber(calculations.percentGain, 1)}%
@@ -628,7 +662,7 @@ export const StakingCalculator: React.FC = () => {
 
           <TotalCard $isDark={isDark}>
             <TotalLabel $isDark={isDark}>
-              🏦 Total Value After {getPeriodLabel()}
+              <TitleIconWrapper><BankIcon /></TitleIconWrapper> Total Value After {getPeriodLabel()}
             </TotalLabel>
             <TotalValue $isDark={isDark}>
               {formatNumber(calculations.total)} CSPR
@@ -639,7 +673,7 @@ export const StakingCalculator: React.FC = () => {
       </ResultsSection>
 
       <Disclaimer $isDark={isDark}>
-        <DisclaimerIcon>💡</DisclaimerIcon>
+        <DisclaimerIcon></DisclaimerIcon>
         <span>
           Calculation based on {selectedAPY}% APY. Rewards compound automatically.
           Actual returns may vary based on validator choice and network conditions.

@@ -284,7 +284,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
       if (permission === 'granted') {
         setIsEnabled(true);
         // Show welcome notification
-        new Notification('🎉 Notifications Enabled!', {
+        new Notification('Notifications Enabled!', {
           body: 'You will now receive updates about your staking activities.',
           icon: '/logo192.png',
         });
@@ -303,7 +303,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
   const handleTestNotification = () => {
     if (!isEnabled) return;
 
-    new Notification('🧪 Test Notification', {
+    new Notification('Test Notification', {
       body: 'This is a test notification from StakeVue. Everything is working correctly!',
       icon: '/logo192.png',
       tag: 'test',
@@ -313,31 +313,31 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
   const notificationTypes = [
     {
       key: 'priceAlerts' as const,
-      icon: '💰',
+      icon: '',
       title: 'Price Alerts',
       desc: 'Get notified when CSPR reaches your target price',
     },
     {
       key: 'stakingRewards' as const,
-      icon: '🎁',
+      icon: '',
       title: 'Staking Rewards',
       desc: 'Daily updates on your accumulated rewards',
     },
     {
       key: 'transactionConfirm' as const,
-      icon: '✅',
+      icon: '',
       title: 'Transaction Confirmations',
       desc: 'Alerts when stake/unstake transactions complete',
     },
     {
       key: 'weeklyReport' as const,
-      icon: '📊',
+      icon: '',
       title: 'Weekly Reports',
       desc: 'Summary of your weekly staking performance',
     },
     {
       key: 'validatorStatus' as const,
-      icon: '🔔',
+      icon: '',
       title: 'Validator Status',
       desc: 'Alerts when validator performance changes',
     },
@@ -349,7 +349,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
         <Header>
           <TitleSection>
             <Title $isDark={isDark}>
-              🔔 Push Notifications
+              Push Notifications
             </Title>
             <Subtitle $isDark={isDark}>
               Your browser doesn't support push notifications
@@ -369,7 +369,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
       <Header>
         <TitleSection>
           <Title $isDark={isDark}>
-            🔔 Push Notifications
+            Push Notifications
           </Title>
           <Subtitle $isDark={isDark}>
             Stay updated on your staking activity
@@ -383,7 +383,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
 
       {!isEnabled ? (
         <EnableButton $isDark={isDark} onClick={handleEnableNotifications}>
-          🔔 Enable Push Notifications
+          Enable Push Notifications
         </EnableButton>
       ) : (
         <>
@@ -410,13 +410,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ isDa
           </NotificationTypes>
 
           <TestButton $isDark={isDark} onClick={handleTestNotification}>
-            🧪 Send Test Notification
+            Send Test Notification
           </TestButton>
         </>
       )}
 
       <InfoBox $isDark={isDark}>
-        💡 Notifications are stored locally and processed in your browser.
+         Notifications are stored locally and processed in your browser.
         No data is sent to external servers. You can revoke permission anytime in your browser settings.
       </InfoBox>
     </Container>
