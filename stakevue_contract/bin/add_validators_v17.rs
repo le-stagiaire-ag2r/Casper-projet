@@ -7,8 +7,8 @@ use odra::host::HostRefLoader;
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
-// V17 Contract Address - UPDATE THIS AFTER DEPLOY (with 'hash-' prefix)
-const CONTRACT_HASH: &str = "hash-REPLACE_AFTER_DEPLOY";
+// V17 Contract Address
+const CONTRACT_HASH: &str = "hash-8725e658c44512f4ab44a3bc3009e17382ae9f83743270219cc4a9e2dd4b21ff";
 
 // Testnet validators - provided by user
 // All from https://testnet.cspr.live/validators
