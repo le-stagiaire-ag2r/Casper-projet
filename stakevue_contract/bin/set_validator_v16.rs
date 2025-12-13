@@ -8,7 +8,7 @@ use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
 // V16 Contract Address - UPDATE THIS AFTER DEPLOY (with 'hash-' prefix)
-const CONTRACT_HASH: &str = "hash-9a00e71cd3207959e6bdea729cfa3afc9567b6744a055d66f56c5db7ac553672";
+const CONTRACT_HASH: &str = "hash-4b87da98bc1b997c37dd8335835487b7a2041335d9f8c1466cbe23df6df358c2";
 
 // Testnet validator public key - 1% commission
 // Find more at: https://testnet.cspr.live/validators
