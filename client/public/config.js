@@ -32,19 +32,19 @@ window.config = {
   // Staking Configuration - V17 uses Casper network delegation minimum
   min_stake_amount: "500000000000", // 500 CSPR minimum (Casper delegation requirement)
 
-  // V17 Approved Validators (testnet validators)
+  // V17 Approved Validators (testnet validators - synced with .env.example)
   approved_validators: [
     "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca",
-    "0109ddf79329838bc3ab02aff72eac1abcc5961fd40fd8722c816bdff7d437b0d0",
-    "0119bf44096984cdfe8541bac167dc3b96c85086aa30b6b6cb0c5c38ad703166e1",
-    "0145fb72c75e1b459839e0fbc11fd05a7f3321ca77d43f12bcbd34a13a3f5d6d01",
-    "015fd964620f98e551065079e142840dac3fb25bd97a0d4722411cb439f9247d72",
-    "0168d67b2d7f9b85f0e34c14e0a8ce8dcabfb5cefc45b5f4c04b62d8e8b2c0d0a1",
-    "0187adb3e0f60a983ecc2ddb48d32b3deaa09388ad3bc41e14aeb19571c90d5404",
-    "01a4f946857c7f1cec6cd85df1dcd9674b46ec546eb1eda0b4f91ae0d6da30d4c1",
-    "01b1126cfaf8f6df4209b5f3e912f23ff8a7e8e9a1b3c5d7f901234567890abcdef",
-    "01d9bf2148748a85c89da5aad8ee0b0fc2d105fd39d41a4c796536354f0ae2900c",
-    "020377bc3ad54b5505971e001044ea822a3f6f307f8dc93fa45a05b7463c0a053bed"
+    "017d96b9a63abcb61c870a4f55187a0a7ac24096bdb5fc585c12a686a4d892009e",
+    "017d9aa0b86413d7ff9a9169182c53f0bacaa80d34c211adab007ed4876af17077",
+    "012d58e05b2057a84115709e0a6ccf000c6a83b4e8dfa389a680c1ab001864f1f2",
+    "0143345f0d7c6e8d1a8e70eecdc3b4801d6b8505cd56c422b56d806b3efd1ebfda",
+    "012b365e09c5d75187b4abc25c4aa28109133bab6a256ef4abe24348073e590d80",
+    "0153d98c835b493c76050735dc79e6702a17cd78ab69d5b0c3631e72f8f38bb095",
+    "013584d18def5ee3ef33374b3e2c9056bbb7860c97044bd16b64d895f8aa073084",
+    "01a4a5517e0b83b7cbccae0cc22fb4a03d5c5a3d15c6b6bd7a6f4747e541bea779",
+    "01a7cfb168d2bc2f69f90627d5e7bc6cb019b1c52c8a374416fdb9c4cef0233611",
+    "01f340df2c32f25391e8f7924a99e93cab3a6f230ff7af1cacbfc070772cbebd94"
   ],
 
   // V17 Exchange Rate
