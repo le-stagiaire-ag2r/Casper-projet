@@ -1,9 +1,17 @@
 #![no_std]
 
 use odra::prelude::*;
-use odra::casper_types::{U512, U256, PublicKey};
+use odra::casper_types::{U512, U256, PublicKey, runtime_args};
+use odra::CallDef;
 use odra_modules::access::Ownable;
 use odra_modules::cep18_token::Cep18;
+
+// ============================================================================
+// SYSTEM AUCTION CONTRACT (from Casper documentation)
+// ============================================================================
+// Testnet: hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2
+// Mainnet: hash-ccb576d6ce6dec84a551e48f0d0b7af89ddba44c7390b690036257a04a3ae9ea
+// ============================================================================
 
 // ============================================================================
 // ERRORS
@@ -24,6 +32,8 @@ pub enum Error {
     WithdrawalAlreadyClaimed = 11,
     NotWithdrawalOwner = 12,
     MaxValidatorsReached = 13,
+    NoDelegationFound = 14,
+    UndelegateAmountExceedsDelegation = 15,
 }
 
 // ============================================================================
@@ -137,13 +147,16 @@ impl odra::casper_types::CLTyped for WithdrawalRequest {
 }
 
 // ============================================================================
-// STAKEVUE CONTRACT V17 - Multi-Validator + Withdrawal Queue
+// STAKEVUE CONTRACT V18 - Direct Auction Contract Calls
 // ============================================================================
 // Features:
 // - Multi-validator support (user chooses validator)
 // - Withdrawal queue with 7 era unbonding
 // - Harvest rewards function for auto-compounding
 // - Exchange rate mechanism
+// - V18: Direct calls to system auction contract (like CLI)
+//   Instead of env().delegate(), we call auction's delegate entry point
+//   with explicit validator, amount, and delegator arguments
 // ============================================================================
 
 // Precision for exchange rate calculations (9 decimals like CSPR)
@@ -247,10 +260,30 @@ impl StakeVue {
         // Update validator delegated amount
         self.validator_delegated.set(&validator, current_delegated + cspr_amount);
 
-        // Delegate CSPR to validator (only in production/livenet)
+        // Delegate CSPR to validator via system auction contract (only in production/livenet)
+        // Following Casper CLI documentation: delegate entry point with validator, amount, delegator
         #[cfg(not(test))]
         {
-            self.env().delegate(validator.clone(), cspr_amount);
+            // Get the auction contract address (Testnet)
+            // hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2
+            let auction_address = Address::new("hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2")
+                .expect("Invalid auction address");
+
+            // The delegator is this contract itself
+            let delegator = self.env().self_address();
+
+            // Build runtime args as per CLI documentation
+            let args = runtime_args! {
+                "validator" => validator.clone(),
+                "amount" => cspr_amount,
+                "delegator" => delegator,
+            };
+
+            // Call auction contract's delegate entry point
+            // CallDef::new(entry_point, is_mut, args)
+            let call_def = CallDef::new("delegate", true, args);
+            self.env().call_contract::<()>(auction_address, call_def);
+
             self.env().emit_event(Delegated {
                 validator: validator.clone(),
                 amount: cspr_amount,
@@ -320,10 +353,28 @@ impl StakeVue {
         self.user_requests.set(&(staker, user_count), request_id);
         self.user_request_count.set(&staker, user_count + 1);
 
-        // Undelegate from validator (only in production/livenet)
+        // Undelegate from validator via system auction contract (only in production/livenet)
+        // Following Casper CLI documentation: undelegate entry point with validator, amount, delegator
         #[cfg(not(test))]
         {
-            self.env().undelegate(validator.clone(), cspr_to_return);
+            // Get the auction contract address (Testnet)
+            let auction_address = Address::new("hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2")
+                .expect("Invalid auction address");
+
+            // The delegator is this contract itself (same as when we delegated)
+            let delegator = self.env().self_address();
+
+            // Build runtime args as per CLI documentation
+            let args = runtime_args! {
+                "validator" => validator.clone(),
+                "amount" => cspr_to_return,
+                "delegator" => delegator,
+            };
+
+            // Call auction contract's undelegate entry point
+            let call_def = CallDef::new("undelegate", true, args);
+            self.env().call_contract::<()>(auction_address, call_def);
+
             self.env().emit_event(Undelegated {
                 validator,
                 amount: cspr_to_return,
@@ -598,6 +649,26 @@ impl StakeVue {
 
     pub fn token_total_supply(&self) -> U256 {
         self.token.total_supply()
+    }
+
+    // ========================================================================
+    // DIAGNOSTIC FUNCTIONS (V18 DEBUG)
+    // ========================================================================
+
+    /// Check actual on-chain delegation amount for a validator
+    /// This queries the Casper auction directly, not our local state
+    #[cfg(not(test))]
+    pub fn get_actual_delegation(&self, validator: PublicKey) -> U512 {
+        self.env().delegated_amount(validator)
+    }
+
+    /// Compare local vs on-chain delegation for debugging
+    #[cfg(not(test))]
+    pub fn debug_delegation_status(&self, validator: PublicKey) -> (U512, U512, bool) {
+        let local = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
+        let actual = self.env().delegated_amount(validator);
+        let matches = local == actual;
+        (local, actual, matches)
     }
 }
 

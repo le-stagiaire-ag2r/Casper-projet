@@ -1,6 +1,6 @@
 [package]
 name = "stakevue_contract"
-version = "17.0.0"
+version = "18.0.0"
 edition = "2021"
 
 [dependencies]
@@ -58,6 +58,28 @@ test = false
 [[bin]]
 name = "test_unstake_v17"
 path = "bin/test_unstake_v17.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "check_delegation_debug"
+path = "bin/check_delegation_debug.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
+# V18 SCRIPTS (Multi-Validator + Withdrawal Queue + Delegation Debug)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v18"
+path = "bin/deploy_v18.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "add_validators_v18"
+path = "bin/add_validators_v18.rs"
 required-features = ["livenet"]
 test = false
 
