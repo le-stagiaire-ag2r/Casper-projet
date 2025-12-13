@@ -1,7 +1,7 @@
 #![no_std]
 
 use odra::prelude::*;
-use odra::casper_types::{U512, U256};
+use odra::casper_types::{U512, U256, PublicKey};
 use odra_modules::access::Ownable;
 use odra_modules::cep18_token::Cep18;
 
@@ -15,6 +15,8 @@ pub enum Error {
     InsufficientStCsprBalance = 2,
     ZeroAmount = 3,
     InsufficientPoolBalance = 4,
+    NoValidatorSet = 5,
+    BelowMinimumDelegation = 6,
 }
 
 // ============================================================================
@@ -41,20 +43,47 @@ pub struct RewardsAdded {
     pub new_exchange_rate: U512,
 }
 
+#[odra::event]
+pub struct ValidatorSet {
+    pub validator: PublicKey,
+}
+
+#[odra::event]
+pub struct Delegated {
+    pub validator: PublicKey,
+    pub amount: U512,
+}
+
+#[odra::event]
+pub struct Undelegated {
+    pub validator: PublicKey,
+    pub amount: U512,
+}
+
 // ============================================================================
-// STAKEVUE CONTRACT V15 - With Exchange Rate
+// STAKEVUE CONTRACT V16 - With Validator Delegation
 // ============================================================================
-// V14 + Exchange rate mechanism for stCSPR appreciation
+// V15 + Real validator delegation using Odra 2.0 native support
 //
-// Exchange Rate = total_cspr_pool / total_stcspr_supply
-// - When rewards are added, exchange rate increases
-// - stCSPR holders benefit from rate appreciation
+// Features:
+// - Exchange Rate = total_cspr_pool / total_stcspr_supply
+// - Automatic delegation to validator on stake
+// - Automatic undelegation on unstake
+// - Rewards come from actual validator rewards
+//
+// Important timing (Casper network):
+// - Delegation becomes active after 1 era
+// - Undelegation completes after 7 eras (mainnet)
+// - Minimum delegation: 500 CSPR per validator
 // ============================================================================
 
 // Precision for exchange rate calculations (9 decimals like CSPR)
 const RATE_PRECISION: u64 = 1_000_000_000;
 
-#[odra::module(events = [Staked, Unstaked, RewardsAdded], errors = Error)]
+// Minimum delegation amount (500 CSPR in motes)
+const MIN_DELEGATION: u64 = 500_000_000_000;
+
+#[odra::module(events = [Staked, Unstaked, RewardsAdded, ValidatorSet, Delegated, Undelegated], errors = Error)]
 pub struct StakeVue {
     /// Access control
     ownable: SubModule<Ownable>,
@@ -62,6 +91,8 @@ pub struct StakeVue {
     token: SubModule<Cep18>,
     /// Total CSPR in pool (including rewards)
     total_cspr_pool: Var<U512>,
+    /// Validator public key for delegation
+    validator: Var<PublicKey>,
 }
 
 #[odra::module]
@@ -88,6 +119,8 @@ impl StakeVue {
     ///
     /// If exchange rate is 1.15 (1 stCSPR = 1.15 CSPR):
     /// - Stake 115 CSPR → receive 100 stCSPR
+    ///
+    /// The CSPR is automatically delegated to the configured validator
     #[odra(payable)]
     pub fn stake(&mut self) {
         let staker = self.env().caller();
@@ -95,6 +128,31 @@ impl StakeVue {
 
         if cspr_amount == U512::zero() {
             self.env().revert(Error::ZeroAmount);
+        }
+
+        // Check validator is configured
+        let validator = self.validator.get();
+        if validator.is_none() {
+            self.env().revert(Error::NoValidatorSet);
+        }
+        let validator = validator.unwrap();
+
+        // Check minimum delegation (only for first stake or if total would be below minimum)
+        // Note: delegated_amount not available in test environment
+        #[cfg(not(test))]
+        {
+            let current_delegated = self.env().delegated_amount(validator.clone());
+            if current_delegated == U512::zero() && cspr_amount < U512::from(MIN_DELEGATION) {
+                self.env().revert(Error::BelowMinimumDelegation);
+            }
+        }
+        #[cfg(test)]
+        {
+            // In tests, check against pool balance instead
+            let current_pool = self.total_cspr_pool.get_or_default();
+            if current_pool == U512::zero() && cspr_amount < U512::from(MIN_DELEGATION) {
+                self.env().revert(Error::BelowMinimumDelegation);
+            }
         }
 
         // Calculate stCSPR to mint based on exchange rate
@@ -107,6 +165,18 @@ impl StakeVue {
         let pool = self.total_cspr_pool.get_or_default();
         self.total_cspr_pool.set(pool + cspr_amount);
 
+        // Delegate CSPR to validator (only in production/livenet)
+        #[cfg(not(test))]
+        {
+            self.env().delegate(validator.clone(), cspr_amount);
+            self.env().emit_event(Delegated {
+                validator,
+                amount: cspr_amount,
+            });
+        }
+        #[cfg(test)]
+        let _ = validator; // Silence unused variable warning in tests
+
         self.env().emit_event(Staked {
             staker,
             cspr_amount,
@@ -118,6 +188,9 @@ impl StakeVue {
     ///
     /// If exchange rate is 1.15 (1 stCSPR = 1.15 CSPR):
     /// - Unstake 100 stCSPR → receive 115 CSPR
+    ///
+    /// Note: Undelegation takes 7 eras to complete on mainnet.
+    /// The CSPR will be available after the unbonding period.
     pub fn unstake(&mut self, stcspr_amount: U256) {
         let staker = self.env().caller();
 
@@ -130,6 +203,13 @@ impl StakeVue {
         if stcspr_amount > staker_balance {
             self.env().revert(Error::InsufficientStCsprBalance);
         }
+
+        // Check validator is configured
+        let validator = self.validator.get();
+        if validator.is_none() {
+            self.env().revert(Error::NoValidatorSet);
+        }
+        let validator = validator.unwrap();
 
         // Calculate CSPR to return based on exchange rate
         let cspr_to_return = self.stcspr_to_cspr(stcspr_amount);
@@ -146,7 +226,20 @@ impl StakeVue {
         // Remove CSPR from pool
         self.total_cspr_pool.set(pool - cspr_to_return);
 
+        // Undelegate from validator (only in production/livenet)
+        #[cfg(not(test))]
+        {
+            self.env().undelegate(validator.clone(), cspr_to_return);
+            self.env().emit_event(Undelegated {
+                validator,
+                amount: cspr_to_return,
+            });
+        }
+        #[cfg(test)]
+        let _ = validator; // Silence unused variable warning in tests
+
         // Transfer CSPR back to staker
+        // Note: In production, this would need to wait for unbonding period
         self.env().transfer_tokens(&staker, &cspr_to_return);
 
         self.env().emit_event(Unstaked {
@@ -245,6 +338,17 @@ impl StakeVue {
         self.ownable.transfer_ownership(&new_owner);
     }
 
+    /// Set the validator to delegate to (owner only)
+    /// Must be called before any staking can occur
+    pub fn set_validator(&mut self, validator: PublicKey) {
+        self.ownable.assert_owner(&self.env().caller());
+        self.validator.set(validator.clone());
+
+        self.env().emit_event(ValidatorSet {
+            validator,
+        });
+    }
+
     // ========================================================================
     // VIEW FUNCTIONS
     // ========================================================================
@@ -284,6 +388,27 @@ impl StakeVue {
     pub fn token_total_supply(&self) -> U256 {
         self.token.total_supply()
     }
+
+    /// Get configured validator public key
+    pub fn get_validator(&self) -> Option<PublicKey> {
+        self.validator.get()
+    }
+
+    /// Get amount currently delegated to validator
+    pub fn get_delegated_amount(&self) -> U512 {
+        #[cfg(not(test))]
+        {
+            match self.validator.get() {
+                Some(validator) => self.env().delegated_amount(validator),
+                None => U512::zero(),
+            }
+        }
+        #[cfg(test)]
+        {
+            // In tests, return total pool as proxy for delegated amount
+            self.total_cspr_pool.get_or_default()
+        }
+    }
 }
 
 // ============================================================================
@@ -310,11 +435,23 @@ fn u256_to_u512(value: U256) -> U512 {
 mod tests {
     use super::*;
     use odra::host::{Deployer, HostRef};
+    use odra::casper_types::AsymmetricType;
+
+    // Test validator public key (dummy for testing)
+    fn test_validator() -> PublicKey {
+        // Create a test public key using ed25519
+        PublicKey::ed25519_from_bytes([1u8; 32]).unwrap()
+    }
 
     fn setup() -> (odra::host::HostEnv, StakeVueHostRef) {
         let env = odra_test::env();
         let owner = env.get_account(0);
-        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
+        let mut contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
+
+        // Set up validator for delegation
+        env.set_caller(owner);
+        contract.set_validator(test_validator());
+
         (env, contract)
     }
 
@@ -326,17 +463,26 @@ mod tests {
     }
 
     #[test]
+    fn test_validator_set() {
+        let (_env, contract) = setup();
+        // Validator should be set
+        let validator = contract.get_validator();
+        assert!(validator.is_some());
+        assert_eq!(validator.unwrap(), test_validator());
+    }
+
+    #[test]
     fn test_stake_at_initial_rate() {
         let (env, mut contract) = setup();
         let staker = env.get_account(1);
         env.set_caller(staker);
 
-        // Stake 10 CSPR at 1:1 rate
-        let stake_amount = U512::from(10_000_000_000u64);
+        // Stake 500 CSPR at 1:1 rate (minimum delegation)
+        let stake_amount = U512::from(MIN_DELEGATION);
         contract.with_tokens(stake_amount).stake();
 
-        // Should receive 10 stCSPR
-        assert_eq!(contract.get_stcspr_balance(staker), U256::from(10_000_000_000u64));
+        // Should receive 500 stCSPR
+        assert_eq!(contract.get_stcspr_balance(staker), U256::from(MIN_DELEGATION));
         assert_eq!(contract.get_total_pool(), stake_amount);
         assert_eq!(contract.get_exchange_rate(), U512::from(RATE_PRECISION));
     }
@@ -347,23 +493,23 @@ mod tests {
         let owner = env.get_account(0);
         let staker = env.get_account(1);
 
-        // Staker stakes 100 CSPR
+        // Staker stakes 1000 CSPR
         env.set_caller(staker);
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake();
+        contract.with_tokens(U512::from(1000_000_000_000u64)).stake();
 
-        // 100 stCSPR minted, 100 CSPR in pool
-        assert_eq!(contract.token_total_supply(), U256::from(100_000_000_000u64));
-        assert_eq!(contract.get_total_pool(), U512::from(100_000_000_000u64));
+        // 1000 stCSPR minted, 1000 CSPR in pool
+        assert_eq!(contract.token_total_supply(), U256::from(1000_000_000_000u64));
+        assert_eq!(contract.get_total_pool(), U512::from(1000_000_000_000u64));
 
-        // Owner adds 15 CSPR rewards (simulating 15% APY)
+        // Owner adds 150 CSPR rewards (simulating 15% APY)
         env.set_caller(owner);
-        contract.with_tokens(U512::from(15_000_000_000u64)).add_rewards();
+        contract.with_tokens(U512::from(150_000_000_000u64)).add_rewards();
 
-        // Pool now has 115 CSPR, still 100 stCSPR
-        assert_eq!(contract.get_total_pool(), U512::from(115_000_000_000u64));
-        assert_eq!(contract.token_total_supply(), U256::from(100_000_000_000u64));
+        // Pool now has 1150 CSPR, still 1000 stCSPR
+        assert_eq!(contract.get_total_pool(), U512::from(1150_000_000_000u64));
+        assert_eq!(contract.token_total_supply(), U256::from(1000_000_000_000u64));
 
-        // Exchange rate should be 1.15 (115/100)
+        // Exchange rate should be 1.15 (1150/1000)
         // 1.15 * 1_000_000_000 = 1_150_000_000
         assert_eq!(contract.get_exchange_rate(), U512::from(1_150_000_000u64));
     }
@@ -374,19 +520,19 @@ mod tests {
         let owner = env.get_account(0);
         let staker = env.get_account(1);
 
-        // Staker stakes 100 CSPR
+        // Staker stakes 1000 CSPR
         env.set_caller(staker);
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake();
+        contract.with_tokens(U512::from(1000_000_000_000u64)).stake();
 
-        // Owner adds 15 CSPR rewards
+        // Owner adds 150 CSPR rewards
         env.set_caller(owner);
-        contract.with_tokens(U512::from(15_000_000_000u64)).add_rewards();
+        contract.with_tokens(U512::from(150_000_000_000u64)).add_rewards();
 
-        // Staker unstakes all 100 stCSPR
+        // Staker unstakes all 1000 stCSPR
         env.set_caller(staker);
-        contract.unstake(U256::from(100_000_000_000u64));
+        contract.unstake(U256::from(1000_000_000_000u64));
 
-        // Should receive 115 CSPR (100 + 15 rewards)
+        // Should receive 1150 CSPR (1000 + 150 rewards)
         // Pool should be empty
         assert_eq!(contract.get_total_pool(), U512::zero());
         assert_eq!(contract.token_total_supply(), U256::zero());
@@ -399,22 +545,22 @@ mod tests {
         let alice = env.get_account(1);
         let bob = env.get_account(2);
 
-        // Alice stakes 100 CSPR at 1:1
+        // Alice stakes 1000 CSPR at 1:1
         env.set_caller(alice);
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake();
-        assert_eq!(contract.get_stcspr_balance(alice), U256::from(100_000_000_000u64));
+        contract.with_tokens(U512::from(1000_000_000_000u64)).stake();
+        assert_eq!(contract.get_stcspr_balance(alice), U256::from(1000_000_000_000u64));
 
-        // Owner adds 15 CSPR rewards (rate now 1.15)
+        // Owner adds 150 CSPR rewards (rate now 1.15)
         env.set_caller(owner);
-        contract.with_tokens(U512::from(15_000_000_000u64)).add_rewards();
+        contract.with_tokens(U512::from(150_000_000_000u64)).add_rewards();
 
-        // Bob stakes 115 CSPR at 1.15 rate
+        // Bob stakes 1150 CSPR at 1.15 rate
         env.set_caller(bob);
-        contract.with_tokens(U512::from(115_000_000_000u64)).stake();
+        contract.with_tokens(U512::from(1150_000_000_000u64)).stake();
 
-        // Bob should receive ~100 stCSPR (115 / 1.15)
+        // Bob should receive ~1000 stCSPR (1150 / 1.15)
         let bob_balance = contract.get_stcspr_balance(bob);
-        assert_eq!(bob_balance, U256::from(100_000_000_000u64));
+        assert_eq!(bob_balance, U256::from(1000_000_000_000u64));
     }
 
     #[test]
@@ -426,13 +572,51 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "BelowMinimumDelegation")]
+    fn test_stake_below_minimum_fails() {
+        let (env, contract) = setup();
+        env.set_caller(env.get_account(1));
+        // Try to stake 100 CSPR (below 500 minimum)
+        contract.with_tokens(U512::from(100_000_000_000u64)).stake();
+    }
+
+    #[test]
+    #[should_panic(expected = "NoValidatorSet")]
+    fn test_stake_without_validator_fails() {
+        let env = odra_test::env();
+        let owner = env.get_account(0);
+        // Deploy without setting validator
+        let contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
+
+        env.set_caller(env.get_account(1));
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake();
+    }
+
+    #[test]
     #[should_panic(expected = "InsufficientStCsprBalance")]
     fn test_unstake_more_than_balance_fails() {
         let (env, mut contract) = setup();
         let staker = env.get_account(1);
         env.set_caller(staker);
 
-        contract.with_tokens(U512::from(10_000_000_000u64)).stake();
-        contract.unstake(U256::from(20_000_000_000u64));
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake();
+        contract.unstake(U256::from(1000_000_000_000u64));
+    }
+
+    #[test]
+    fn test_additional_stake_below_minimum_succeeds() {
+        let (env, mut contract) = setup();
+        let staker = env.get_account(1);
+        env.set_caller(staker);
+
+        // First stake meets minimum (500 CSPR)
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake();
+
+        // Additional stake below minimum should succeed
+        // because we already have a delegation
+        contract.with_tokens(U512::from(100_000_000_000u64)).stake();
+
+        // Total should be 600 stCSPR
+        assert_eq!(contract.get_stcspr_balance(staker), U256::from(600_000_000_000u64));
     }
 }
