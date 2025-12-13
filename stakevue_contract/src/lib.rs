@@ -1,16 +1,16 @@
 #![no_std]
 
 use odra::prelude::*;
-use odra::casper_types::{U512, U256, PublicKey, runtime_args};
-use odra::CallDef;
+use odra::casper_types::{U512, U256, PublicKey};
 use odra_modules::access::Ownable;
 use odra_modules::cep18_token::Cep18;
 
 // ============================================================================
-// SYSTEM AUCTION CONTRACT (from Casper documentation)
+// V19 - Uses Odra's native env().delegate() and env().undelegate()
 // ============================================================================
-// Testnet: hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2
-// Mainnet: hash-ccb576d6ce6dec84a551e48f0d0b7af89ddba44c7390b690036257a04a3ae9ea
+// These functions properly use delegator_purse argument for contract-level
+// delegation/undelegation, which is the correct way for smart contracts
+// to interact with the Casper auction system in Casper 2.0.
 // ============================================================================
 
 // ============================================================================
@@ -260,29 +260,12 @@ impl StakeVue {
         // Update validator delegated amount
         self.validator_delegated.set(&validator, current_delegated + cspr_amount);
 
-        // Delegate CSPR to validator via system auction contract (only in production/livenet)
-        // Following Casper CLI documentation: delegate entry point with validator, amount, delegator
+        // Delegate CSPR to validator via Odra's native delegate function
+        // This uses the correct delegator_purse argument for contract-level delegation
         #[cfg(not(test))]
         {
-            // Get the auction contract address (Testnet)
-            // hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2
-            let auction_address = Address::new("hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2")
-                .expect("Invalid auction address");
-
-            // The delegator is this contract itself
-            let delegator = self.env().self_address();
-
-            // Build runtime args as per CLI documentation
-            let args = runtime_args! {
-                "validator" => validator.clone(),
-                "amount" => cspr_amount,
-                "delegator" => delegator,
-            };
-
-            // Call auction contract's delegate entry point
-            // CallDef::new(entry_point, is_mut, args)
-            let call_def = CallDef::new("delegate", true, args);
-            self.env().call_contract::<()>(auction_address, call_def);
+            // Use Odra's env().delegate() which handles the purse argument correctly
+            self.env().delegate(validator.clone(), cspr_amount);
 
             self.env().emit_event(Delegated {
                 validator: validator.clone(),
@@ -353,27 +336,12 @@ impl StakeVue {
         self.user_requests.set(&(staker, user_count), request_id);
         self.user_request_count.set(&staker, user_count + 1);
 
-        // Undelegate from validator via system auction contract (only in production/livenet)
-        // Following Casper CLI documentation: undelegate entry point with validator, amount, delegator
+        // Undelegate from validator via Odra's native undelegate function
+        // This uses the correct delegator_purse argument for contract-level undelegation
         #[cfg(not(test))]
         {
-            // Get the auction contract address (Testnet)
-            let auction_address = Address::new("hash-93d923e336b20a4c4ca14d592b60e5bd3fe330775618290104f9beb326db7ae2")
-                .expect("Invalid auction address");
-
-            // The delegator is this contract itself (same as when we delegated)
-            let delegator = self.env().self_address();
-
-            // Build runtime args as per CLI documentation
-            let args = runtime_args! {
-                "validator" => validator.clone(),
-                "amount" => cspr_to_return,
-                "delegator" => delegator,
-            };
-
-            // Call auction contract's undelegate entry point
-            let call_def = CallDef::new("undelegate", true, args);
-            self.env().call_contract::<()>(auction_address, call_def);
+            // Use Odra's env().undelegate() which handles the purse argument correctly
+            self.env().undelegate(validator.clone(), cspr_to_return);
 
             self.env().emit_event(Undelegated {
                 validator,

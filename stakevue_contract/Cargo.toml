@@ -1,6 +1,6 @@
 [package]
 name = "stakevue_contract"
-version = "18.0.0"
+version = "19.0.0"
 edition = "2021"
 
 [dependencies]
@@ -64,6 +64,22 @@ test = false
 [[bin]]
 name = "check_delegation_debug"
 path = "bin/check_delegation_debug.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
+# V19 SCRIPTS (Native Odra delegate/undelegate - fixes error 64658)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v19"
+path = "bin/deploy_v19.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "add_validators_v19"
+path = "bin/add_validators_v19.rs"
 required-features = ["livenet"]
 test = false
 
