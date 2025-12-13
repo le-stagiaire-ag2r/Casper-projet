@@ -1,15 +1,15 @@
 /**
  * ValidatorSelector Component for StakeVue V17
- * Collapsible accordion style - click to expand/collapse validator list
+ * Displays approved validators with all info for easy comparison
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import './ValidatorSelector.css';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ValidatorInfo,
   ValidatorSortOption,
   getApprovedValidatorsInfo,
   sortValidators,
+  filterValidators,
   getRecommendedValidator,
 } from '../../services/validatorService';
 
@@ -31,9 +31,13 @@ const ValidatorSelector: React.FC<ValidatorSelectorProps> = ({
   const [validators, setValidators] = useState<ValidatorInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [sortBy, setSortBy] = useState<ValidatorSortOption>('apy');
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    minPerformance: 0,
+    maxCommission: 100,
+    activeOnly: true,
+  });
 
   // Fetch validators
   useEffect(() => {
@@ -59,168 +63,207 @@ const ValidatorSelector: React.FC<ValidatorSelectorProps> = ({
     fetchValidators();
   }, [approvedPublicKeys, baseAPY]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsExpanded(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Sort validators
+  // Sort and filter validators
   const displayedValidators = useMemo(() => {
-    return sortValidators(validators, sortBy);
-  }, [validators, sortBy]);
-
-  // Get selected validator info
-  const selectedValidatorInfo = useMemo(() => {
-    return validators.find(v => v.publicKey === selectedValidator);
-  }, [validators, selectedValidator]);
+    const filtered = filterValidators(validators, filters);
+    return sortValidators(filtered, sortBy);
+  }, [validators, sortBy, filters]);
 
   // Recommended validator
   const recommended = useMemo(() => {
     return getRecommendedValidator(validators);
   }, [validators]);
 
-  // Handle validator selection
-  const handleSelect = (publicKey: string) => {
-    onSelect(publicKey);
-    setIsExpanded(false);
-  };
-
   if (loading) {
     return (
-      <div className="validator-selector-compact loading">
-        <div className="spinner-small" />
-        <span>Chargement des validateurs...</span>
+      <div className="validator-selector loading">
+        <div className="spinner" />
+        <p>Chargement des validateurs...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="validator-selector-compact error">
-        <span>Erreur: {error}</span>
+      <div className="validator-selector error">
+        <p>❌ {error}</p>
+        <button onClick={() => window.location.reload()}>Réessayer</button>
       </div>
     );
   }
 
   if (validators.length === 0) {
     return (
-      <div className="validator-selector-compact empty">
-        <span>Aucun validateur disponible</span>
+      <div className="validator-selector empty">
+        <p>Aucun validateur disponible</p>
       </div>
     );
   }
 
   return (
-    <div
-      className={`validator-selector-accordion ${disabled ? 'disabled' : ''}`}
-      ref={containerRef}
-    >
-      {/* Compact header - always visible */}
-      <div
-        className={`accordion-header ${isExpanded ? 'expanded' : ''}`}
-        onClick={() => !disabled && setIsExpanded(!isExpanded)}
-      >
-        {selectedValidatorInfo ? (
-          <div className="selected-validator">
-            <div className="validator-mini">
-              {selectedValidatorInfo.logo ? (
-                <img src={selectedValidatorInfo.logo} alt="" className="mini-logo" />
-              ) : (
-                <div className="mini-logo placeholder">
-                  {selectedValidatorInfo.name.charAt(0)}
-                </div>
-              )}
-              <div className="mini-info">
-                <strong>{selectedValidatorInfo.name}</strong>
-                <span className="mini-stats">
-                  APY {selectedValidatorInfo.estimatedAPY.toFixed(1)}% | Commission {selectedValidatorInfo.commission}%
-                </span>
-              </div>
-            </div>
-            <span className="change-btn">Changer</span>
-          </div>
-        ) : (
-          <div className="select-prompt">
-            <span>Choisir un validateur</span>
-            <span className="validator-count">{validators.length} disponibles</span>
-          </div>
-        )}
-        <div className={`chevron ${isExpanded ? 'up' : 'down'}`}>▼</div>
+    <div className={`validator-selector ${disabled ? 'disabled' : ''}`}>
+      {/* Header with sort/filter controls */}
+      <div className="validator-header">
+        <h3>Choisir un Validateur</h3>
+
+        <div className="controls">
+          {/* Sort dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as ValidatorSortOption)}
+            disabled={disabled}
+          >
+            <option value="apy">Meilleur APY</option>
+            <option value="commission">Commission la + basse</option>
+            <option value="performance">Meilleure Performance</option>
+            <option value="totalStake">Total Staké</option>
+            <option value="delegators">+ Populaire</option>
+            <option value="rank">Rang</option>
+          </select>
+
+          {/* Filter toggle */}
+          <button
+            className="filter-toggle"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            🎛️ Filtres
+          </button>
+        </div>
       </div>
 
-      {/* Expandable list */}
-      {isExpanded && (
-        <div className="accordion-content">
-          {/* Sort control */}
-          <div className="sort-bar">
-            <span>Trier par:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as ValidatorSortOption)}
-            >
-              <option value="apy">Meilleur APY</option>
-              <option value="commission">Commission basse</option>
-              <option value="performance">Performance</option>
-              <option value="delegators">Popularité</option>
-              <option value="rank">Rang</option>
-            </select>
+      {/* Filters panel */}
+      {showFilters && (
+        <div className="filters-panel">
+          <div className="filter-item">
+            <label>Performance min: {filters.minPerformance}%</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={filters.minPerformance}
+              onChange={(e) =>
+                setFilters({ ...filters, minPerformance: Number(e.target.value) })
+              }
+            />
           </div>
-
-          {/* Validator list - grid layout */}
-          <div className="validators-grid">
-            {displayedValidators.map((validator) => (
-              <div
-                key={validator.publicKey}
-                className={`validator-item ${
-                  selectedValidator === validator.publicKey ? 'selected' : ''
-                } ${validator.publicKey === recommended?.publicKey ? 'recommended' : ''}`}
-                onClick={() => handleSelect(validator.publicKey)}
-              >
-                {validator.publicKey === recommended?.publicKey && (
-                  <span className="rec-badge">Recommandé</span>
-                )}
-                <div className="item-header">
-                  {validator.logo ? (
-                    <img src={validator.logo} alt="" className="item-logo" />
-                  ) : (
-                    <div className="item-logo placeholder">
-                      {validator.name.charAt(0)}
-                    </div>
-                  )}
-                  <div className="item-name">
-                    <strong>{validator.name}</strong>
-                    <span className="item-rank">#{validator.rank}</span>
-                  </div>
-                </div>
-                <div className="item-stats">
-                  <div className="stat">
-                    <span className="label">APY</span>
-                    <span className="value green">{validator.estimatedAPY.toFixed(1)}%</span>
-                  </div>
-                  <div className="stat">
-                    <span className="label">Comm.</span>
-                    <span className="value">{validator.commission}%</span>
-                  </div>
-                  <div className="stat">
-                    <span className="label">Perf.</span>
-                    <span className="value">{validator.performance}%</span>
-                  </div>
-                </div>
-                {validator.publicKey === selectedValidator && (
-                  <div className="selected-check">✓</div>
-                )}
-              </div>
-            ))}
+          <div className="filter-item">
+            <label>Commission max: {filters.maxCommission}%</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={filters.maxCommission}
+              onChange={(e) =>
+                setFilters({ ...filters, maxCommission: Number(e.target.value) })
+              }
+            />
+          </div>
+          <div className="filter-item">
+            <label>
+              <input
+                type="checkbox"
+                checked={filters.activeOnly}
+                onChange={(e) =>
+                  setFilters({ ...filters, activeOnly: e.target.checked })
+                }
+              />
+              Actifs uniquement
+            </label>
           </div>
         </div>
       )}
+
+      {/* Recommended validator highlight */}
+      {recommended && (
+        <div
+          className={`validator-card recommended ${
+            selectedValidator === recommended.publicKey ? 'selected' : ''
+          }`}
+          onClick={() => !disabled && onSelect(recommended.publicKey)}
+        >
+          <div className="recommended-badge">⭐ Recommandé</div>
+          <ValidatorCard validator={recommended} />
+        </div>
+      )}
+
+      {/* Validator list */}
+      <div className="validator-list">
+        {displayedValidators
+          .filter((v) => v.publicKey !== recommended?.publicKey)
+          .map((validator) => (
+            <div
+              key={validator.publicKey}
+              className={`validator-card ${
+                selectedValidator === validator.publicKey ? 'selected' : ''
+              }`}
+              onClick={() => !disabled && onSelect(validator.publicKey)}
+            >
+              <ValidatorCard validator={validator} />
+            </div>
+          ))}
+      </div>
+
+      {displayedValidators.length === 0 && (
+        <p className="no-results">Aucun validateur ne correspond aux filtres</p>
+      )}
+    </div>
+  );
+};
+
+// Individual validator card component
+const ValidatorCard: React.FC<{ validator: ValidatorInfo }> = ({ validator }) => {
+  return (
+    <div className="card-content">
+      {/* Logo and name */}
+      <div className="validator-identity">
+        {validator.logo ? (
+          <img src={validator.logo} alt={validator.name} className="validator-logo" />
+        ) : (
+          <div className="validator-logo placeholder">
+            {validator.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="validator-name">
+          <strong>{validator.name}</strong>
+          <span className="rank">#{validator.rank}</span>
+        </div>
+      </div>
+
+      {/* Key stats */}
+      <div className="validator-stats">
+        <div className="stat highlight">
+          <span className="label">APY</span>
+          <span className="value green">{validator.estimatedAPY.toFixed(1)}%</span>
+        </div>
+        <div className="stat">
+          <span className="label">Commission</span>
+          <span className={`value ${validator.commission <= 5 ? 'green' : validator.commission >= 15 ? 'red' : ''}`}>
+            {validator.commission}%
+          </span>
+        </div>
+        <div className="stat">
+          <span className="label">Performance</span>
+          <span className={`value ${validator.performance >= 99 ? 'green' : validator.performance < 95 ? 'red' : ''}`}>
+            {validator.performance}%
+          </span>
+        </div>
+        <div className="stat">
+          <span className="label">Staké</span>
+          <span className="value">{validator.totalStakeFormatted}</span>
+        </div>
+        <div className="stat">
+          <span className="label">Délégateurs</span>
+          <span className="value">{validator.delegatorsCount.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* Badges */}
+      <div className="validator-badges">
+        {validator.performance >= 99 && <span className="badge perf">🏆 Top Perf</span>}
+        {validator.commission <= 5 && <span className="badge fee">💰 Low Fee</span>}
+        {validator.rank <= 10 && <span className="badge rank">⭐ Top 10</span>}
+        {!validator.isActive && <span className="badge inactive">⚠️ Inactif</span>}
+      </div>
     </div>
   );
 };
