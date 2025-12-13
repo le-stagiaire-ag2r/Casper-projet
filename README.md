@@ -321,11 +321,24 @@ cargo run --bin test_unstake_v17 --features livenet
 |---------|------|------------|
 | **V17** | Dec 2025 | **Multi-validator delegation** - Real Auction Pool staking, withdrawal queue, 9 validators |
 | **V16.1** | Dec 2025 | **UX Visual Refont** - Accordion validator selector, grid layout, real-time data |
-| **V16** | Dec 2025 | UI improvements, dark theme |
-| **V15.1** | Dec 2025 | Live RPC API - Real-time contract stats |
-| **V15** | Dec 2025 | Exchange rate mechanism - stCSPR appreciation |
-| **V14** | Dec 2025 | Production-ready with integrated CEP-18 |
-| **V1-V13** | Nov-Dec 2025 | Development iterations |
+| **V16** | Dec 2025 | **Visual Overhaul** - Galaxy background, glass UI, SVG icons, purple theme |
+| **V15.1** | Dec 2025 | **Live RPC API** - Real-time contract stats from blockchain |
+| **V15** | Dec 2025 | **Exchange rate mechanism** - stCSPR appreciates with rewards |
+| **V14** | Dec 2025 | Production-ready with integrated CEP-18 stCSPR token |
+| **V13** | Dec 2025 | Minimal version proving payable works |
+| **V12** | Dec 2025 | CEP-18 attempt (package key conflict) |
+| **V11** | Dec 2025 | External token reference debugging |
+| **V10** | Dec 2025 | Token integration attempts |
+| **V9** | Dec 2025 | External token reference (broken attached_value) |
+| **V8.2** | Dec 2025 | Ownable + Pauseable modules, Odra 2.4.0 |
+| **V8.0** | Dec 2025 | First real CSPR staking with Odra framework |
+| **V7.x** | Nov 2025 | APY slider, price charts, CSV export |
+| **V6.x** | Nov 2025 | Price alerts, portfolio history |
+| **V5.0** | Nov 2025 | Security hardening - 10 vulnerabilities fixed (A+ score) |
+| **V4.0** | Nov 2025 | Multi-validator support, admin functions |
+| **V3.0** | Nov 2025 | Liquid token (stCSPR) - mint/burn logic |
+| **V2.0** | Nov 2025 | Per-user stake tracking, rewards calculation |
+| **V1.0** | Nov 2025 | Core staking - basic stake/unstake |
 
 ---
 
