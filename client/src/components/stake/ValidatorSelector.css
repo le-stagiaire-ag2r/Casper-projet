@@ -1,0 +1,310 @@
+/* ValidatorSelector Styles */
+
+.validator-selector {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.validator-selector.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.validator-selector.loading,
+.validator-selector.error,
+.validator-selector.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.validator-selector .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #00d395;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
+.validator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.validator-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.validator-header .controls {
+  display: flex;
+  gap: 10px;
+}
+
+.validator-header select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  cursor: pointer;
+}
+
+.validator-header .filter-toggle {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.validator-header .filter-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Filters Panel */
+.filters-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  padding: 15px;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-item label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.filter-item input[type="range"] {
+  width: 100%;
+  accent-color: #00d395;
+}
+
+.filter-item input[type="checkbox"] {
+  accent-color: #00d395;
+}
+
+/* Validator List */
+.validator-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Validator Card */
+.validator-card {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.validator-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(0, 211, 149, 0.3);
+  transform: translateY(-2px);
+}
+
+.validator-card.selected {
+  background: rgba(0, 211, 149, 0.1);
+  border-color: #00d395;
+}
+
+.validator-card.recommended {
+  position: relative;
+  background: rgba(0, 211, 149, 0.05);
+  border-color: rgba(0, 211, 149, 0.3);
+  margin-bottom: 20px;
+}
+
+.recommended-badge {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #00d395, #00a878);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+/* Card Content */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Validator Identity */
+.validator-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.validator-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.validator-logo.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.validator-name {
+  display: flex;
+  flex-direction: column;
+}
+
+.validator-name strong {
+  font-size: 1rem;
+  color: #fff;
+}
+
+.validator-name .rank {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Stats Grid */
+.validator-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 12px;
+}
+
+.validator-stats .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.validator-stats .stat.highlight {
+  background: rgba(0, 211, 149, 0.1);
+}
+
+.validator-stats .stat .label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.validator-stats .stat .value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.validator-stats .stat .value.green {
+  color: #00d395;
+}
+
+.validator-stats .stat .value.red {
+  color: #ff6b6b;
+}
+
+/* Badges */
+.validator-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.validator-badges .badge {
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.validator-badges .badge.perf {
+  background: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+}
+
+.validator-badges .badge.fee {
+  background: rgba(0, 211, 149, 0.1);
+  color: #00d395;
+}
+
+.validator-badges .badge.rank {
+  background: rgba(138, 43, 226, 0.1);
+  color: #a855f7;
+}
+
+.validator-badges .badge.inactive {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+}
+
+/* No Results */
+.no-results {
+  text-align: center;
+  padding: 30px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .validator-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .validator-header .controls {
+    justify-content: space-between;
+  }
+
+  .validator-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .validator-identity {
+    flex-direction: column;
+    text-align: center;
+  }
+}
