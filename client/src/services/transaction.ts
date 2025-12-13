@@ -1,15 +1,15 @@
 /**
- * Transaction Service for StakeVue V15
+ * Transaction Service for StakeVue V17
  *
- * Uses proxy_caller.wasm for all contract calls (stake, unstake, add_rewards)
+ * Uses proxy_caller.wasm for all contract calls (stake, request_unstake, claim_withdrawal, harvest_rewards)
  *
- * V15 Features:
- * - stake() payable - uses attached_value(), exchange rate aware
- * - unstake(amount: U256) - burns stCSPR and returns CSPR based on rate
- * - add_rewards() payable - owner can add rewards to increase exchange rate
- * - get_exchange_rate() - query current rate (1.0 = 1_000_000_000)
- * - Integrated SubModule<Cep18> token for stCSPR (mint/burn)
- * - Ownable module for admin control
+ * V17 Features:
+ * - stake(validator: PublicKey) payable - user chooses validator
+ * - request_unstake(amount: U256, validator: PublicKey) - queues withdrawal (7 eras unbonding)
+ * - claim_withdrawal(request_id: U64) - claim after unbonding period
+ * - harvest_rewards() - owner function for auto-compounding
+ * - Multi-validator support (up to 20 validators)
+ * - Min stake: 500 CSPR for first delegation to a validator
  *
  * Based on:
  * - Odra Framework 2.4.0 proxy_caller pattern
@@ -124,21 +124,30 @@ const bytesToCLList = (bytes: Uint8Array): CLValue => {
 };
 
 /**
- * Build a Stake Transaction using proxy_caller.wasm for V8 Odra contracts
+ * Build a Stake Transaction using proxy_caller.wasm for V17 Odra contracts
  *
- * The stake() function in V8 is payable (#[odra(payable)]), which means
+ * V17 stake(validator: PublicKey) is payable (#[odra(payable)]), which means
  * it receives CSPR via attached_value. We use proxy_caller.wasm to:
  * 1. Transfer CSPR from user's purse to a cargo purse
- * 2. Call the contract's stake() entry point
+ * 2. Call the contract's stake(validator) entry point
  * 3. The contract uses self.env().attached_value() to get the amount
+ *
+ * @param senderPublicKeyHex - The sender's public key in hex format
+ * @param amountCspr - Amount in CSPR to stake
+ * @param validatorPublicKeyHex - The validator's public key to stake with
  */
 export const buildStakeTransaction = async (
   senderPublicKeyHex: string,
-  amountCspr: string
+  amountCspr: string,
+  validatorPublicKeyHex: string
 ): Promise<{ deploy: any }> => {
   // Validate inputs
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
+  }
+
+  if (!validatorPublicKeyHex) {
+    throw new Error('Validator public key is required');
   }
 
   if (!config.contract_package_hash) {
@@ -151,11 +160,16 @@ export const buildStakeTransaction = async (
   // Convert amounts
   const amountMotes = csprToMotes(amountCspr);
   // Payment = gas cost + attached value (CSPR being staked)
-  const gasMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
+  // V17 needs more gas for delegation (~15 CSPR)
+  const gasMotes = config.transaction_payment || '15000000000'; // 15 CSPR for gas
   const totalPayment = (BigInt(gasMotes) + BigInt(amountMotes)).toString();
 
-  // Build empty RuntimeArgs for stake() - it uses attached_value instead
-  const stakeArgs = Args.fromMap({});
+  // Build RuntimeArgs for stake(validator: PublicKey)
+  // Serialize the validator public key
+  const validatorPubKey = PublicKey.fromHex(validatorPublicKeyHex);
+  const stakeArgs = Args.fromMap({
+    validator: CLValue.newCLPublicKey(validatorPubKey),
+  });
   const serializedArgs = stakeArgs.toBytes();
 
   // Build proxy_caller arguments
@@ -194,14 +208,92 @@ export const buildStakeTransaction = async (
 };
 
 /**
- * Build an Unstake Transaction using proxy_caller.wasm for V8 Odra contracts
+ * Build a Request Unstake Transaction using proxy_caller.wasm for V17
  *
- * The unstake() function takes an amount parameter and returns CSPR to the caller.
- * We use proxy_caller.wasm to call versioned contracts properly.
+ * V17 uses a withdrawal queue: request_unstake queues the withdrawal,
+ * then after 7 eras (~14 hours on testnet), the user can claim_withdrawal.
+ *
+ * @param senderPublicKeyHex - The sender's public key in hex format
+ * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
+ * @param validatorPublicKeyHex - The validator to undelegate from
  */
 export const buildUnstakeTransaction = async (
   senderPublicKeyHex: string,
-  amountCspr: string
+  amountStCspr: string,
+  validatorPublicKeyHex: string
+): Promise<{ deploy: any }> => {
+  // Validate inputs
+  if (!senderPublicKeyHex) {
+    throw new Error('Sender public key is required');
+  }
+
+  if (!validatorPublicKeyHex) {
+    throw new Error('Validator public key is required');
+  }
+
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
+  }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
+
+  // Convert stCSPR to internal units (like motes but for stCSPR - 9 decimals)
+  const amountUnits = csprToMotes(amountStCspr);
+  const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
+
+  // Build RuntimeArgs for request_unstake(amount: U256, validator: PublicKey)
+  const validatorPubKey = PublicKey.fromHex(validatorPublicKeyHex);
+  const unstakeArgs = Args.fromMap({
+    amount: CLValue.newCLUInt256(amountUnits),
+    validator: CLValue.newCLPublicKey(validatorPubKey),
+  });
+  const serializedArgs = unstakeArgs.toBytes();
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    // Package hash of the StakeVue contract (32 bytes)
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    // Entry point to call
+    entry_point: CLValue.newCLString('request_unstake'),
+    // Serialized RuntimeArgs as Bytes (List<U8>)
+    args: bytesToCLList(serializedArgs),
+    // No attached value for unstake
+    attached_value: CLValue.newCLUInt512('0'),
+    // Special Casper argument (0 for non-payable calls)
+    amount: CLValue.newCLUInt512('0'),
+  });
+
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+
+  // Build deploy header
+  const deployHeader = DeployHeader.default();
+  deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
+  deployHeader.chainName = config.chain_name || 'casper-test';
+  deployHeader.gasPrice = 1;
+
+  // Build payment
+  const payment = ExecutableDeployItem.standardPayment(paymentMotes);
+
+  // Create deploy
+  const deploy = Deploy.makeDeploy(deployHeader, payment, session);
+
+  // Serialize deploy for CSPR.click
+  return { deploy: Deploy.toJSON(deploy) };
+};
+
+/**
+ * Build a Claim Withdrawal Transaction for V17
+ *
+ * After the unbonding period (7 eras), user can claim their CSPR.
+ *
+ * @param senderPublicKeyHex - The sender's public key in hex format
+ * @param requestId - The withdrawal request ID returned by request_unstake
+ */
+export const buildClaimWithdrawalTransaction = async (
+  senderPublicKeyHex: string,
+  requestId: number
 ): Promise<{ deploy: any }> => {
   // Validate inputs
   if (!senderPublicKeyHex) {
@@ -215,27 +307,20 @@ export const buildUnstakeTransaction = async (
   // Load proxy_caller.wasm
   const proxyCallerWasm = await loadProxyCallerWasm();
 
-  // Convert amounts
-  const amountMotes = csprToMotes(amountCspr);
-  const paymentMotes = config.transaction_payment || '5000000000';
+  const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
 
-  // Build RuntimeArgs for unstake(amount: U512) - V8.2 uses U512
-  const unstakeArgs = Args.fromMap({
-    amount: CLValue.newCLUInt512(amountMotes),
+  // Build RuntimeArgs for claim_withdrawal(request_id: U64)
+  const claimArgs = Args.fromMap({
+    request_id: CLValue.newCLUint64(requestId),
   });
-  const serializedArgs = unstakeArgs.toBytes();
+  const serializedArgs = claimArgs.toBytes();
 
   // Build proxy_caller arguments
   const proxyArgs = Args.fromMap({
-    // Package hash of the StakeVue contract (32 bytes)
     package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
-    // Entry point to call
-    entry_point: CLValue.newCLString('unstake'),
-    // Serialized RuntimeArgs as Bytes (List<U8>)
+    entry_point: CLValue.newCLString('claim_withdrawal'),
     args: bytesToCLList(serializedArgs),
-    // No attached value for unstake
     attached_value: CLValue.newCLUInt512('0'),
-    // Special Casper argument (0 for non-payable calls)
     amount: CLValue.newCLUInt512('0'),
   });
 

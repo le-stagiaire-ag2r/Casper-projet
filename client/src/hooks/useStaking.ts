@@ -21,7 +21,12 @@ export interface TransactionState {
 }
 
 /**
- * Hook for staking operations on StakeVue
+ * Hook for staking operations on StakeVue V17
+ *
+ * V17 Features:
+ * - stake(validator) - user chooses which validator
+ * - request_unstake(amount, validator) - queues withdrawal (7 eras unbonding)
+ * - Min stake: 500 CSPR for first delegation to a validator
  *
  * Provides stake and unstake functionality using CSPR.click
  * for transaction signing and submission.
@@ -63,15 +68,28 @@ export const useStaking = () => {
   }, []);
 
   /**
-   * Stake CSPR tokens
+   * Stake CSPR tokens to a validator (V17)
    *
    * @param amountCspr - Amount in CSPR to stake
+   * @param validatorPublicKey - The validator's public key to stake with
    * @returns Promise with stake result
    */
-  const stake = async (amountCspr: string): Promise<StakingResult> => {
+  const stake = async (amountCspr: string, validatorPublicKey: string): Promise<StakingResult> => {
     // Validate connection
     if (!isConnected || !activeAccount) {
       const error = 'No wallet connected. Please connect your wallet first.';
+      setTransactionState({
+        isProcessing: false,
+        status: null,
+        deployHash: null,
+        error,
+      });
+      return { success: false, error };
+    }
+
+    // Validate validator
+    if (!validatorPublicKey) {
+      const error = 'Please select a validator to stake with.';
       setTransactionState({
         isProcessing: false,
         status: null,
@@ -94,8 +112,8 @@ export const useStaking = () => {
       return { success: false, error };
     }
 
-    // Check minimum stake
-    const minStake = parseFloat(motesToCspr(window.config.min_stake_amount || '1000000000'));
+    // Check minimum stake (V17: 500 CSPR for first delegation)
+    const minStake = parseFloat(motesToCspr(window.config.min_stake_amount || '500000000000'));
     if (amount < minStake) {
       const error = `Minimum stake amount is ${minStake} CSPR`;
       setTransactionState({
@@ -116,10 +134,11 @@ export const useStaking = () => {
     });
 
     try {
-      // Build the stake transaction (async for V8.1 proxy_caller)
+      // Build the stake transaction with validator (V17)
       const transaction = await buildStakeTransaction(
         activeAccount.publicKey,
-        amountCspr
+        amountCspr,
+        validatorPublicKey
       );
 
       setTransactionState((prev) => ({
@@ -185,15 +204,32 @@ export const useStaking = () => {
   };
 
   /**
-   * Unstake stCSPR tokens
+   * Request unstake of stCSPR tokens (V17 - queues withdrawal)
+   *
+   * In V17, unstaking goes through a withdrawal queue:
+   * 1. request_unstake() burns stCSPR and queues the CSPR withdrawal
+   * 2. After 7 eras (~14 hours on testnet), user can claim_withdrawal()
    *
    * @param amountCspr - Amount in stCSPR to unstake
+   * @param validatorPublicKey - The validator to undelegate from
    * @returns Promise with unstake result
    */
-  const unstake = async (amountCspr: string): Promise<StakingResult> => {
+  const unstake = async (amountCspr: string, validatorPublicKey: string): Promise<StakingResult> => {
     // Validate connection
     if (!isConnected || !activeAccount) {
       const error = 'No wallet connected. Please connect your wallet first.';
+      setTransactionState({
+        isProcessing: false,
+        status: null,
+        deployHash: null,
+        error,
+      });
+      return { success: false, error };
+    }
+
+    // Validate validator
+    if (!validatorPublicKey) {
+      const error = 'Please select a validator to unstake from.';
       setTransactionState({
         isProcessing: false,
         status: null,
@@ -219,16 +255,17 @@ export const useStaking = () => {
     // Reset state and start processing
     setTransactionState({
       isProcessing: true,
-      status: 'Building transaction...',
+      status: 'Queueing withdrawal request...',
       deployHash: null,
       error: null,
     });
 
     try {
-      // Build the unstake transaction (async for V8.1 proxy_caller)
+      // Build the request_unstake transaction (V17)
       const transaction = await buildUnstakeTransaction(
         activeAccount.publicKey,
-        amountCspr
+        amountCspr,
+        validatorPublicKey
       );
 
       setTransactionState((prev) => ({
@@ -261,7 +298,7 @@ export const useStaking = () => {
 
         setTransactionState({
           isProcessing: false,
-          status: 'Unstake successful!',
+          status: 'Withdrawal request queued! CSPR will be available in ~7 eras.',
           deployHash: result.deployHash || null,
           error: null,
         });

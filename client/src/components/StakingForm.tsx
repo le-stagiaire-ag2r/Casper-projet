@@ -7,11 +7,17 @@ import { useToast } from './Toast';
 import { useBalanceContext } from '../context/BalanceContext';
 import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
 import { useConfetti } from './Confetti';
+import ValidatorSelector from './stake/ValidatorSelector';
+import './stake/ValidatorSelector.css';
 
 // Get config values
 const config = (window as any).config || {};
-const MIN_STAKE_CSPR = parseFloat(config.min_stake_amount || '1000000000') / 1_000_000_000;
-const GAS_FEE_CSPR = parseFloat(config.transaction_payment || '5000000000') / 1_000_000_000;
+// V17: Min stake 500 CSPR for first delegation
+const MIN_STAKE_CSPR = parseFloat(config.min_stake_amount || '500000000000') / 1_000_000_000;
+// V17: Gas fee 15 CSPR for delegation
+const GAS_FEE_CSPR = parseFloat(config.transaction_payment || '15000000000') / 1_000_000_000;
+// V17: Approved validators from config
+const APPROVED_VALIDATORS: string[] = config.approved_validators || [];
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -471,6 +477,9 @@ export const StakingForm: React.FC = () => {
   const { success: toastSuccess, error: toastError, ToastComponent } = useToast();
   const { triggerConfetti, ConfettiComponent } = useConfetti();
 
+  // V17: Validator selection
+  const [selectedValidator, setSelectedValidator] = useState<string | null>(null);
+
   // Use shared balance context
   const {
     csprBalance,
@@ -511,6 +520,15 @@ export const StakingForm: React.FC = () => {
     }
 
     if (activeTab === 'stake') {
+      // V17: Must select a validator
+      if (!selectedValidator) {
+        return {
+          valid: false,
+          message: 'Please select a validator below',
+          type: 'error' as const
+        };
+      }
+
       if (numAmount < MIN_STAKE_CSPR) {
         return {
           valid: false,
@@ -536,6 +554,15 @@ export const StakingForm: React.FC = () => {
         };
       }
     } else {
+      // V17: Must select a validator to unstake from
+      if (!selectedValidator) {
+        return {
+          valid: false,
+          message: 'Please select a validator to unstake from',
+          type: 'error' as const
+        };
+      }
+
       if (numAmount > stCsprBalance) {
         return {
           valid: false,
@@ -554,7 +581,7 @@ export const StakingForm: React.FC = () => {
     }
 
     return { valid: true, message: null, type: 'info' as const };
-  }, [amount, activeTab, csprBalance, stCsprBalance]);
+  }, [amount, activeTab, csprBalance, stCsprBalance, selectedValidator]);
 
   // Calculate preview values using V15 exchange rate
   const preview = useMemo(() => {
@@ -595,10 +622,17 @@ export const StakingForm: React.FC = () => {
       return;
     }
 
+    // V17: Require validator selection
+    if (!selectedValidator) {
+      toastError('Validator Required', 'Please select a validator');
+      return;
+    }
+
     const txAmount = parseFloat(amount);
 
     if (activeTab === 'stake') {
-      const result = await stake(amount);
+      // V17: Pass validator to stake function
+      const result = await stake(amount, selectedValidator);
       // Update balance immediately on success (demo mode support)
       if (result.success || result.deployHash) {
         const stcsprReceived = csprToStcspr(txAmount);
@@ -610,14 +644,15 @@ export const StakingForm: React.FC = () => {
         setAmount('');
       }
     } else {
-      const result = await unstake(amount);
+      // V17: Pass validator to unstake function (request_unstake)
+      const result = await unstake(amount, selectedValidator);
       // Update balance immediately on success (demo mode support)
       if (result.success || result.deployHash) {
         const csprReceived = stcsprToCspr(txAmount);
         updateAfterUnstake(txAmount);
         updateContractAfterUnstake(txAmount); // Update contract pool data
         playSuccessSound();
-        toastSuccess('Unstake Successful!', `${txAmount} stCSPR burned → ${csprReceived.toFixed(4)} CSPR received`);
+        toastSuccess('Withdrawal Queued!', `${txAmount} stCSPR → ${csprReceived.toFixed(4)} CSPR (available after ~7 eras)`);
         setAmount('');
       }
     }
@@ -722,7 +757,7 @@ export const StakingForm: React.FC = () => {
         </InputGroup>
 
         {/* Preview Box */}
-        {preview && validation.valid && (
+        {preview && selectedValidator && (
           <PreviewBox $isDark={isDark}>
             <PreviewTitle $isDark={isDark}>
               {activeTab === 'stake' ? '📊 You will receive' : '📊 You will get back'}
@@ -749,10 +784,27 @@ export const StakingForm: React.FC = () => {
                 </PreviewRow>
               </>
             )}
+            {activeTab === 'unstake' && (
+              <PreviewRow>
+                <PreviewLabel $isDark={isDark}>Unbonding period</PreviewLabel>
+                <PreviewValue $isDark={isDark}>~7 eras (~14h on testnet)</PreviewValue>
+              </PreviewRow>
+            )}
           </PreviewBox>
         )}
 
-        <SubmitButton type="submit" disabled={isProcessing || !amount || !validation.valid}>
+        {/* V17: Validator Selector */}
+        <div style={{ marginBottom: '20px' }}>
+          <ValidatorSelector
+            approvedPublicKeys={APPROVED_VALIDATORS}
+            selectedValidator={selectedValidator}
+            onSelect={setSelectedValidator}
+            baseAPY={17}
+            disabled={isProcessing}
+          />
+        </div>
+
+        <SubmitButton type="submit" disabled={isProcessing || !amount || !validation.valid || !selectedValidator}>
           {isProcessing ? (
             <>
               <Spinner />
@@ -786,7 +838,7 @@ export const StakingForm: React.FC = () => {
 
         <InfoBox $isDark={isDark}>
           <InfoRow $isDark={isDark}>
-            <InfoLabel $isDark={isDark}>Exchange Rate (V15)</InfoLabel>
+            <InfoLabel $isDark={isDark}>Exchange Rate (V17)</InfoLabel>
             <InfoValue $isDark={isDark} style={{ color: exchangeRate > 1 ? '#30d158' : undefined }}>
               1 stCSPR = {exchangeRate.toFixed(4)} CSPR
             </InfoValue>
@@ -802,6 +854,10 @@ export const StakingForm: React.FC = () => {
           <InfoRow $isDark={isDark}>
             <InfoLabel $isDark={isDark}>Min. Stake</InfoLabel>
             <InfoValue $isDark={isDark}>{MIN_STAKE_CSPR} CSPR</InfoValue>
+          </InfoRow>
+          <InfoRow $isDark={isDark}>
+            <InfoLabel $isDark={isDark}>Unbonding Period</InfoLabel>
+            <InfoValue $isDark={isDark}>~7 eras</InfoValue>
           </InfoRow>
         </InfoBox>
       </form>
