@@ -402,10 +402,10 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
               <InfoSvgIcon />
             </InfoIcon>
             <InfoContent>
-              <InfoTitle>V15 Exchange Rate</InfoTitle>
+              <InfoTitle>V17 Multi-Validator Staking</InfoTitle>
               <InfoText>
-                This version features the exchange rate mechanism.
-                Rewards added to the pool increase the rate, making stCSPR appreciate over time.
+                Choose your validator, stake min 500 CSPR, and earn rewards!
+                Unstaking queues a withdrawal (~7 eras unbonding).
               </InfoText>
             </InfoContent>
           </InfoBanner>

@@ -1,6 +1,6 @@
 [package]
 name = "stakevue_contract"
-version = "15.0.0"
+version = "17.0.0"
 edition = "2021"
 
 [dependencies]
@@ -34,7 +34,57 @@ path = "bin/build_schema.rs"
 test = false
 
 # ============================================================================
-# V15 SCRIPTS (CURRENT - Exchange Rate)
+# V17 SCRIPTS (CURRENT - Multi-Validator + Withdrawal Queue)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v17"
+path = "bin/deploy_v17.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "add_validators_v17"
+path = "bin/add_validators_v17.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v17"
+path = "bin/test_stake_v17.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_unstake_v17"
+path = "bin/test_unstake_v17.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
+# V16 SCRIPTS (Validator Delegation - Single Validator)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v16"
+path = "bin/deploy_v16.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "set_validator_v16"
+path = "bin/set_validator_v16.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v16"
+path = "bin/test_stake_v16.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
+# V15 SCRIPTS (Exchange Rate)
 # ============================================================================
 
 [[bin]]

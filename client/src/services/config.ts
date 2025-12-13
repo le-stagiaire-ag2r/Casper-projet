@@ -7,6 +7,10 @@ export const config = {
   csprCloudUrl: process.env.REACT_APP_CSPR_CLOUD_URL || 'https://api.testnet.cspr.cloud',
   csprClickAppId: process.env.REACT_APP_CSPRCLICK_APP_ID || '',
   csprClickAppKey: process.env.REACT_APP_CSPRCLICK_APP_KEY || '',
+  // V17: Approved validators list (comma-separated public keys)
+  approvedValidators: (process.env.REACT_APP_APPROVED_VALIDATORS || '').split(',').filter(v => v.length > 0),
+  // V17: Min stake 500 CSPR for first delegation
+  minStakeAmount: process.env.REACT_APP_MIN_STAKE_AMOUNT || '500000000000',
 };
 
 // Validation
