@@ -334,15 +334,15 @@ const FAQ_DATA = [
   },
   {
     keywords: ['start', 'begin', 'how to', 'getting started', 'first'],
-    response: 'Getting started is easy!\n\n1. Connect your Casper wallet\n2. Enter CSPR amount to stake\n3. Click "Stake" and confirm\n4. Receive stCSPR instantly!\n\nStart with any amount you\'re comfortable with!'
+    response: 'Getting started is easy!\n\n1. Connect your Casper wallet\n2. Choose a validator from our approved list\n3. Enter CSPR amount (min 500 CSPR)\n4. Click "Stake" and confirm\n5. Receive stCSPR instantly!\n\nYour stake is delegated to your chosen validator!'
   },
   {
     keywords: ['minimum', 'min', 'least', 'smallest'],
-    response: 'Minimum stake is just 1 CSPR! However, we recommend keeping ~5 CSPR in your wallet for transaction fees. Start small and increase as you get comfortable.'
+    response: 'Minimum stake is 500 CSPR (Casper network delegation requirement). Keep ~20 CSPR for gas fees. Choose your preferred validator from our approved list!'
   },
   {
     keywords: ['validator', 'node', 'delegate'],
-    response: 'StakeVue automatically distributes your stake across top-performing validators with 99%+ uptime. This provides better security and consistent rewards compared to picking a single validator.'
+    response: 'In V17, YOU choose which validator to stake with! Compare validators by APY, commission, performance, and popularity. We show all the info you need to make the best choice.'
   },
   {
     keywords: ['fee', 'cost', 'charge', 'commission'],
