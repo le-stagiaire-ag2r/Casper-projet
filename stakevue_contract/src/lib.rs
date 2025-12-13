@@ -24,6 +24,8 @@ pub enum Error {
     WithdrawalAlreadyClaimed = 11,
     NotWithdrawalOwner = 12,
     MaxValidatorsReached = 13,
+    NoDelegationFound = 14,
+    UndelegateAmountExceedsDelegation = 15,
 }
 
 // ============================================================================
@@ -137,13 +139,15 @@ impl odra::casper_types::CLTyped for WithdrawalRequest {
 }
 
 // ============================================================================
-// STAKEVUE CONTRACT V17 - Multi-Validator + Withdrawal Queue
+// STAKEVUE CONTRACT V18 - Multi-Validator + Withdrawal Queue + Delegation Debug
 // ============================================================================
 // Features:
 // - Multi-validator support (user chooses validator)
 // - Withdrawal queue with 7 era unbonding
 // - Harvest rewards function for auto-compounding
 // - Exchange rate mechanism
+// - V18: Pre-flight delegation checks before undelegate
+// - V18: Diagnostic functions for debugging delegation state
 // ============================================================================
 
 // Precision for exchange rate calculations (9 decimals like CSPR)
@@ -323,10 +327,35 @@ impl StakeVue {
         // Undelegate from validator (only in production/livenet)
         #[cfg(not(test))]
         {
-            self.env().undelegate(validator.clone(), cspr_to_return);
+            // Check actual on-chain delegation first
+            let actual_delegation = self.env().delegated_amount(validator.clone());
+
+            // Revert with clear error if no delegation exists
+            if actual_delegation == U512::zero() {
+                self.env().revert(Error::NoDelegationFound);
+            }
+
+            // Revert if trying to undelegate more than what's delegated
+            if cspr_to_return > actual_delegation {
+                self.env().revert(Error::UndelegateAmountExceedsDelegation);
+            }
+
+            // Check if remaining would be below minimum (500 CSPR)
+            let min_delegation = U512::from(MIN_DELEGATION);
+            let remaining = actual_delegation - cspr_to_return;
+
+            let undelegate_amount = if remaining > U512::zero() && remaining < min_delegation {
+                // Undelegate everything to avoid minimum violation
+                actual_delegation
+            } else {
+                // Normal undelegate amount
+                cspr_to_return
+            };
+
+            self.env().undelegate(validator.clone(), undelegate_amount);
             self.env().emit_event(Undelegated {
                 validator,
-                amount: cspr_to_return,
+                amount: undelegate_amount,
             });
         }
 
@@ -598,6 +627,26 @@ impl StakeVue {
 
     pub fn token_total_supply(&self) -> U256 {
         self.token.total_supply()
+    }
+
+    // ========================================================================
+    // DIAGNOSTIC FUNCTIONS (V18 DEBUG)
+    // ========================================================================
+
+    /// Check actual on-chain delegation amount for a validator
+    /// This queries the Casper auction directly, not our local state
+    #[cfg(not(test))]
+    pub fn get_actual_delegation(&self, validator: PublicKey) -> U512 {
+        self.env().delegated_amount(validator)
+    }
+
+    /// Compare local vs on-chain delegation for debugging
+    #[cfg(not(test))]
+    pub fn debug_delegation_status(&self, validator: PublicKey) -> (U512, U512, bool) {
+        let local = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
+        let actual = self.env().delegated_amount(validator);
+        let matches = local == actual;
+        (local, actual, matches)
     }
 }
 
