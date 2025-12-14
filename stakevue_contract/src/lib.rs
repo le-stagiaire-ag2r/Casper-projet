@@ -262,16 +262,13 @@ impl StakeVue {
 
         // Delegate CSPR to validator via Odra's native delegate function
         // This uses the correct delegator_purse argument for contract-level delegation
-        #[cfg(not(test))]
-        {
-            // Use Odra's env().delegate() which handles the purse argument correctly
-            self.env().delegate(validator.clone(), cspr_amount);
+        // Use Odra's env().delegate() which handles the purse argument correctly
+        self.env().delegate(validator.clone(), cspr_amount);
 
-            self.env().emit_event(Delegated {
-                validator: validator.clone(),
-                amount: cspr_amount,
-            });
-        }
+        self.env().emit_event(Delegated {
+            validator: validator.clone(),
+            amount: cspr_amount,
+        });
 
         self.env().emit_event(Staked {
             staker,
@@ -338,16 +335,13 @@ impl StakeVue {
 
         // Undelegate from validator via Odra's native undelegate function
         // This uses the correct delegator_purse argument for contract-level undelegation
-        #[cfg(not(test))]
-        {
-            // Use Odra's env().undelegate() which handles the purse argument correctly
-            self.env().undelegate(validator.clone(), cspr_to_return);
+        // Use Odra's env().undelegate() which handles the purse argument correctly
+        self.env().undelegate(validator.clone(), cspr_to_return);
 
-            self.env().emit_event(Undelegated {
-                validator,
-                amount: cspr_to_return,
-            });
-        }
+        self.env().emit_event(Undelegated {
+            validator: validator.clone(),
+            amount: cspr_to_return,
+        });
 
         self.env().emit_event(UnstakeRequested {
             staker,
@@ -625,13 +619,11 @@ impl StakeVue {
 
     /// Check actual on-chain delegation amount for a validator
     /// This queries the Casper auction directly, not our local state
-    #[cfg(not(test))]
     pub fn get_actual_delegation(&self, validator: PublicKey) -> U512 {
         self.env().delegated_amount(validator)
     }
 
     /// Compare local vs on-chain delegation for debugging
-    #[cfg(not(test))]
     pub fn debug_delegation_status(&self, validator: PublicKey) -> (U512, U512, bool) {
         let local = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
         let actual = self.env().delegated_amount(validator);
@@ -835,5 +827,141 @@ mod tests {
 
         contract.remove_validator(test_validator());
         assert!(!contract.is_validator_active(test_validator()));
+    }
+
+    // ============================================================================
+    // REAL DELEGATION TESTS WITH ODRAVM VALIDATORS
+    // These tests use env.get_validator() and advance_with_auctions()
+    // to properly test the delegate/undelegate flow
+    // ============================================================================
+
+    /// Setup with real OdraVM validator
+    fn setup_with_real_validator() -> (odra::host::HostEnv, StakeVueHostRef, PublicKey) {
+        let env = odra_test::env();
+        let owner = env.get_account(0);
+
+        // Get a real validator from OdraVM
+        let validator = env.get_validator(0);
+
+        let mut contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
+
+        // Add real validator
+        env.set_caller(owner);
+        contract.add_validator(validator.clone());
+
+        (env, contract, validator)
+    }
+
+    #[test]
+    fn test_stake_with_real_validator() {
+        let (env, mut contract, validator) = setup_with_real_validator();
+        let staker = env.get_account(1);
+
+        // Get auction delay for timing
+        let auction_delay = env.auction_delay();
+
+        env.set_caller(staker);
+        let stake_amount = U512::from(1000_000_000_000u64); // 1000 CSPR
+
+        // Stake to real validator
+        contract.with_tokens(stake_amount).stake(validator.clone());
+
+        // Check internal state
+        assert_eq!(contract.get_stcspr_balance(staker), U256::from(1000_000_000_000u64));
+        assert_eq!(contract.get_total_pool(), stake_amount);
+        assert_eq!(contract.get_delegated_to_validator(validator.clone()), stake_amount);
+
+        // Advance time to process delegation
+        env.advance_with_auctions(auction_delay * 2);
+
+        // Check actual on-chain delegation via env().delegated_amount()
+        let actual_delegated = contract.get_actual_delegation(validator);
+        // Note: May include rewards, so check it's at least stake_amount
+        assert!(actual_delegated >= stake_amount, "Delegation should be recorded on-chain");
+    }
+
+    #[test]
+    fn test_full_stake_unstake_flow() {
+        let (env, mut contract, validator) = setup_with_real_validator();
+        let staker = env.get_account(1);
+
+        let auction_delay = env.auction_delay();
+        let unbonding_delay = env.unbonding_delay();
+
+        // === STAKE ===
+        env.set_caller(staker);
+        let stake_amount = U512::from(1000_000_000_000u64); // 1000 CSPR
+        contract.with_tokens(stake_amount).stake(validator.clone());
+
+        assert_eq!(contract.get_stcspr_balance(staker), U256::from(1000_000_000_000u64));
+
+        // Advance time to process delegation
+        env.advance_with_auctions(auction_delay * 2);
+
+        // === UNSTAKE ===
+        env.set_caller(staker);
+        let unstake_amount = U256::from(500_000_000_000u64); // 500 stCSPR
+        let request_id = contract.request_unstake(unstake_amount, validator.clone());
+
+        assert_eq!(request_id, 1);
+        assert_eq!(contract.get_stcspr_balance(staker), U256::from(500_000_000_000u64)); // 500 left
+        assert_eq!(contract.get_pending_withdrawals(), U512::from(500_000_000_000u64));
+
+        // Advance time for unbonding
+        env.advance_with_auctions(unbonding_delay * 2);
+
+        // === CLAIM ===
+        env.set_caller(staker);
+        // Note: claim_withdrawal should work after unbonding period
+        // contract.claim_withdrawal(request_id);
+    }
+
+    #[test]
+    fn test_unstake_full_amount() {
+        let (env, mut contract, validator) = setup_with_real_validator();
+        let staker = env.get_account(1);
+
+        let auction_delay = env.auction_delay();
+
+        // Stake
+        env.set_caller(staker);
+        let stake_amount = U512::from(1000_000_000_000u64);
+        contract.with_tokens(stake_amount).stake(validator.clone());
+
+        // Wait for delegation to be processed
+        env.advance_with_auctions(auction_delay * 2);
+
+        // Unstake everything
+        env.set_caller(staker);
+        let request_id = contract.request_unstake(U256::from(1000_000_000_000u64), validator.clone());
+
+        assert_eq!(request_id, 1);
+        assert_eq!(contract.get_stcspr_balance(staker), U256::zero());
+        assert_eq!(contract.get_delegated_to_validator(validator), U512::zero());
+    }
+
+    #[test]
+    fn test_partial_unstake() {
+        let (env, mut contract, validator) = setup_with_real_validator();
+        let staker = env.get_account(1);
+
+        let auction_delay = env.auction_delay();
+
+        // Stake 1000 CSPR
+        env.set_caller(staker);
+        let stake_amount = U512::from(1000_000_000_000u64);
+        contract.with_tokens(stake_amount).stake(validator.clone());
+
+        // Wait for delegation
+        env.advance_with_auctions(auction_delay * 2);
+
+        // Unstake only 200 stCSPR
+        env.set_caller(staker);
+        let unstake_amount = U256::from(200_000_000_000u64);
+        let request_id = contract.request_unstake(unstake_amount, validator.clone());
+
+        assert_eq!(request_id, 1);
+        assert_eq!(contract.get_stcspr_balance(staker), U256::from(800_000_000_000u64)); // 800 left
+        assert_eq!(contract.get_delegated_to_validator(validator), U512::from(800_000_000_000u64));
     }
 }
