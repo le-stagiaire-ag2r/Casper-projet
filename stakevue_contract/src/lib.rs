@@ -658,23 +658,7 @@ mod tests {
     use odra::host::{Deployer, HostRef};
     use odra::casper_types::AsymmetricType;
 
-    // Valid Ed25519 test public keys (32 bytes)
-    fn test_validator() -> PublicKey {
-        // Use a valid 32-byte Ed25519 public key
-        let mut bytes = [0u8; 32];
-        bytes[0] = 0x01;
-        bytes[31] = 0x01;
-        PublicKey::ed25519_from_bytes(bytes).unwrap()
-    }
-
-    fn test_validator2() -> PublicKey {
-        // Second valid 32-byte Ed25519 public key
-        let mut bytes = [0u8; 32];
-        bytes[0] = 0x02;
-        bytes[31] = 0x02;
-        PublicKey::ed25519_from_bytes(bytes).unwrap()
-    }
-
+    // Unapproved validator for testing validation
     fn unapproved_validator() -> PublicKey {
         // Third valid 32-byte Ed25519 public key (not approved)
         let mut bytes = [0u8; 32];
@@ -683,92 +667,97 @@ mod tests {
         PublicKey::ed25519_from_bytes(bytes).unwrap()
     }
 
-    fn setup() -> (odra::host::HostEnv, StakeVueHostRef) {
+    fn setup() -> (odra::host::HostEnv, StakeVueHostRef, PublicKey) {
         let env = odra_test::env();
         let owner = env.get_account(0);
+        // Use real OdraVM validator for proper delegation testing
+        let validator = env.get_validator(0);
         let mut contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
 
-        // Add test validator
+        // Add real validator
         env.set_caller(owner);
-        contract.add_validator(test_validator());
+        contract.add_validator(validator.clone());
 
-        (env, contract)
+        (env, contract, validator)
     }
 
     #[test]
     fn test_initial_state() {
-        let (_env, contract) = setup();
+        let (_env, contract, validator) = setup();
         assert_eq!(contract.get_exchange_rate(), U512::from(RATE_PRECISION));
         assert_eq!(contract.get_validator_count(), 1);
-        assert!(contract.is_validator_active(test_validator()));
+        assert!(contract.is_validator_active(validator));
     }
 
     #[test]
     fn test_add_multiple_validators() {
-        let (env, mut contract) = setup();
+        let (env, mut contract, validator1) = setup();
         let owner = env.get_account(0);
+        let validator2 = env.get_validator(1);
         env.set_caller(owner);
 
-        contract.add_validator(test_validator2());
+        contract.add_validator(validator2.clone());
 
         assert_eq!(contract.get_validator_count(), 2);
-        assert!(contract.is_validator_active(test_validator()));
-        assert!(contract.is_validator_active(test_validator2()));
+        assert!(contract.is_validator_active(validator1));
+        assert!(contract.is_validator_active(validator2));
     }
 
     #[test]
     fn test_stake_to_validator() {
-        let (env, mut contract) = setup();
+        let (env, mut contract, validator) = setup();
         let staker = env.get_account(1);
         env.set_caller(staker);
 
         let stake_amount = U512::from(MIN_DELEGATION);
-        contract.with_tokens(stake_amount).stake(test_validator());
+        contract.with_tokens(stake_amount).stake(validator.clone());
 
         assert_eq!(contract.get_stcspr_balance(staker), U256::from(MIN_DELEGATION));
         assert_eq!(contract.get_total_pool(), stake_amount);
-        assert_eq!(contract.get_delegated_to_validator(test_validator()), stake_amount);
+        assert_eq!(contract.get_delegated_to_validator(validator), stake_amount);
     }
 
     #[test]
     fn test_stake_to_multiple_validators() {
-        let (env, mut contract) = setup();
+        let (env, mut contract, validator1) = setup();
         let owner = env.get_account(0);
         let staker = env.get_account(1);
+        let validator2 = env.get_validator(1);
 
         // Add second validator
         env.set_caller(owner);
-        contract.add_validator(test_validator2());
+        contract.add_validator(validator2.clone());
 
         // Stake to both
         env.set_caller(staker);
-        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
-        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator2());
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(validator1.clone());
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(validator2.clone());
 
         assert_eq!(contract.get_stcspr_balance(staker), U256::from(MIN_DELEGATION * 2));
-        assert_eq!(contract.get_delegated_to_validator(test_validator()), U512::from(MIN_DELEGATION));
-        assert_eq!(contract.get_delegated_to_validator(test_validator2()), U512::from(MIN_DELEGATION));
+        assert_eq!(contract.get_delegated_to_validator(validator1), U512::from(MIN_DELEGATION));
+        assert_eq!(contract.get_delegated_to_validator(validator2), U512::from(MIN_DELEGATION));
     }
 
     #[test]
     #[should_panic(expected = "ValidatorNotApproved")]
     fn test_stake_to_unapproved_validator_fails() {
-        let (env, contract) = setup();
+        let (env, contract, _validator) = setup();
         env.set_caller(env.get_account(1));
+        // Try to stake to a validator that hasn't been added
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(unapproved_validator());
     }
 
     #[test]
     fn test_request_unstake() {
-        let (env, mut contract) = setup();
+        let (env, mut contract, validator) = setup();
         let staker = env.get_account(1);
         env.set_caller(staker);
 
         // Stake first
-        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(validator.clone());
 
         // Request unstake
-        let request_id = contract.request_unstake(U256::from(MIN_DELEGATION), test_validator());
+        let request_id = contract.request_unstake(U256::from(MIN_DELEGATION), validator);
 
         assert_eq!(request_id, 1);
         assert_eq!(contract.get_stcspr_balance(staker), U256::zero());
@@ -778,13 +767,13 @@ mod tests {
 
     #[test]
     fn test_harvest_rewards() {
-        let (env, mut contract) = setup();
+        let (env, mut contract, validator) = setup();
         let owner = env.get_account(0);
         let staker = env.get_account(1);
 
         // Stake
         env.set_caller(staker);
-        contract.with_tokens(U512::from(1000_000_000_000u64)).stake(test_validator());
+        contract.with_tokens(U512::from(1000_000_000_000u64)).stake(validator);
 
         // Harvest rewards
         env.set_caller(owner);
@@ -799,62 +788,45 @@ mod tests {
     #[test]
     #[should_panic(expected = "BelowMinimumDelegation")]
     fn test_stake_below_minimum_fails() {
-        let (env, contract) = setup();
+        let (env, contract, validator) = setup();
         env.set_caller(env.get_account(1));
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
+        contract.with_tokens(U512::from(100_000_000_000u64)).stake(validator);
     }
 
     #[test]
     fn test_additional_stake_below_minimum_succeeds() {
-        let (env, mut contract) = setup();
+        let (env, mut contract, validator) = setup();
         let staker = env.get_account(1);
         env.set_caller(staker);
 
         // First stake meets minimum
-        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(validator.clone());
 
         // Additional stake below minimum should succeed
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
+        contract.with_tokens(U512::from(100_000_000_000u64)).stake(validator);
 
         assert_eq!(contract.get_stcspr_balance(staker), U256::from(600_000_000_000u64));
     }
 
     #[test]
     fn test_remove_validator() {
-        let (env, mut contract) = setup();
+        let (env, mut contract, validator) = setup();
         let owner = env.get_account(0);
         env.set_caller(owner);
 
-        contract.remove_validator(test_validator());
-        assert!(!contract.is_validator_active(test_validator()));
+        contract.remove_validator(validator.clone());
+        assert!(!contract.is_validator_active(validator));
     }
 
     // ============================================================================
-    // REAL DELEGATION TESTS WITH ODRAVM VALIDATORS
+    // DELEGATION TESTS WITH ODRAVM VALIDATORS
     // These tests use env.get_validator() and advance_with_auctions()
     // to properly test the delegate/undelegate flow
     // ============================================================================
 
-    /// Setup with real OdraVM validator
-    fn setup_with_real_validator() -> (odra::host::HostEnv, StakeVueHostRef, PublicKey) {
-        let env = odra_test::env();
-        let owner = env.get_account(0);
-
-        // Get a real validator from OdraVM
-        let validator = env.get_validator(0);
-
-        let mut contract = StakeVue::deploy(&env, StakeVueInitArgs { owner });
-
-        // Add real validator
-        env.set_caller(owner);
-        contract.add_validator(validator.clone());
-
-        (env, contract, validator)
-    }
-
     #[test]
     fn test_stake_with_real_validator() {
-        let (env, mut contract, validator) = setup_with_real_validator();
+        let (env, mut contract, validator) = setup();
         let staker = env.get_account(1);
 
         // Get auction delay for timing
@@ -882,7 +854,7 @@ mod tests {
 
     #[test]
     fn test_full_stake_unstake_flow() {
-        let (env, mut contract, validator) = setup_with_real_validator();
+        let (env, mut contract, validator) = setup();
         let staker = env.get_account(1);
 
         let auction_delay = env.auction_delay();
@@ -918,7 +890,7 @@ mod tests {
 
     #[test]
     fn test_unstake_full_amount() {
-        let (env, mut contract, validator) = setup_with_real_validator();
+        let (env, mut contract, validator) = setup();
         let staker = env.get_account(1);
 
         let auction_delay = env.auction_delay();
@@ -942,7 +914,7 @@ mod tests {
 
     #[test]
     fn test_partial_unstake() {
-        let (env, mut contract, validator) = setup_with_real_validator();
+        let (env, mut contract, validator) = setup();
         let staker = env.get_account(1);
 
         let auction_delay = env.auction_delay();
