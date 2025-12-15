@@ -5,11 +5,15 @@
 use odra::prelude::*;
 use odra::casper_types::{U512, PublicKey};
 
+// Minimum delegation amount (500 CSPR in motes) - required by Casper
+const MIN_DELEGATION: u64 = 500_000_000_000;
+
 #[odra::odra_error]
 pub enum SimpleError {
     ZeroAmount = 1,
     ValidatorNotSet = 2,
     InsufficientDelegation = 3,
+    BelowMinimumDelegation = 4,
 }
 
 #[odra::event]
@@ -51,6 +55,11 @@ impl SimpleStake {
 
         if amount == U512::zero() {
             self.env().revert(SimpleError::ZeroAmount);
+        }
+
+        // Check minimum delegation (500 CSPR required by Casper)
+        if amount < U512::from(MIN_DELEGATION) {
+            self.env().revert(SimpleError::BelowMinimumDelegation);
         }
 
         let validator = self.validator.get().unwrap_or_else(|| {
