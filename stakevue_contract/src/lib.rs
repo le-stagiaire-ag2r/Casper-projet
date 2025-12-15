@@ -1,8 +1,5 @@
 #![no_std]
 
-// Simple stake module for testing delegate/undelegate without tokens
-pub mod simple_stake;
-
 use odra::prelude::*;
 use odra::casper_types::{U512, U256, PublicKey};
 use odra_modules::access::Ownable;

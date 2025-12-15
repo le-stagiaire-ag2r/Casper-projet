@@ -2,8 +2,3 @@
 fqn = "stakevue_contract::StakeVue"
 package_hash_key_name = "stakevue_v19"
 allow_key_override = true
-
-[[contracts]]
-fqn = "stakevue_contract::simple_stake::SimpleStake"
-package_hash_key_name = "simple_stake"
-allow_key_override = true
