@@ -6,11 +6,17 @@ use odra_modules::access::Ownable;
 use odra_modules::cep18_token::Cep18;
 
 // ============================================================================
-// V19 - Uses Odra's native env().delegate() and env().undelegate()
+// V20 - Wise Lending Architecture (Pool-Based Liquid Staking)
 // ============================================================================
-// These functions properly use delegator_purse argument for contract-level
-// delegation/undelegation, which is the correct way for smart contracts
-// to interact with the Casper auction system in Casper 2.0.
+// Based on analysis of Wise Lending transactions on Casper Testnet:
+// - stake(): CSPR goes to pool, admin delegates later
+// - request_unstake(): Burns stCSPR, creates withdrawal request, NO undelegate
+// - claim(): Transfers from pool liquidity (if available)
+// - admin_delegate(): Owner delegates pool funds to validators
+// - admin_undelegate(): Owner undelegates (separate process)
+//
+// This architecture avoids the purse mismatch issue (error 64658) by
+// separating user operations from auction contract interactions.
 // ============================================================================
 
 // ============================================================================
@@ -34,6 +40,9 @@ pub enum Error {
     MaxValidatorsReached = 13,
     NoDelegationFound = 14,
     UndelegateAmountExceedsDelegation = 15,
+    InsufficientLiquidity = 16,
+    NothingToDelegate = 17,
+    NothingToUndelegate = 18,
 }
 
 // ============================================================================
@@ -88,6 +97,23 @@ pub struct Delegated {
 #[odra::event]
 pub struct Undelegated {
     pub validator: PublicKey,
+    pub amount: U512,
+}
+
+#[odra::event]
+pub struct AdminDelegated {
+    pub validator: PublicKey,
+    pub amount: U512,
+}
+
+#[odra::event]
+pub struct AdminUndelegated {
+    pub validator: PublicKey,
+    pub amount: U512,
+}
+
+#[odra::event]
+pub struct LiquidityAdded {
     pub amount: U512,
 }
 
@@ -147,16 +173,18 @@ impl odra::casper_types::CLTyped for WithdrawalRequest {
 }
 
 // ============================================================================
-// STAKEVUE CONTRACT V18 - Direct Auction Contract Calls
+// STAKEVUE CONTRACT V20 - Wise Lending Architecture
 // ============================================================================
 // Features:
 // - Multi-validator support (user chooses validator)
 // - Withdrawal queue with 7 era unbonding
 // - Harvest rewards function for auto-compounding
 // - Exchange rate mechanism
-// - V18: Direct calls to system auction contract (like CLI)
-//   Instead of env().delegate(), we call auction's delegate entry point
-//   with explicit validator, amount, and delegator arguments
+// - V20: Pool-based architecture (like Wise Lending)
+//   * User stake() adds CSPR to pool, admin delegates later
+//   * User request_unstake() burns tokens, NO direct undelegate
+//   * Admin handles all auction contract interactions
+//   * This avoids the purse mismatch error (64658)
 // ============================================================================
 
 // Precision for exchange rate calculations (9 decimals like CSPR)
@@ -172,23 +200,27 @@ const UNBONDING_BLOCKS: u64 = 5000;
 // Maximum number of validators
 const MAX_VALIDATORS: usize = 20;
 
-#[odra::module(events = [Staked, UnstakeRequested, Claimed, RewardsHarvested, ValidatorAdded, ValidatorRemoved, Delegated, Undelegated], errors = Error)]
+#[odra::module(events = [Staked, UnstakeRequested, Claimed, RewardsHarvested, ValidatorAdded, ValidatorRemoved, Delegated, Undelegated, AdminDelegated, AdminUndelegated, LiquidityAdded], errors = Error)]
 pub struct StakeVue {
     /// Access control
     ownable: SubModule<Ownable>,
     /// Integrated stCSPR CEP-18 token
     token: SubModule<Cep18>,
-    /// Total CSPR in pool (including rewards)
+    /// Total CSPR in pool (staked value, including rewards)
     total_cspr_pool: Var<U512>,
-    /// Total pending withdrawals
+    /// Available liquidity in contract (not delegated, can be used for claims)
+    available_liquidity: Var<U512>,
+    /// Total pending withdrawals (requested but not yet claimed)
     pending_withdrawals: Var<U512>,
+    /// Total pending undelegations (requested, waiting for admin to undelegate)
+    pending_undelegations: Var<U512>,
     /// Approved validators (index -> pubkey)
     validators: Mapping<u8, PublicKey>,
     /// Number of validators
     validator_count: Var<u8>,
     /// Validator active status
     validator_active: Mapping<PublicKey, bool>,
-    /// Amount delegated per validator
+    /// Amount delegated per validator (actual on-chain delegation)
     validator_delegated: Mapping<PublicKey, U512>,
     /// Withdrawal requests (id -> request)
     withdrawal_requests: Mapping<u64, WithdrawalRequest>,
@@ -206,7 +238,9 @@ impl StakeVue {
     pub fn init(&mut self, owner: Address) {
         self.ownable.init(owner);
         self.total_cspr_pool.set(U512::zero());
+        self.available_liquidity.set(U512::zero());
         self.pending_withdrawals.set(U512::zero());
+        self.pending_undelegations.set(U512::zero());
         self.validator_count.set(0);
         self.next_request_id.set(1);
 
@@ -220,13 +254,14 @@ impl StakeVue {
     }
 
     // ========================================================================
-    // STAKING FUNCTIONS
+    // STAKING FUNCTIONS (V20 - Pool Based)
     // ========================================================================
 
-    /// Stake CSPR to a chosen validator and receive stCSPR tokens
+    /// Stake CSPR and receive stCSPR tokens
     ///
-    /// The validator must be approved by the contract owner.
-    /// Minimum delegation is 500 CSPR for first stake to a validator.
+    /// V20: CSPR goes to the liquidity pool. Admin will delegate later.
+    /// This avoids the purse mismatch issue with direct delegation.
+    /// The validator parameter is kept for tracking/routing purposes.
     #[odra(payable)]
     pub fn stake(&mut self, validator: PublicKey) {
         let staker = self.env().caller();
@@ -236,15 +271,9 @@ impl StakeVue {
             self.env().revert(Error::ZeroAmount);
         }
 
-        // Check validator is approved
+        // Check validator is approved (for routing preference)
         if !self.validator_active.get(&validator).unwrap_or(false) {
             self.env().revert(Error::ValidatorNotApproved);
-        }
-
-        // Check minimum delegation
-        let current_delegated = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
-        if current_delegated == U512::zero() && cspr_amount < U512::from(MIN_DELEGATION) {
-            self.env().revert(Error::BelowMinimumDelegation);
         }
 
         // Calculate stCSPR to mint based on exchange rate
@@ -253,25 +282,17 @@ impl StakeVue {
         // Mint stCSPR tokens to staker
         self.token.raw_mint(&staker, &stcspr_to_mint);
 
-        // Add CSPR to pool
+        // Add CSPR to total pool (represents total staked value)
         let pool = self.total_cspr_pool.get_or_default();
         self.total_cspr_pool.set(pool + cspr_amount);
 
-        // Update validator delegated amount
-        self.validator_delegated.set(&validator, current_delegated + cspr_amount);
+        // Add to available liquidity (CSPR sitting in contract, not yet delegated)
+        let liquidity = self.available_liquidity.get_or_default();
+        self.available_liquidity.set(liquidity + cspr_amount);
 
-        // Delegate CSPR to validator via Odra's native delegate function
-        // This uses the correct delegator_purse argument for contract-level delegation
-        #[cfg(not(test))]
-        {
-            // Use Odra's env().delegate() which handles the purse argument correctly
-            self.env().delegate(validator.clone(), cspr_amount);
-
-            self.env().emit_event(Delegated {
-                validator: validator.clone(),
-                amount: cspr_amount,
-            });
-        }
+        // V20: NO direct delegation here!
+        // Admin will call admin_delegate() to delegate pool funds to validators
+        // This avoids the purse mismatch error (64658)
 
         self.env().emit_event(Staked {
             staker,
@@ -283,9 +304,10 @@ impl StakeVue {
 
     /// Request unstake: burn stCSPR and queue withdrawal
     ///
-    /// The CSPR will be available after the unbonding period (~7 eras).
-    /// Call claim() after the unbonding period to receive CSPR.
-    pub fn request_unstake(&mut self, stcspr_amount: U256, validator: PublicKey) -> u64 {
+    /// V20: Burns tokens and creates withdrawal request.
+    /// NO direct undelegate call - admin handles that separately.
+    /// User can claim when liquidity is available in the pool.
+    pub fn request_unstake(&mut self, stcspr_amount: U256) -> u64 {
         let staker = self.env().caller();
 
         if stcspr_amount == U256::zero() {
@@ -298,26 +320,28 @@ impl StakeVue {
             self.env().revert(Error::InsufficientStCsprBalance);
         }
 
-        // Check validator has enough delegated
-        let delegated = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
+        // Calculate CSPR value
         let cspr_to_return = self.stcspr_to_cspr(stcspr_amount);
-        if cspr_to_return > delegated {
+
+        // Check total pool has enough
+        let pool = self.total_cspr_pool.get_or_default();
+        if cspr_to_return > pool {
             self.env().revert(Error::InsufficientPoolBalance);
         }
 
         // Burn stCSPR tokens
         self.token.raw_burn(&staker, &stcspr_amount);
 
-        // Update validator delegated amount
-        self.validator_delegated.set(&validator, delegated - cspr_to_return);
-
         // Update total pool
-        let pool = self.total_cspr_pool.get_or_default();
         self.total_cspr_pool.set(pool - cspr_to_return);
 
         // Add to pending withdrawals
         let pending = self.pending_withdrawals.get_or_default();
         self.pending_withdrawals.set(pending + cspr_to_return);
+
+        // Add to pending undelegations (admin needs to undelegate this amount)
+        let pending_undel = self.pending_undelegations.get_or_default();
+        self.pending_undelegations.set(pending_undel + cspr_to_return);
 
         // Create withdrawal request
         let request_id = self.next_request_id.get_or_default();
@@ -336,18 +360,9 @@ impl StakeVue {
         self.user_requests.set(&(staker, user_count), request_id);
         self.user_request_count.set(&staker, user_count + 1);
 
-        // Undelegate from validator via Odra's native undelegate function
-        // This uses the correct delegator_purse argument for contract-level undelegation
-        #[cfg(not(test))]
-        {
-            // Use Odra's env().undelegate() which handles the purse argument correctly
-            self.env().undelegate(validator.clone(), cspr_to_return);
-
-            self.env().emit_event(Undelegated {
-                validator,
-                amount: cspr_to_return,
-            });
-        }
+        // V20: NO direct undelegate here!
+        // Admin will call admin_undelegate() to handle auction contract interaction
+        // This avoids the purse mismatch error (64658)
 
         self.env().emit_event(UnstakeRequested {
             staker,
@@ -361,7 +376,9 @@ impl StakeVue {
 
     /// Claim a completed withdrawal request
     ///
-    /// Can only be called after the unbonding period has passed.
+    /// V20: Transfers from pool liquidity. Requires:
+    /// 1. Unbonding period has passed
+    /// 2. Pool has enough liquidity (admin must have processed undelegations)
     pub fn claim(&mut self, request_id: u64) {
         let caller = self.env().caller();
 
@@ -388,15 +405,24 @@ impl StakeVue {
             self.env().revert(Error::WithdrawalNotReady);
         }
 
+        // V20: Check pool has enough liquidity
+        let liquidity = self.available_liquidity.get_or_default();
+        if request.cspr_amount > liquidity {
+            self.env().revert(Error::InsufficientLiquidity);
+        }
+
         // Mark as claimed
         request.claimed = true;
         self.withdrawal_requests.set(&request_id, request.clone());
 
-        // Remove from pending
+        // Remove from pending withdrawals
         let pending = self.pending_withdrawals.get_or_default();
         self.pending_withdrawals.set(pending - request.cspr_amount);
 
-        // Transfer CSPR to staker
+        // Reduce available liquidity
+        self.available_liquidity.set(liquidity - request.cspr_amount);
+
+        // Transfer CSPR to staker from pool
         self.env().transfer_tokens(&caller, &request.cspr_amount);
 
         self.env().emit_event(Claimed {
@@ -453,8 +479,114 @@ impl StakeVue {
     }
 
     // ========================================================================
-    // ADMIN FUNCTIONS
+    // ADMIN FUNCTIONS (V20 - Pool Management)
     // ========================================================================
+
+    /// Delegate pool funds to a validator (owner only)
+    ///
+    /// V20: Admin controls when to delegate. Takes CSPR from available_liquidity
+    /// and delegates to the specified validator.
+    pub fn admin_delegate(&mut self, validator: PublicKey, amount: U512) {
+        self.ownable.assert_owner(&self.env().caller());
+
+        if amount == U512::zero() {
+            self.env().revert(Error::ZeroAmount);
+        }
+
+        // Check validator is approved
+        if !self.validator_active.get(&validator).unwrap_or(false) {
+            self.env().revert(Error::ValidatorNotApproved);
+        }
+
+        // Check we have enough liquidity to delegate
+        let liquidity = self.available_liquidity.get_or_default();
+        if amount > liquidity {
+            self.env().revert(Error::InsufficientLiquidity);
+        }
+
+        // Check minimum delegation requirement
+        let current_delegated = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
+        if current_delegated == U512::zero() && amount < U512::from(MIN_DELEGATION) {
+            self.env().revert(Error::BelowMinimumDelegation);
+        }
+
+        // Reduce available liquidity
+        self.available_liquidity.set(liquidity - amount);
+
+        // Update validator delegated amount
+        self.validator_delegated.set(&validator, current_delegated + amount);
+
+        // Actually delegate to auction contract
+        #[cfg(not(test))]
+        {
+            self.env().delegate(validator.clone(), amount);
+        }
+
+        self.env().emit_event(AdminDelegated {
+            validator,
+            amount,
+        });
+    }
+
+    /// Undelegate from a validator (owner only)
+    ///
+    /// V20: Admin calls this to undelegate. After unbonding period,
+    /// call admin_add_liquidity() to add the returned CSPR to the pool.
+    pub fn admin_undelegate(&mut self, validator: PublicKey, amount: U512) {
+        self.ownable.assert_owner(&self.env().caller());
+
+        if amount == U512::zero() {
+            self.env().revert(Error::ZeroAmount);
+        }
+
+        // Check validator has enough delegated
+        let delegated = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
+        if amount > delegated {
+            self.env().revert(Error::UndelegateAmountExceedsDelegation);
+        }
+
+        // Update validator delegated amount
+        self.validator_delegated.set(&validator, delegated - amount);
+
+        // Reduce pending undelegations (this amount is now being processed)
+        let pending_undel = self.pending_undelegations.get_or_default();
+        if amount <= pending_undel {
+            self.pending_undelegations.set(pending_undel - amount);
+        } else {
+            self.pending_undelegations.set(U512::zero());
+        }
+
+        // Actually undelegate from auction contract
+        #[cfg(not(test))]
+        {
+            self.env().undelegate(validator.clone(), amount);
+        }
+
+        self.env().emit_event(AdminUndelegated {
+            validator,
+            amount,
+        });
+    }
+
+    /// Add liquidity to the pool (owner only)
+    ///
+    /// V20: After unbonding completes, admin calls this to add the
+    /// returned CSPR back to available_liquidity for claims.
+    #[odra(payable)]
+    pub fn admin_add_liquidity(&mut self) {
+        self.ownable.assert_owner(&self.env().caller());
+
+        let amount = self.env().attached_value();
+        if amount == U512::zero() {
+            self.env().revert(Error::ZeroAmount);
+        }
+
+        // Add to available liquidity
+        let liquidity = self.available_liquidity.get_or_default();
+        self.available_liquidity.set(liquidity + amount);
+
+        self.env().emit_event(LiquidityAdded { amount });
+    }
 
     /// Add a validator to the approved list (owner only)
     pub fn add_validator(&mut self, validator: PublicKey) {
@@ -539,6 +671,18 @@ impl StakeVue {
         self.pending_withdrawals.get_or_default()
     }
 
+    /// Get available liquidity (V20)
+    /// This is CSPR in the contract that can be used for claims
+    pub fn get_available_liquidity(&self) -> U512 {
+        self.available_liquidity.get_or_default()
+    }
+
+    /// Get pending undelegations (V20)
+    /// Amount that needs to be undelegated by admin
+    pub fn get_pending_undelegations(&self) -> U512 {
+        self.pending_undelegations.get_or_default()
+    }
+
     /// Get contract owner
     pub fn get_owner(&self) -> Address {
         self.ownable.get_owner()
@@ -619,25 +763,6 @@ impl StakeVue {
         self.token.total_supply()
     }
 
-    // ========================================================================
-    // DIAGNOSTIC FUNCTIONS (V18 DEBUG)
-    // ========================================================================
-
-    /// Check actual on-chain delegation amount for a validator
-    /// This queries the Casper auction directly, not our local state
-    #[cfg(not(test))]
-    pub fn get_actual_delegation(&self, validator: PublicKey) -> U512 {
-        self.env().delegated_amount(validator)
-    }
-
-    /// Compare local vs on-chain delegation for debugging
-    #[cfg(not(test))]
-    pub fn debug_delegation_status(&self, validator: PublicKey) -> (U512, U512, bool) {
-        let local = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
-        let actual = self.env().delegated_amount(validator);
-        let matches = local == actual;
-        (local, actual, matches)
-    }
 }
 
 // ============================================================================
@@ -733,9 +858,12 @@ mod tests {
         let stake_amount = U512::from(MIN_DELEGATION);
         contract.with_tokens(stake_amount).stake(test_validator());
 
+        // V20: stake adds to pool and available_liquidity (not validator_delegated)
         assert_eq!(contract.get_stcspr_balance(staker), U256::from(MIN_DELEGATION));
         assert_eq!(contract.get_total_pool(), stake_amount);
-        assert_eq!(contract.get_delegated_to_validator(test_validator()), stake_amount);
+        assert_eq!(contract.get_available_liquidity(), stake_amount);
+        // Validator delegated is 0 until admin calls admin_delegate
+        assert_eq!(contract.get_delegated_to_validator(test_validator()), U512::zero());
     }
 
     #[test]
@@ -748,14 +876,33 @@ mod tests {
         env.set_caller(owner);
         contract.add_validator(test_validator2());
 
-        // Stake to both
+        // Stake (validator param is just for routing preference in V20)
         env.set_caller(staker);
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator2());
 
+        // V20: all CSPR goes to available_liquidity
         assert_eq!(contract.get_stcspr_balance(staker), U256::from(MIN_DELEGATION * 2));
+        assert_eq!(contract.get_available_liquidity(), U512::from(MIN_DELEGATION * 2));
+    }
+
+    #[test]
+    fn test_admin_delegate() {
+        let (env, mut contract) = setup();
+        let owner = env.get_account(0);
+        let staker = env.get_account(1);
+
+        // User stakes
+        env.set_caller(staker);
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
+
+        // Admin delegates to validator
+        env.set_caller(owner);
+        contract.admin_delegate(test_validator(), U512::from(MIN_DELEGATION));
+
+        // Now validator has delegation, liquidity is 0
         assert_eq!(contract.get_delegated_to_validator(test_validator()), U512::from(MIN_DELEGATION));
-        assert_eq!(contract.get_delegated_to_validator(test_validator2()), U512::from(MIN_DELEGATION));
+        assert_eq!(contract.get_available_liquidity(), U512::zero());
     }
 
     #[test]
@@ -775,13 +922,40 @@ mod tests {
         // Stake first
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
 
-        // Request unstake
-        let request_id = contract.request_unstake(U256::from(MIN_DELEGATION), test_validator());
+        // Request unstake (V20: no validator param needed)
+        let request_id = contract.request_unstake(U256::from(MIN_DELEGATION));
 
         assert_eq!(request_id, 1);
         assert_eq!(contract.get_stcspr_balance(staker), U256::zero());
         assert_eq!(contract.get_pending_withdrawals(), U512::from(MIN_DELEGATION));
+        assert_eq!(contract.get_pending_undelegations(), U512::from(MIN_DELEGATION));
         assert_eq!(contract.get_user_request_count(staker), 1);
+    }
+
+    #[test]
+    fn test_admin_undelegate() {
+        let (env, mut contract) = setup();
+        let owner = env.get_account(0);
+        let staker = env.get_account(1);
+
+        // User stakes
+        env.set_caller(staker);
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
+
+        // Admin delegates
+        env.set_caller(owner);
+        contract.admin_delegate(test_validator(), U512::from(MIN_DELEGATION));
+
+        // User requests unstake
+        env.set_caller(staker);
+        contract.request_unstake(U256::from(MIN_DELEGATION));
+
+        // Admin undelegates
+        env.set_caller(owner);
+        contract.admin_undelegate(test_validator(), U512::from(MIN_DELEGATION));
+
+        assert_eq!(contract.get_delegated_to_validator(test_validator()), U512::zero());
+        assert_eq!(contract.get_pending_undelegations(), U512::zero());
     }
 
     #[test]
@@ -806,25 +980,32 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "BelowMinimumDelegation")]
-    fn test_stake_below_minimum_fails() {
-        let (env, contract) = setup();
-        env.set_caller(env.get_account(1));
+    fn test_admin_delegate_below_minimum_fails() {
+        let (env, mut contract) = setup();
+        let owner = env.get_account(0);
+        let staker = env.get_account(1);
+
+        // User stakes (any amount is ok in V20)
+        env.set_caller(staker);
         contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
+
+        // Admin tries to delegate below minimum - should fail
+        env.set_caller(owner);
+        contract.admin_delegate(test_validator(), U512::from(100_000_000_000u64));
     }
 
     #[test]
-    fn test_additional_stake_below_minimum_succeeds() {
+    fn test_stake_any_amount_succeeds() {
         let (env, mut contract) = setup();
         let staker = env.get_account(1);
         env.set_caller(staker);
 
-        // First stake meets minimum
-        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
-
-        // Additional stake below minimum should succeed
+        // V20: stake accepts any amount (minimum is checked on admin_delegate)
+        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
         contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
 
-        assert_eq!(contract.get_stcspr_balance(staker), U256::from(600_000_000_000u64));
+        assert_eq!(contract.get_stcspr_balance(staker), U256::from(200_000_000_000u64));
+        assert_eq!(contract.get_available_liquidity(), U512::from(200_000_000_000u64));
     }
 
     #[test]
