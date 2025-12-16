@@ -1,15 +1,15 @@
-// StakeVue Runtime Configuration V19
+// StakeVue Runtime Configuration V20
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V19 (Native Odra delegate/undelegate)
-  // V19 Contract Hash: hash-b778d35d8787dede42734b8adf69b76ec6a5e615206592d8c426c152a2801f6d
-  // Features: stake(validator), request_unstake(amount, validator), claim_withdrawal(request_id)
-  // Fix: Uses Odra's native env().delegate() and env().undelegate() with proper delegator_purse
-  // Min stake: 500 CSPR for first delegation to a validator
-  contract_hash: "b778d35d8787dede42734b8adf69b76ec6a5e615206592d8c426c152a2801f6d",
-  // V19 package hash - MUST match contract hash for new Odra deployments
-  contract_package_hash: "b778d35d8787dede42734b8adf69b76ec6a5e615206592d8c426c152a2801f6d",
+  // Smart Contract Configuration - V20 (Wise Lending Pool Architecture)
+  // V20 Contract Hash: hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f
+  // Features: stake(validator) -> pool, request_unstake(amount) -> burn only, claim(request_id)
+  // Architecture: Pool-based like Wise Lending - admin handles delegate/undelegate
+  // Min stake: 1 CSPR (no direct delegation, funds go to pool)
+  contract_hash: "ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f",
+  // V20 package hash
+  contract_package_hash: "ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f",
 
   // Contract owner address (for admin features)
   owner_account_hash: "2f63ef2c9db78bcf2288529e2217cd8e70614f0b1aad4f8ef8871acd39ac2f7e",
@@ -27,14 +27,14 @@ window.config = {
   api_url: "http://localhost:3001",
   cspr_live_url: "https://testnet.cspr.live",
 
-  // Transaction Configuration - V19 delegation operations need more gas
-  transaction_payment: "15000000000", // 15 CSPR in motes for delegation gas
+  // Transaction Configuration - V20 pool operations (no direct delegation)
+  transaction_payment: "10000000000", // 10 CSPR in motes for gas
   add_rewards_payment: "10000000000", // 10 CSPR gas for add_rewards
 
-  // Staking Configuration - V19 uses Casper network delegation minimum
-  min_stake_amount: "500000000000", // 500 CSPR minimum (Casper delegation requirement)
+  // Staking Configuration - V20 pool-based (no delegation minimum)
+  min_stake_amount: "1000000000", // 1 CSPR minimum (pool-based, no delegation requirement)
 
-  // V19 Approved Validators (testnet validators - synced with .env.example)
+  // V20 Approved Validators (testnet validators - synced with .env.example)
   approved_validators: [
     "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca",
     "017d96b9a63abcb61c870a4f55187a0a7ac24096bdb5fc585c12a686a4d892009e",
@@ -49,6 +49,6 @@ window.config = {
     "01f340df2c32f25391e8f7924a99e93cab3a6f230ff7af1cacbfc070772cbebd94"
   ],
 
-  // V19 Exchange Rate
+  // V20 Exchange Rate
   rate_precision: 1000000000, // 1.0 = 1_000_000_000
 };

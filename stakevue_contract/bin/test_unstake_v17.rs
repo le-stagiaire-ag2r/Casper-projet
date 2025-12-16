@@ -1,22 +1,22 @@
 //! Test unstake (withdrawal queue) on V17 contract
+//! NOTE: V17 contract is deprecated. Use V20 scripts instead.
 //! Run with: cargo run --bin test_unstake_v17 --features livenet
 
 use std::str::FromStr;
-use odra::casper_types::{AsymmetricType, PublicKey, U256, U512};
-use odra::host::{HostRef, HostRefLoader};
+use odra::casper_types::{U256, U512};
+use odra::host::{HostRefLoader};
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
 // V17 Contract Address (final deploy with correct WASM)
+// NOTE: This script uses V20 function signature, which may not match V17 contract on-chain
 const CONTRACT_HASH: &str = "hash-c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747";
-
-// MAKE validator - same as where we staked
-const VALIDATOR_PUBLIC_KEY: &str = "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca";
 
 fn main() {
     let env = odra_casper_livenet_env::env();
 
     println!("=== Testing Unstake Queue on V17 ===");
+    println!("NOTE: V17 is deprecated. Use V20 scripts for new contracts.");
     println!("Contract: {}", CONTRACT_HASH);
 
     // Load existing contract
@@ -25,10 +25,6 @@ fn main() {
 
     let caller = env.caller();
     println!("Caller: {:?}", caller);
-
-    // Parse validator
-    let validator = PublicKey::from_hex(VALIDATOR_PUBLIC_KEY)
-        .expect("Invalid validator public key");
 
     // Check current balance
     let stcspr_balance = stakevue.get_stcspr_balance(caller);
@@ -41,11 +37,12 @@ fn main() {
     }
 
     // Request unstake for full balance
+    // V20: request_unstake no longer requires validator parameter
     let unstake_amount = stcspr_balance;
     env.set_gas(10_000_000_000u64); // 10 CSPR gas
 
     println!("\nRequesting unstake of {} stCSPR...", unstake_amount);
-    let request_id = stakevue.request_unstake(unstake_amount, validator);
+    let request_id = stakevue.request_unstake(unstake_amount);
 
     // Check results
     let new_balance = stakevue.get_stcspr_balance(caller);
