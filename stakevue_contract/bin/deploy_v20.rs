@@ -19,7 +19,7 @@ fn main() {
     let owner = env.caller();
     println!("Owner: {:?}", owner);
 
-    env.set_gas(100_000_000_000u64); // 100 CSPR for deployment
+    env.set_gas(600_000_000_000u64); // 600 CSPR for deployment
 
     let contract = StakeVue::deploy(&env, stakevue_contract::StakeVueInitArgs { owner });
 
