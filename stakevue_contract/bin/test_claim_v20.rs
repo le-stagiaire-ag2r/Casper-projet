@@ -9,7 +9,7 @@ use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
 // TODO: Update with your V20 contract address after deployment
-const CONTRACT_HASH: &str = "hash-YOUR_V20_CONTRACT_HASH_HERE";
+const CONTRACT_HASH: &str = "hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f";
 
 // Request ID to claim (get from request_unstake output)
 const REQUEST_ID: u64 = 0;
