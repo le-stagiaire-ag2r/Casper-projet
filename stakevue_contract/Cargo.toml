@@ -68,6 +68,64 @@ required-features = ["livenet"]
 test = false
 
 # ============================================================================
+# V20 SCRIPTS (Wise Lending Pool Architecture - admin delegate/undelegate)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v20"
+path = "bin/deploy_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "add_validators_v20"
+path = "bin/add_validators_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v20"
+path = "bin/test_stake_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "admin_delegate_v20"
+path = "bin/admin_delegate_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "admin_undelegate_v20"
+path = "bin/admin_undelegate_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "admin_add_liquidity_v20"
+path = "bin/admin_add_liquidity_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_request_unstake_v20"
+path = "bin/test_request_unstake_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_claim_v20"
+path = "bin/test_claim_v20.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "check_status_v20"
+path = "bin/check_status_v20.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
 # V19 SCRIPTS (Native Odra delegate/undelegate - fixes error 64658)
 # ============================================================================
 
