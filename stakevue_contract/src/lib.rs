@@ -6,19 +6,17 @@ use odra_modules::access::Ownable;
 use odra_modules::cep18_token::Cep18;
 
 // ============================================================================
-// V21 - Hybrid Architecture (Direct Delegation for Large Stakes)
+// V20 - Wise Lending Architecture (Pool-Based Liquid Staking)
 // ============================================================================
-// Improvement over V20:
-// - stake() >= 500 CSPR: Delegates DIRECTLY to validator (like Make/Wise)
-// - stake() < 500 CSPR: Goes to pool (admin delegates later when pool >= 500)
-// - request_unstake(): Burns stCSPR, creates withdrawal request
+// Based on analysis of Wise Lending transactions on Casper Testnet:
+// - stake(): CSPR goes to pool, admin delegates later
+// - request_unstake(): Burns stCSPR, creates withdrawal request, NO undelegate
 // - claim(): Transfers from pool liquidity (if available)
 // - admin_delegate(): Owner delegates pool funds to validators
 // - admin_undelegate(): Owner undelegates (separate process)
 //
-// This gives the best of both worlds:
-// - Large stakes: 1 transaction, delegated immediately (like Make)
-// - Small stakes: Pool-based, batched by admin
+// This architecture avoids the purse mismatch issue (error 64658) by
+// separating user operations from auction contract interactions.
 // ============================================================================
 
 // ============================================================================
@@ -175,18 +173,18 @@ impl odra::casper_types::CLTyped for WithdrawalRequest {
 }
 
 // ============================================================================
-// STAKEVUE CONTRACT V21 - Hybrid Architecture
+// STAKEVUE CONTRACT V20 - Wise Lending Architecture
 // ============================================================================
 // Features:
 // - Multi-validator support (user chooses validator)
 // - Withdrawal queue with 7 era unbonding
 // - Harvest rewards function for auto-compounding
 // - Exchange rate mechanism
-// - V21: Hybrid architecture (Direct + Pool)
-//   * stake() >= 500 CSPR: Delegates DIRECTLY (like Make/Wise)
-//   * stake() < 500 CSPR: Goes to pool, admin batches later
-//   * request_unstake(): Burns tokens, creates withdrawal
-//   * Admin handles undelegation for claims
+// - V20: Pool-based architecture (like Wise Lending)
+//   * User stake() adds CSPR to pool, admin delegates later
+//   * User request_unstake() burns tokens, NO direct undelegate
+//   * Admin handles all auction contract interactions
+//   * This avoids the purse mismatch error (64658)
 // ============================================================================
 
 // Precision for exchange rate calculations (9 decimals like CSPR)
@@ -256,14 +254,14 @@ impl StakeVue {
     }
 
     // ========================================================================
-    // STAKING FUNCTIONS (V21 - Hybrid: Direct + Pool)
+    // STAKING FUNCTIONS (V20 - Pool Based)
     // ========================================================================
 
     /// Stake CSPR and receive stCSPR tokens
     ///
-    /// V21 Hybrid:
-    /// - >= 500 CSPR: Delegates DIRECTLY to validator (like Make/Wise)
-    /// - < 500 CSPR: Goes to pool (admin delegates later)
+    /// V20: CSPR goes to the liquidity pool. Admin will delegate later.
+    /// This avoids the purse mismatch issue with direct delegation.
+    /// The validator parameter is kept for tracking/routing purposes.
     #[odra(payable)]
     pub fn stake(&mut self, validator: PublicKey) {
         let staker = self.env().caller();
@@ -273,7 +271,7 @@ impl StakeVue {
             self.env().revert(Error::ZeroAmount);
         }
 
-        // Check validator is approved
+        // Check validator is approved (for routing preference)
         if !self.validator_active.get(&validator).unwrap_or(false) {
             self.env().revert(Error::ValidatorNotApproved);
         }
@@ -288,30 +286,13 @@ impl StakeVue {
         let pool = self.total_cspr_pool.get_or_default();
         self.total_cspr_pool.set(pool + cspr_amount);
 
-        // V21: Check if we can delegate directly
-        let current_delegated = self.validator_delegated.get(&validator).unwrap_or(U512::zero());
-        let can_delegate_directly = cspr_amount >= U512::from(MIN_DELEGATION) || current_delegated > U512::zero();
+        // Add to available liquidity (CSPR sitting in contract, not yet delegated)
+        let liquidity = self.available_liquidity.get_or_default();
+        self.available_liquidity.set(liquidity + cspr_amount);
 
-        if can_delegate_directly {
-            // Direct delegation (like Make/Wise) - 1 transaction!
-            // Update validator delegated amount
-            self.validator_delegated.set(&validator, current_delegated + cspr_amount);
-
-            // Delegate to auction contract
-            #[cfg(not(test))]
-            {
-                self.env().delegate(validator.clone(), cspr_amount);
-            }
-
-            self.env().emit_event(Delegated {
-                validator: validator.clone(),
-                amount: cspr_amount,
-            });
-        } else {
-            // Small stake: add to pool (admin delegates later when pool >= 500)
-            let liquidity = self.available_liquidity.get_or_default();
-            self.available_liquidity.set(liquidity + cspr_amount);
-        }
+        // V20: NO direct delegation here!
+        // Admin will call admin_delegate() to delegate pool funds to validators
+        // This avoids the purse mismatch error (64658)
 
         self.env().emit_event(Staked {
             staker,
@@ -877,13 +858,12 @@ mod tests {
         let stake_amount = U512::from(MIN_DELEGATION);
         contract.with_tokens(stake_amount).stake(test_validator());
 
-        // V21: stake >= 500 CSPR delegates directly (in test mode, delegate is no-op)
+        // V20: stake adds to pool and available_liquidity (not validator_delegated)
         assert_eq!(contract.get_stcspr_balance(staker), U256::from(MIN_DELEGATION));
         assert_eq!(contract.get_total_pool(), stake_amount);
-        // V21: liquidity is 0 because it was delegated directly
-        assert_eq!(contract.get_available_liquidity(), U512::zero());
-        // V21: Validator has the delegation (tracked internally)
-        assert_eq!(contract.get_delegated_to_validator(test_validator()), stake_amount);
+        assert_eq!(contract.get_available_liquidity(), stake_amount);
+        // Validator delegated is 0 until admin calls admin_delegate
+        assert_eq!(contract.get_delegated_to_validator(test_validator()), U512::zero());
     }
 
     #[test]
@@ -896,18 +876,14 @@ mod tests {
         env.set_caller(owner);
         contract.add_validator(test_validator2());
 
-        // Stake >= 500 CSPR to each validator
+        // Stake (validator param is just for routing preference in V20)
         env.set_caller(staker);
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator2());
 
-        // V21: both stakes are delegated directly
+        // V20: all CSPR goes to available_liquidity
         assert_eq!(contract.get_stcspr_balance(staker), U256::from(MIN_DELEGATION * 2));
-        // V21: liquidity is 0 because both were delegated
-        assert_eq!(contract.get_available_liquidity(), U512::zero());
-        // V21: Each validator has their delegation
-        assert_eq!(contract.get_delegated_to_validator(test_validator()), U512::from(MIN_DELEGATION));
-        assert_eq!(contract.get_delegated_to_validator(test_validator2()), U512::from(MIN_DELEGATION));
+        assert_eq!(contract.get_available_liquidity(), U512::from(MIN_DELEGATION * 2));
     }
 
     #[test]
@@ -916,18 +892,11 @@ mod tests {
         let owner = env.get_account(0);
         let staker = env.get_account(1);
 
-        // V21: User stakes small amount (goes to pool)
+        // User stakes
         env.set_caller(staker);
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
-        contract.with_tokens(U512::from(100_000_000_000u64)).stake(test_validator());
+        contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
 
-        // Pool now has 500 CSPR in liquidity
-        assert_eq!(contract.get_available_liquidity(), U512::from(MIN_DELEGATION));
-
-        // Admin delegates pool to validator
+        // Admin delegates to validator
         env.set_caller(owner);
         contract.admin_delegate(test_validator(), U512::from(MIN_DELEGATION));
 
@@ -969,12 +938,13 @@ mod tests {
         let owner = env.get_account(0);
         let staker = env.get_account(1);
 
-        // V21: User stakes >= 500 CSPR (delegated directly)
+        // User stakes
         env.set_caller(staker);
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
 
-        // V21: Validator already has delegation from direct stake
-        assert_eq!(contract.get_delegated_to_validator(test_validator()), U512::from(MIN_DELEGATION));
+        // Admin delegates
+        env.set_caller(owner);
+        contract.admin_delegate(test_validator(), U512::from(MIN_DELEGATION));
 
         // User requests unstake
         env.set_caller(staker);

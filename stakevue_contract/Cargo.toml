@@ -1,6 +1,6 @@
 [package]
 name = "stakevue_contract"
-version = "21.0.0"
+version = "20.0.0"
 edition = "2021"
 
 [dependencies]
@@ -64,16 +64,6 @@ test = false
 [[bin]]
 name = "check_delegation_debug"
 path = "bin/check_delegation_debug.rs"
-required-features = ["livenet"]
-test = false
-
-# ============================================================================
-# V21 SCRIPTS (Hybrid - Direct delegation for >= 500 CSPR)
-# ============================================================================
-
-[[bin]]
-name = "deploy_v21"
-path = "bin/deploy_v21.rs"
 required-features = ["livenet"]
 test = false
 
