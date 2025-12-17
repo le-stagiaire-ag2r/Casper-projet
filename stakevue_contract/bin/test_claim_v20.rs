@@ -12,7 +12,7 @@ use stakevue_contract::StakeVue;
 const CONTRACT_HASH: &str = "hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f";
 
 // Request ID to claim (get from request_unstake output)
-const REQUEST_ID: u64 = 0;
+const REQUEST_ID: u64 = 1;
 
 fn main() {
     let env = odra_casper_livenet_env::env();

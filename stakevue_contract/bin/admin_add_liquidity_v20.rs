@@ -13,7 +13,7 @@ const CONTRACT_HASH: &str = "hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae87884618
 
 // Amount to add as liquidity (in CSPR)
 // This should match the amount that completed unbonding
-const LIQUIDITY_AMOUNT_CSPR: u64 = 10;
+const LIQUIDITY_AMOUNT_CSPR: u64 = 520;
 
 fn main() {
     let env = odra_casper_livenet_env::env();
