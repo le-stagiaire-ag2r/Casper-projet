@@ -300,22 +300,23 @@ const serializeUnstakeArgsU512 = (stcsprAmount: bigint): Uint8Array => {
 };
 
 /**
- * Build a Request Unstake Transaction using proxy_caller.wasm for V21
+ * Build a Request Unstake Transaction - V22 Direct Call (no proxy_caller)
  *
- * V21 uses pool-based architecture: request_unstake only burns stCSPR,
+ * V22 uses pool-based architecture: request_unstake only burns stCSPR,
  * NO validator parameter needed (admin handles undelegation separately).
  *
- * Uses proxy_caller to call the versioned contract via package hash.
- * Uses U512 for amount as that's what Odra 2.5.0 examples use.
+ * Since request_unstake is NOT payable, we can call it directly using
+ * StoredVersionedContractByHash without needing proxy_caller.wasm.
+ * This avoids the Deploy vs Transaction V1 format incompatibility.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
- * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
- * @param _validatorPublicKeyHex - IGNORED in V21 (kept for backwards compatibility)
+ * @param amountStCspr - Amount of stCSPR to unstake (as string)
+ * @param _validatorPublicKeyHex - IGNORED in V22 (kept for backwards compatibility)
  */
 export const buildUnstakeTransaction = async (
   senderPublicKeyHex: string,
   amountStCspr: string,
-  _validatorPublicKeyHex?: string // Ignored in V21
+  _validatorPublicKeyHex?: string // Ignored in V22
 ): Promise<{ deploy: any }> => {
   // Validate inputs
   if (!senderPublicKeyHex) {
@@ -326,32 +327,28 @@ export const buildUnstakeTransaction = async (
     throw new Error('Contract package hash not configured');
   }
 
-  // Load proxy_caller.wasm
-  const proxyCallerWasm = await loadProxyCallerWasm();
-
   // Convert stCSPR to internal units (like motes but for stCSPR - 9 decimals)
   const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // V22: Use SDK U512 serialization with logging
+  console.log('Unstake V22 - Direct call (no proxy_caller)');
+  console.log('Package hash:', getPackageHashHex());
+  console.log('Amount (motes):', amountMotes);
+
+  // Build args for request_unstake(stcspr_amount: U512)
   const unstakeArgs = Args.fromMap({
     stcspr_amount: CLValue.newCLUInt512(amountMotes),
   });
-  const serializedArgs = unstakeArgs.toBytes();
-  console.log('Unstake SDK args bytes:', Array.from(serializedArgs).map(b => b.toString(16).padStart(2, '0')).join(' '));
-  console.log('Unstake amount (motes):', amountMotes);
 
-  // Build proxy_caller arguments
-  const proxyArgs = Args.fromMap({
-    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
-    entry_point: CLValue.newCLString('request_unstake'),
-    args: bytesToCLList(serializedArgs),
-    attached_value: CLValue.newCLUInt512('0'),
-    amount: CLValue.newCLUInt512('0'),
-  });
-
-  // Build session using ModuleBytes with proxy_caller.wasm
-  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+  // Call contract directly using StoredVersionedContractByHash
+  // This works for non-payable functions without needing proxy_caller
+  const contractHashBytes = hexToBytes(getPackageHashHex());
+  const session = ExecutableDeployItem.newStoredVersionedContractByHash(
+    contractHashBytes,
+    null, // null = latest version
+    'request_unstake',
+    unstakeArgs
+  );
 
   // Build deploy header
   const deployHeader = DeployHeader.default();
