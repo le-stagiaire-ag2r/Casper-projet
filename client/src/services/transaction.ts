@@ -289,13 +289,13 @@ const serializeUnstakeArgs = (stcsprAmount: bigint): Uint8Array => {
 };
 
 /**
- * Build a Request Unstake Transaction for V21
+ * Build a Request Unstake Transaction using proxy_caller.wasm for V21
  *
  * V21 uses pool-based architecture: request_unstake only burns stCSPR,
  * NO validator parameter needed (admin handles undelegation separately).
  *
- * IMPORTANT: request_unstake is NOT payable, so we call it directly via
- * StoredContractByHash instead of using proxy_caller.wasm.
+ * Uses proxy_caller to call the versioned contract via package hash.
+ * Uses U512 for amount as that's what Odra 2.5.0 examples use.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
@@ -315,22 +315,30 @@ export const buildUnstakeTransaction = async (
     throw new Error('Contract package hash not configured');
   }
 
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
+
   // Convert stCSPR to internal units (like motes but for stCSPR - 9 decimals)
   const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // Build runtime arguments for request_unstake(stcspr_amount: U256)
-  const args = Args.fromMap({
-    stcspr_amount: CLValue.newCLUInt256(amountMotes),
+  // V22: Use SDK U512 serialization (contract now accepts U512)
+  const unstakeArgs = Args.fromMap({
+    stcspr_amount: CLValue.newCLUInt512(amountMotes),
+  });
+  const serializedArgs = unstakeArgs.toBytes();
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    entry_point: CLValue.newCLString('request_unstake'),
+    args: bytesToCLList(serializedArgs),
+    attached_value: CLValue.newCLUInt512('0'),
+    amount: CLValue.newCLUInt512('0'),
   });
 
-  // Call contract directly via StoredContractByHash (no proxy_caller needed for non-payable)
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    ContractHash.newContract(getPackageHashHex()),
-    'request_unstake',
-    args
-  );
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
 
   // Build deploy header
   const deployHeader = DeployHeader.default();
@@ -414,12 +422,10 @@ const serializeClaimArgs = (requestId: bigint): Uint8Array => {
 };
 
 /**
- * Build a Claim Withdrawal Transaction for V21
+ * Build a Claim Withdrawal Transaction using proxy_caller.wasm for V21
  *
  * After the unbonding period (7 eras), user can claim their CSPR.
- *
- * IMPORTANT: claim_withdrawal is NOT payable, so we call it directly via
- * StoredContractByHash instead of using proxy_caller.wasm.
+ * Uses proxy_caller to call versioned contract via package hash.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param requestId - The withdrawal request ID returned by request_unstake
@@ -437,20 +443,25 @@ export const buildClaimWithdrawalTransaction = async (
     throw new Error('Contract package hash not configured');
   }
 
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
+
   const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
 
-  // Build runtime arguments for claim_withdrawal(request_id: u64)
-  const args = Args.fromMap({
-    request_id: CLValue.newCLUint64(requestId.toString()),
+  // Use manual serialization for u64 to match Odra's expected bytesrepr format
+  const serializedArgs = serializeClaimArgs(BigInt(requestId));
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    entry_point: CLValue.newCLString('claim_withdrawal'),
+    args: bytesToCLList(serializedArgs),
+    attached_value: CLValue.newCLUInt512('0'),
+    amount: CLValue.newCLUInt512('0'),
   });
 
-  // Call contract directly via StoredContractByHash (no proxy_caller needed for non-payable)
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    ContractHash.newContract(getPackageHashHex()),
-    'claim_withdrawal',
-    args
-  );
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
 
   // Build deploy header
   const deployHeader = DeployHeader.default();

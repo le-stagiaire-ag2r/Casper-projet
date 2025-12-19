@@ -1,15 +1,15 @@
-// StakeVue Runtime Configuration V21 (Odra 2.5.0)
+// StakeVue Runtime Configuration V22 (Odra 2.5.0 + U512 fix)
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V21 (Odra 2.5.0 Upgrade)
-  // V21 Contract Hash: hash-550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655
-  // Features: stake(validator) -> pool, request_unstake(amount) -> burn only, claim(request_id)
+  // Smart Contract Configuration - V22 (U512 SDK compatibility fix)
+  // V22 Contract Hash: hash-2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3
+  // Features: stake(validator) -> pool, request_unstake(U512 amount) -> burn only, claim(request_id)
   // Architecture: Pool-based like Wise Lending - admin handles delegate/undelegate
-  // Upgrade: Odra 2.5.0 with improved validator support
-  contract_hash: "550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655",
-  // V21 package hash
-  contract_package_hash: "550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655",
+  // Fix: request_unstake now accepts U512 for SDK compatibility (fixes Error 19)
+  contract_hash: "2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3",
+  // V22 package hash
+  contract_package_hash: "2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3",
 
   // Contract owner address (for admin features)
   owner_account_hash: "2f63ef2c9db78bcf2288529e2217cd8e70614f0b1aad4f8ef8871acd39ac2f7e",

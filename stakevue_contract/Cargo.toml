@@ -1,6 +1,6 @@
 [package]
 name = "stakevue_contract"
-version = "21.0.0"
+version = "22.0.0"
 edition = "2021"
 
 [dependencies]
@@ -68,7 +68,29 @@ required-features = ["livenet"]
 test = false
 
 # ============================================================================
-# V21 SCRIPTS (Odra 2.5.0 Upgrade)
+# V22 SCRIPTS (Odra 2.5.0 + U512 fix for SDK compatibility)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v22"
+path = "bin/deploy_v22.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "add_validators_v22"
+path = "bin/add_validators_v22.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v22"
+path = "bin/test_stake_v22.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
+# V21 SCRIPTS (Odra 2.5.0 Upgrade - has U256 SDK issue)
 # ============================================================================
 
 [[bin]]

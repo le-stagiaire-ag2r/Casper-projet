@@ -61,7 +61,7 @@ pub struct Staked {
 pub struct UnstakeRequested {
     pub staker: Address,
     pub request_id: u64,
-    pub stcspr_amount: U256,
+    pub stcspr_amount: U512, // V22: Changed to U512 for SDK compatibility
     pub cspr_amount: U512,
 }
 
@@ -304,24 +304,28 @@ impl StakeVue {
 
     /// Request unstake: burn stCSPR and queue withdrawal
     ///
-    /// V20: Burns tokens and creates withdrawal request.
+    /// V22: Accepts U512 for SDK compatibility, converts to U256 internally.
+    /// Burns tokens and creates withdrawal request.
     /// NO direct undelegate call - admin handles that separately.
     /// User can claim when liquidity is available in the pool.
-    pub fn request_unstake(&mut self, stcspr_amount: U256) -> u64 {
+    pub fn request_unstake(&mut self, stcspr_amount: U512) -> u64 {
         let staker = self.env().caller();
 
-        if stcspr_amount == U256::zero() {
+        // Convert U512 to U256 for internal use (stCSPR is U256 token)
+        let stcspr_amount_u256 = u512_to_u256(stcspr_amount);
+
+        if stcspr_amount_u256 == U256::zero() {
             self.env().revert(Error::ZeroAmount);
         }
 
         // Check staker's stCSPR balance
         let staker_balance = self.token.balance_of(&staker);
-        if stcspr_amount > staker_balance {
+        if stcspr_amount_u256 > staker_balance {
             self.env().revert(Error::InsufficientStCsprBalance);
         }
 
         // Calculate CSPR value
-        let cspr_to_return = self.stcspr_to_cspr(stcspr_amount);
+        let cspr_to_return = self.stcspr_to_cspr(stcspr_amount_u256);
 
         // Check total pool has enough
         let pool = self.total_cspr_pool.get_or_default();
@@ -330,7 +334,7 @@ impl StakeVue {
         }
 
         // Burn stCSPR tokens
-        self.token.raw_burn(&staker, &stcspr_amount);
+        self.token.raw_burn(&staker, &stcspr_amount_u256);
 
         // Update total pool
         self.total_cspr_pool.set(pool - cspr_to_return);
@@ -367,7 +371,7 @@ impl StakeVue {
         self.env().emit_event(UnstakeRequested {
             staker,
             request_id,
-            stcspr_amount,
+            stcspr_amount, // Already U512
             cspr_amount: cspr_to_return,
         });
 
@@ -980,7 +984,7 @@ mod tests {
         contract.with_tokens(U512::from(MIN_DELEGATION)).stake(test_validator());
 
         // Request unstake (V20: no validator param needed)
-        let request_id = contract.request_unstake(U256::from(MIN_DELEGATION));
+        let request_id = contract.request_unstake(U512::from(MIN_DELEGATION));
 
         assert_eq!(request_id, 1);
         assert_eq!(contract.get_stcspr_balance(staker), U256::zero());
@@ -1005,7 +1009,7 @@ mod tests {
 
         // User requests unstake
         env.set_caller(staker);
-        contract.request_unstake(U256::from(MIN_DELEGATION));
+        contract.request_unstake(U512::from(MIN_DELEGATION));
 
         // Admin undelegates
         env.set_caller(owner);
