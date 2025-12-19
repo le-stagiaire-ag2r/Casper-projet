@@ -208,13 +208,93 @@ export const buildStakeTransaction = async (
 };
 
 /**
- * Build a Request Unstake Transaction for V20 using StoredContractByHash
+ * Manually serialize a U256 value to Casper bytesrepr format
+ * Format: 1 byte length (0-32) + little-endian bytes (no leading zeros)
+ */
+const serializeU256 = (value: bigint): Uint8Array => {
+  if (value === 0n) {
+    return new Uint8Array([0]); // Zero is serialized as just 0x00
+  }
+
+  // Convert to little-endian bytes
+  const bytes: number[] = [];
+  let remaining = value;
+  while (remaining > 0n) {
+    bytes.push(Number(remaining & 0xffn));
+    remaining = remaining >> 8n;
+  }
+
+  // Prepend length byte
+  return new Uint8Array([bytes.length, ...bytes]);
+};
+
+/**
+ * Manually serialize RuntimeArgs for request_unstake(stcspr_amount: U256)
+ * This avoids potential SDK serialization issues
+ */
+const serializeUnstakeArgs = (stcsprAmount: bigint): Uint8Array => {
+  // Serialize the U256 value
+  const u256Bytes = serializeU256(stcsprAmount);
+
+  // RuntimeArgs format:
+  // - u32: number of args (1)
+  // - For each arg:
+  //   - String: arg name (u32 length + UTF-8 bytes)
+  //   - CLValue: (u32 inner_bytes_len + inner_bytes + type_bytes)
+
+  const argName = 'stcspr_amount';
+  const argNameBytes = new TextEncoder().encode(argName);
+
+  // Calculate sizes
+  const innerBytesLen = u256Bytes.length;
+  const typeBytes = [8]; // U256 type tag is 8
+
+  // Total size calculation:
+  // 4 (num args) + 4 (name len) + argNameBytes.length + 4 (inner len) + innerBytesLen + typeBytes.length
+  const totalSize = 4 + 4 + argNameBytes.length + 4 + innerBytesLen + typeBytes.length;
+
+  const buffer = new Uint8Array(totalSize);
+  let offset = 0;
+
+  // Number of args (u32 little-endian)
+  buffer[offset++] = 1;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+
+  // Arg name length (u32 little-endian)
+  buffer[offset++] = argNameBytes.length;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+
+  // Arg name bytes
+  buffer.set(argNameBytes, offset);
+  offset += argNameBytes.length;
+
+  // CLValue inner bytes length (u32 little-endian)
+  buffer[offset++] = innerBytesLen;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+
+  // CLValue inner bytes (the U256 serialization)
+  buffer.set(u256Bytes, offset);
+  offset += innerBytesLen;
+
+  // CLType bytes (U256 = 8)
+  buffer.set(typeBytes, offset);
+
+  return buffer;
+};
+
+/**
+ * Build a Request Unstake Transaction using proxy_caller.wasm for V20
  *
  * V20 uses pool-based architecture: request_unstake only burns stCSPR,
  * NO validator parameter needed (admin handles undelegation separately).
  *
- * Since request_unstake is NOT payable, we call it directly via StoredContractByHash
- * instead of using proxy_caller.wasm (which is only needed for payable entry points).
+ * Uses manual RuntimeArgs serialization to avoid SDK compatibility issues.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
@@ -230,27 +310,36 @@ export const buildUnstakeTransaction = async (
     throw new Error('Sender public key is required');
   }
 
-  if (!config.contract_hash) {
-    throw new Error('Contract hash not configured');
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
   }
 
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
+
   // Convert stCSPR to internal units (like motes but for stCSPR - 9 decimals)
-  const amountUnits = csprToMotes(amountStCspr);
+  const amountUnits = BigInt(csprToMotes(amountStCspr));
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // Build RuntimeArgs for V20 request_unstake(stcspr_amount: U256)
-  // NOTE: V20 does NOT take a validator parameter!
-  const args = Args.fromMap({
-    stcspr_amount: CLValue.newCLUInt256(amountUnits),
+  // Manually serialize RuntimeArgs to avoid SDK issues
+  const serializedArgs = serializeUnstakeArgs(amountUnits);
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    // Package hash of the StakeVue contract (32 bytes)
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    // Entry point to call
+    entry_point: CLValue.newCLString('request_unstake'),
+    // Manually serialized RuntimeArgs as Bytes (List<U8>)
+    args: bytesToCLList(serializedArgs),
+    // No attached value for unstake (non-payable)
+    attached_value: CLValue.newCLUInt512('0'),
+    // Special Casper argument (0 for non-payable calls)
+    amount: CLValue.newCLUInt512('0'),
   });
 
-  // Build session - call contract directly (no proxy_caller needed for non-payable)
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    ContractHash.newContract(getContractHashHex()),
-    'request_unstake',
-    args
-  );
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
 
   // Build deploy header
   const deployHeader = DeployHeader.default();
@@ -269,10 +358,75 @@ export const buildUnstakeTransaction = async (
 };
 
 /**
- * Build a Claim Withdrawal Transaction for V20 using StoredContractByHash
+ * Manually serialize a u64 value to Casper bytesrepr format
+ * Format: 8 bytes little-endian
+ */
+const serializeU64 = (value: bigint): Uint8Array => {
+  const bytes = new Uint8Array(8);
+  let remaining = value;
+  for (let i = 0; i < 8; i++) {
+    bytes[i] = Number(remaining & 0xffn);
+    remaining = remaining >> 8n;
+  }
+  return bytes;
+};
+
+/**
+ * Manually serialize RuntimeArgs for claim_withdrawal(request_id: u64)
+ */
+const serializeClaimArgs = (requestId: bigint): Uint8Array => {
+  // Serialize the u64 value
+  const u64Bytes = serializeU64(requestId);
+
+  const argName = 'request_id';
+  const argNameBytes = new TextEncoder().encode(argName);
+
+  // Calculate sizes
+  const innerBytesLen = u64Bytes.length; // 8 bytes for u64
+  const typeBytes = [5]; // U64 type tag is 5
+
+  const totalSize = 4 + 4 + argNameBytes.length + 4 + innerBytesLen + typeBytes.length;
+
+  const buffer = new Uint8Array(totalSize);
+  let offset = 0;
+
+  // Number of args (u32 little-endian)
+  buffer[offset++] = 1;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+
+  // Arg name length (u32 little-endian)
+  buffer[offset++] = argNameBytes.length;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+
+  // Arg name bytes
+  buffer.set(argNameBytes, offset);
+  offset += argNameBytes.length;
+
+  // CLValue inner bytes length (u32 little-endian)
+  buffer[offset++] = innerBytesLen;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+  buffer[offset++] = 0;
+
+  // CLValue inner bytes (the u64 serialization)
+  buffer.set(u64Bytes, offset);
+  offset += innerBytesLen;
+
+  // CLType bytes (U64 = 5)
+  buffer.set(typeBytes, offset);
+
+  return buffer;
+};
+
+/**
+ * Build a Claim Withdrawal Transaction using proxy_caller.wasm for V20
  *
  * After the unbonding period (7 eras), user can claim their CSPR.
- * Since claim_withdrawal is NOT payable, we call it directly.
+ * Uses proxy_caller to call versioned contract via package hash.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param requestId - The withdrawal request ID returned by request_unstake
@@ -286,24 +440,29 @@ export const buildClaimWithdrawalTransaction = async (
     throw new Error('Sender public key is required');
   }
 
-  if (!config.contract_hash) {
-    throw new Error('Contract hash not configured');
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
   }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = await loadProxyCallerWasm();
 
   const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
 
-  // Build RuntimeArgs for claim_withdrawal(request_id: u64)
-  const args = Args.fromMap({
-    request_id: CLValue.newCLUint64(requestId),
+  // Manually serialize RuntimeArgs to avoid SDK issues
+  const serializedArgs = serializeClaimArgs(BigInt(requestId));
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    entry_point: CLValue.newCLString('claim_withdrawal'),
+    args: bytesToCLList(serializedArgs),
+    attached_value: CLValue.newCLUInt512('0'),
+    amount: CLValue.newCLUInt512('0'),
   });
 
-  // Build session - call contract directly (no proxy_caller needed for non-payable)
-  const session = new ExecutableDeployItem();
-  session.storedContractByHash = new StoredContractByHash(
-    ContractHash.newContract(getContractHashHex()),
-    'claim_withdrawal',
-    args
-  );
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
 
   // Build deploy header
   const deployHeader = DeployHeader.default();
