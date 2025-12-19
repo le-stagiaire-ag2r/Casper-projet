@@ -1,15 +1,15 @@
-// StakeVue Runtime Configuration V20
+// StakeVue Runtime Configuration V21 (Odra 2.5.0)
 // This file is loaded at runtime, not bundled - allows config changes without rebuild
 
 window.config = {
-  // Smart Contract Configuration - V20 (Wise Lending Pool Architecture)
-  // V20 Contract Hash: hash-2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937
+  // Smart Contract Configuration - V21 (Odra 2.5.0 Upgrade)
+  // V21 Contract Hash: hash-550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655
   // Features: stake(validator) -> pool, request_unstake(amount) -> burn only, claim(request_id)
   // Architecture: Pool-based like Wise Lending - admin handles delegate/undelegate
-  // Min stake: 1 CSPR (no direct delegation, funds go to pool)
-  contract_hash: "2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937",
-  // V20 package hash
-  contract_package_hash: "2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937",
+  // Upgrade: Odra 2.5.0 with improved validator support
+  contract_hash: "550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655",
+  // V21 package hash
+  contract_package_hash: "550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655",
 
   // Contract owner address (for admin features)
   owner_account_hash: "2f63ef2c9db78bcf2288529e2217cd8e70614f0b1aad4f8ef8871acd39ac2f7e",
@@ -27,14 +27,14 @@ window.config = {
   api_url: "http://localhost:3001",
   cspr_live_url: "https://testnet.cspr.live",
 
-  // Transaction Configuration - V20 pool operations (no direct delegation)
+  // Transaction Configuration - V21 pool operations (no direct delegation)
   transaction_payment: "10000000000", // 10 CSPR in motes for gas
   add_rewards_payment: "10000000000", // 10 CSPR gas for add_rewards
 
-  // Staking Configuration - V20 (500 CSPR minimum for delegation)
+  // Staking Configuration - V21 (500 CSPR minimum for delegation)
   min_stake_amount: "500000000000", // 500 CSPR minimum (Casper delegation requirement)
 
-  // V20 Approved Validators (testnet validators - synced with .env.example)
+  // V21 Approved Validators (testnet validators - synced with .env.example)
   approved_validators: [
     "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca",
     "017d96b9a63abcb61c870a4f55187a0a7ac24096bdb5fc585c12a686a4d892009e",
@@ -49,6 +49,6 @@ window.config = {
     "01f340df2c32f25391e8f7924a99e93cab3a6f230ff7af1cacbfc070772cbebd94"
   ],
 
-  // V20 Exchange Rate
+  // V21 Exchange Rate
   rate_precision: 1000000000, // 1.0 = 1_000_000_000
 };

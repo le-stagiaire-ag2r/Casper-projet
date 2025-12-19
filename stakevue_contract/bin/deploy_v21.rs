@@ -30,7 +30,6 @@ fn main() {
     println!("Contract address: {:?}", contract.address());
     println!();
     println!("Next steps:");
-    println!("1. Update CONTRACT_HASH in all v21 scripts");
-    println!("2. Add validator: cargo run --bin add_validators_v20 --features livenet");
-    println!("3. Test stake: cargo run --bin test_stake_v20 --features livenet");
+    println!("1. Add validators: cargo run --bin add_validators_v21 --features livenet");
+    println!("2. Test stake: cargo run --bin test_stake_v21 --features livenet");
 }

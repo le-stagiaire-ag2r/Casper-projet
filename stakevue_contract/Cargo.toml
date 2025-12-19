@@ -77,6 +77,18 @@ path = "bin/deploy_v21.rs"
 required-features = ["livenet"]
 test = false
 
+[[bin]]
+name = "add_validators_v21"
+path = "bin/add_validators_v21.rs"
+required-features = ["livenet"]
+test = false
+
+[[bin]]
+name = "test_stake_v21"
+path = "bin/test_stake_v21.rs"
+required-features = ["livenet"]
+test = false
+
 # ============================================================================
 # V20 SCRIPTS (Wise Lending Pool Architecture - admin delegate/undelegate)
 # ============================================================================
