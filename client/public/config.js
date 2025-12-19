@@ -31,8 +31,8 @@ window.config = {
   transaction_payment: "10000000000", // 10 CSPR in motes for gas
   add_rewards_payment: "10000000000", // 10 CSPR gas for add_rewards
 
-  // Staking Configuration - V20 pool-based (no delegation minimum)
-  min_stake_amount: "1000000000", // 1 CSPR minimum (pool-based, no delegation requirement)
+  // Staking Configuration - V20 (500 CSPR minimum for delegation)
+  min_stake_amount: "500000000000", // 500 CSPR minimum (Casper delegation requirement)
 
   // V20 Approved Validators (testnet validators - synced with .env.example)
   approved_validators: [
