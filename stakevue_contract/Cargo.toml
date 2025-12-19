@@ -68,6 +68,16 @@ required-features = ["livenet"]
 test = false
 
 # ============================================================================
+# V21 SCRIPTS (Odra 2.5.0 Upgrade)
+# ============================================================================
+
+[[bin]]
+name = "deploy_v21"
+path = "bin/deploy_v21.rs"
+required-features = ["livenet"]
+test = false
+
+# ============================================================================
 # V20 SCRIPTS (Wise Lending Pool Architecture - admin delegate/undelegate)
 # ============================================================================
 
