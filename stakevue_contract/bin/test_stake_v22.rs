@@ -2,8 +2,8 @@
 //! Run with: cargo run --bin test_stake_v22 --features livenet
 
 use std::str::FromStr;
-use odra::casper_types::{AsymmetricType, U512};
-use odra::host::HostRefLoader;
+use odra::casper_types::{AsymmetricType, U512, bytesrepr::ToBytes};
+use odra::host::{HostRef, HostRefLoader};
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
@@ -19,7 +19,7 @@ fn main() {
     println!("Contract: {}", CONTRACT_HASH);
 
     let address = Address::from_str(CONTRACT_HASH).expect("Invalid contract hash");
-    let stakevue = StakeVue::load(&env, address);
+    let mut stakevue = StakeVue::load(&env, address);
 
     let caller = env.caller();
     println!("Caller: {:?}", caller);
@@ -43,17 +43,20 @@ fn main() {
     println!("Total pool: {} CSPR", pool / U512::from(1_000_000_000u64));
     println!("Available liquidity: {} CSPR", liquidity / U512::from(1_000_000_000u64));
 
-    println!("\n=== V22 Ready! ===");
-    println!("To stake, uncomment the stake code below and run again.");
+    // Debug: Show how Rust serializes U512
+    let test_amount = U512::from(10_000_000_000u64); // 10 stCSPR
+    let serialized = test_amount.to_bytes().unwrap();
+    println!("\n--- Debug: Rust U512 serialization ---");
+    println!("Value: {}", test_amount);
+    println!("Bytes: {:02x?}", serialized);
+    println!("Hex: {}", serialized.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>().join(" "));
 
-    // Uncomment to test stake:
-    /*
-    let validator = PublicKey::from_hex(VALIDATOR_PUBLIC_KEY)
-        .expect("Invalid validator public key");
-    let stake_amount = U512::from(STAKE_AMOUNT_CSPR) * U512::from(1_000_000_000u64);
-    println!("\nStaking {} CSPR...", STAKE_AMOUNT_CSPR);
+    // TEST UNSTAKE - This will call request_unstake via Rust/Odra
+    println!("\n--- Testing request_unstake via Rust ---");
+    let unstake_amount = U512::from(5_000_000_000u64); // 5 stCSPR
+    println!("Calling request_unstake with {} motes...", unstake_amount);
+
     env.set_gas(10_000_000_000u64);
-    stakevue.with_tokens(stake_amount).stake(validator);
-    println!("Stake SUCCESS!");
-    */
+    let request_id = stakevue.request_unstake(unstake_amount);
+    println!("SUCCESS! Request ID: {}", request_id);
 }
