@@ -1,13 +1,13 @@
 # 🌌 StakeVue
 
 ![Casper Network](https://img.shields.io/badge/Casper-2.0_Testnet-blue)
-![Status](https://img.shields.io/badge/Status-V17_Multi--Validator-brightgreen)
+![Status](https://img.shields.io/badge/Status-V20_Pool--Based-brightgreen)
 ![Framework](https://img.shields.io/badge/Framework-Odra_2.4.0-purple)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 <p align="center">
   <img src="https://img.shields.io/badge/Casper-2.0_Testnet-00D4FF?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Version-16-8B5CF6?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Version-20-8B5CF6?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Odra-2.4.0-FF6B35?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge"/>
 </p>
@@ -18,102 +18,89 @@
 
 --- Please note that when reading this, the site is constantly evolving. This readme may not be up-to-date, some figures may have changed, or the logic may have been altered. In short, nothing technically serious, but be aware.
 
-**V17 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747)
+**V20 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937)
 
 ---
 
-You have **CSPR**. You want to earn rewards (~15-17% APY). But traditional staking **locks your tokens** for days...
+## 🎉 V20 - Pool-Based Architecture (Wise Lending Style)
 
-**StakeVue fixes that:**
+### ✅ Fully Tested & Working via CLI
 
-```
-+---------------------------------------------------------------------+
-|  TRADITIONAL STAKING                                                |
-|                                                                     |
-|  Your 100 CSPR --> Validator --> LOCKED for days/weeks              |
-|                                  You can't use them!                |
-+---------------------------------------------------------------------+
+V20 implements a **pool-based liquid staking** architecture inspired by Wise Lending on Casper. The complete cycle has been validated:
 
-+---------------------------------------------------------------------+
-|  LIQUID STAKING (StakeVue)                                          |
-|                                                                     |
-|  Your 500 CSPR --> StakeVue --> You get 500 stCSPR                  |
-|                                                                     |
-|  With your stCSPR you can:                                          |
-|  +-- Trade on DEX                                                   |
-|  +-- Use as collateral in DeFi                                      |
-|  +-- Transfer to anyone                                             |
-|  +-- Unstake anytime to get CSPR back (with rewards!)               |
-+---------------------------------------------------------------------+
-```
+| Step | Command | Status |
+|------|---------|--------|
+| ✅ User Stake | `cargo run --bin test_stake_v20 --features livenet` | **Working** |
+| ✅ Admin Delegate | `cargo run --bin admin_delegate_v20 --features livenet` | **Working** |
+| ✅ User Request Unstake | `cargo run --bin test_request_unstake_v20 --features livenet` | **Working** |
+| ✅ Admin Undelegate | `cargo run --bin admin_undelegate_v20 --features livenet` | **Working** |
+| ✅ Admin Add Liquidity | `cargo run --bin admin_add_liquidity_v20 --features livenet` | **Working** |
+| ✅ User Claim | `cargo run --bin test_claim_v20 --features livenet` | **Working** |
 
-That's **liquid staking**. Your tokens work for you AND stay liquid. 🚀
-
-## V17 - Multi-Validator Delegation
-
-### New Features
-
-V17 introduces **real network delegation** with multi-validator support:
+### V20 Architecture
 
 ```
 +---------------------------------------------------------------------+
-|  V17 MULTI-VALIDATOR                                                |
+|  V20 POOL-BASED ARCHITECTURE (Wise Lending Style)                   |
 |                                                                     |
-|  User stakes 500 CSPR                                               |
+|  STAKE FLOW:                                                        |
+|  User 500 CSPR --> Pool --> Admin delegates --> Validator           |
 |       |                                                             |
 |       v                                                             |
-|  +-- StakeVue Contract --+                                          |
-|  |                       |                                          |
-|  |  Choose validator:    |                                          |
-|  |  [x] MAKE (10%)       |                                          |
-|  |  [ ] CasperCommunity  |                                          |
-|  |  [ ] Era Guardian     |                                          |
-|  |  [ ] Bit Cat          |                                          |
-|  |  ... 9 validators     |                                          |
-|  +-----------+-----------+                                          |
-|              |                                                      |
-|              v                                                      |
-|  +-- Casper Auction Pool --+                                        |
-|  |  Real network staking   |                                        |
-|  |  Earn validator rewards |                                        |
-|  +--------------------------+                                       |
+|  Mint 500 stCSPR (immediate)                                        |
+|                                                                     |
+|  UNSTAKE FLOW:                                                      |
+|  1. User request_unstake() --> Burns stCSPR, creates request        |
+|  2. Admin undelegate() --> Removes from validator                   |
+|  3. Wait 7 eras (~14h) --> Unbonding period                         |
+|  4. Admin add_liquidity() --> CSPR returns to pool                  |
+|  5. User claim() --> Receives CSPR                                  |
 +---------------------------------------------------------------------+
 ```
 
-### Key V17 Features
+### Why Pool-Based?
 
-| Feature | Description |
-|---------|-------------|
-| **Multi-Validator** | Choose from 9+ approved validators |
-| **Real Delegation** | Stakes go to Casper Auction Pool |
-| **Withdrawal Queue** | Request unstake → 7 era unbonding → Claim |
-| **Min Stake 500 CSPR** | Casper network delegation requirement |
-| **Validator Info** | APY, Commission, Performance displayed |
+V20 solves the **error 64658** (purse mismatch) that plagued V17-V19:
 
-### Stake Flow (V17)
+| Architecture | Direct Delegation | Pool-Based (V20) |
+|--------------|-------------------|------------------|
+| User delegates | User → Validator | User → Pool |
+| Admin delegates | N/A | Pool → Validator |
+| Undelegate | User (fails 64658) | Admin (works!) |
+| Complexity | Simple but buggy | More steps but reliable |
 
+---
+
+## ⚠️ Known Issue: Web Frontend vs CLI
+
+### CLI (Rust/Odra) = ✅ 100% Working
+
+All operations work perfectly via command line:
+
+```bash
+cd stakevue_contract
+
+# Full cycle test
+cargo run --bin test_stake_v20 --features livenet
+cargo run --bin admin_delegate_v20 --features livenet
+cargo run --bin test_request_unstake_v20 --features livenet
+cargo run --bin admin_undelegate_v20 --features livenet
+# Wait ~14 hours for unbonding
+cargo run --bin admin_add_liquidity_v20 --features livenet
+cargo run --bin test_claim_v20 --features livenet
 ```
-User (500 CSPR) --> StakeVue --> Validator Stakes --> Auction Pool
-                        |
-                        v
-                 Mint 500 stCSPR
-```
 
-### Unstake Flow (V17)
+### Web Frontend (Vercel) = ⚠️ Partial
 
-```
-1. request_unstake(amount, validator)
-   --> Queues withdrawal
-   --> Burns stCSPR
-   --> Starts 7-era unbonding
+| Function | Web Status | Issue |
+|----------|------------|-------|
+| **Stake** | ✅ Working | Uses proxy_caller.wasm correctly |
+| **Unstake** | ❌ Error 19 | SDK serialization issue with U256 |
+| **Claim** | ❌ Error 19 | SDK serialization issue with u64 |
 
-2. [Wait 7 eras (~14 hours testnet)]
+**Root Cause:** The `casper-js-sdk` v5 serializes `RuntimeArgs` differently than Odra expects. When passing U256 or u64 arguments through `proxy_caller.wasm`, the deserialization fails with `LeftOverBytes [19]`.
 
-3. claim_withdrawal(request_id)
-   --> Receive CSPR back
-```
-
-**No lock-up period. No waiting. Your money, your choice.** ✨
+**Workaround:** Use CLI for unstake/claim operations until SDK compatibility is fixed.
 
 ---
 
@@ -175,29 +162,50 @@ V15 implements a **dynamic exchange rate** that increases over time as rewards a
 
 ## Contract Details
 
-### V17 Contract
+### V20 Contract (Current)
 
 | Property | Value |
 |----------|-------|
-| **Contract Hash** | `c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747` |
+| **Package Hash** | `2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937` |
 | **Network** | casper-test |
 | **Framework** | Odra 2.4.0 |
 | **Token Standard** | CEP-18 (integrated stCSPR) |
 | **Min Stake** | 500 CSPR |
-| **Gas Fee** | 15 CSPR |
+| **Architecture** | Pool-based (Wise Lending style) |
 
-### Entry Points (V17)
+### Entry Points (V20)
 
+#### User Functions
 | Function | Type | Description |
 |----------|------|-------------|
-| `stake(validator)` | Payable | Stake CSPR to chosen validator |
-| `request_unstake(amount, validator)` | Public | Queue withdrawal (burns stCSPR) |
-| `claim_withdrawal(request_id)` | Public | Claim after unbonding period |
-| `harvest_rewards()` | Owner | Auto-compound validator rewards |
+| `stake(validator)` | Payable | Stake CSPR to pool, choose validator for admin delegation |
+| `request_unstake(stcspr_amount)` | Public | Burn stCSPR, create withdrawal request (NO validator param) |
+| `claim_withdrawal(request_id)` | Public | Claim CSPR after unbonding + liquidity added |
+
+#### Admin Functions
+| Function | Type | Description |
+|----------|------|-------------|
+| `admin_delegate(validator, amount)` | Owner | Delegate pool CSPR to validator |
+| `admin_undelegate(validator, amount)` | Owner | Undelegate from validator |
+| `admin_add_liquidity()` | Owner | Transfer unbonded CSPR back to pool |
 | `add_approved_validator(pk)` | Owner | Add validator to whitelist |
 | `remove_approved_validator(pk)` | Owner | Remove from whitelist |
-| `get_exchange_rate()` | View | Current rate (9 decimals) |
-| `get_approved_validators()` | View | List of approved validators |
+
+#### View Functions
+| Function | Description |
+|----------|-------------|
+| `get_exchange_rate()` | Current stCSPR/CSPR rate (9 decimals) |
+| `get_stcspr_balance(account)` | User's stCSPR balance |
+| `get_cspr_value(account)` | User's CSPR value (stCSPR × rate) |
+| `get_pending_withdrawals()` | Total pending withdrawal requests |
+| `get_withdrawal_amount(request_id)` | CSPR amount for a withdrawal request |
+
+### V17 Contract (Archived)
+
+| Property | Value |
+|----------|-------|
+| **Contract Hash** | `c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747` |
+| **Status** | Archived - Had error 64658 on undelegate |
 
 ---
 
@@ -297,19 +305,22 @@ cargo run --bin test_unstake_v17 --features livenet
 
 ## Roadmap
 
-### Completed
+### Completed ✅
 - [x] V15 Exchange rate mechanism
 - [x] V16.1 UX Visual Refont (accordion validator selector)
-- [x] **V17 Multi-validator delegation**
-- [x] **Real Casper Auction Pool staking**
-- [x] **Withdrawal queue (7 era unbonding)**
-- [x] **9 approved validators with real data**
-- [x] **Live on Vercel testnet**
+- [x] V17 Multi-validator delegation
+- [x] V18-V19 Debug iterations (error 64658)
+- [x] **V20 Pool-based architecture (Wise Lending style)**
+- [x] **Full cycle tested: stake → delegate → unstake → undelegate → claim**
+- [x] **Error 64658 solved with admin-controlled delegation**
+- [x] **Live on Vercel testnet (stake working)**
 
-### Next Steps
-- [ ] Test unstake flow end-to-end
-- [ ] Test claim_withdrawal after unbonding
-- [ ] harvest_rewards automation
+### In Progress 🔧
+- [ ] Fix web frontend unstake/claim (SDK serialization issue)
+- [ ] Investigate casper-js-sdk v5 RuntimeArgs compatibility
+
+### Next Steps 📋
+- [ ] harvest_rewards automation (auto-compound)
 - [ ] Security audit
 - [ ] Mainnet deployment
 
@@ -319,6 +330,9 @@ cargo run --bin test_unstake_v17 --features livenet
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **V20** | Dec 2025 | **Pool-based architecture** - Wise Lending style, admin delegation, full cycle working via CLI |
+| **V19** | Dec 2025 | Debug attempt - still had 64658 |
+| **V18** | Dec 2025 | Debug attempt - purse mismatch issues |
 | **V17** | Dec 2025 | **Multi-validator delegation** - Real Auction Pool staking, withdrawal queue, 9 validators |
 | **V16.1** | Dec 2025 | **UX Visual Refont** - Accordion validator selector, grid layout, real-time data |
 | **V16** | Dec 2025 | **Visual Overhaul** - Galaxy background, glass UI, SVG icons, purple theme |
@@ -344,19 +358,11 @@ cargo run --bin test_unstake_v17 --features livenet
 
 ## Links
 
-- **Live Demo:** https://casper-projet.vercel.app
-- **V17 Contract:** https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747
-- **Odra Framework:** https://odra.dev
-- **Casper Network:** https://casper.network
-
----
-
-## 🔗 Links
-
 | | |
 |---|---|
 | 🌐 **Live Demo** | https://casper-projet.vercel.app |
-| 📜 **Contract** | [View on Testnet](https://testnet.cspr.live/contract-package/2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985) |
+| 📜 **V20 Contract** | [View on Testnet](https://testnet.cspr.live/contract-package/2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937) |
+| 📜 **V17 Contract (Archived)** | [View on Testnet](https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747) |
 | 🛠️ **Odra Framework** | https://odra.dev |
 | 🌍 **Casper Network** | https://casper.network |
 | 🚰 **Testnet Faucet** | https://faucet.casper.network |
