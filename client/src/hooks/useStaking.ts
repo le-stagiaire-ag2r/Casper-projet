@@ -3,6 +3,7 @@ import { useCsprClick } from './useCsprClick';
 import {
   buildStakeTransaction,
   buildUnstakeTransaction,
+  buildClaimWithdrawalTransaction,
   csprToMotes,
   motesToCspr,
 } from '../services/transaction';
@@ -331,6 +332,104 @@ export const useStaking = () => {
   };
 
   /**
+   * Claim a ready withdrawal (V20)
+   *
+   * After the unbonding period (7 eras), user can claim their CSPR.
+   *
+   * @param requestId - The withdrawal request ID
+   * @returns Promise with claim result
+   */
+  const claim = async (requestId: number): Promise<StakingResult> => {
+    // Validate connection
+    if (!isConnected || !activeAccount) {
+      const error = 'No wallet connected. Please connect your wallet first.';
+      setTransactionState({
+        isProcessing: false,
+        status: null,
+        deployHash: null,
+        error,
+      });
+      return { success: false, error };
+    }
+
+    // Reset state and start processing
+    setTransactionState({
+      isProcessing: true,
+      status: 'Claiming withdrawal...',
+      deployHash: null,
+      error: null,
+    });
+
+    try {
+      // Build the claim_withdrawal transaction
+      const transaction = await buildClaimWithdrawalTransaction(
+        activeAccount.publicKey,
+        requestId
+      );
+
+      setTransactionState((prev) => ({
+        ...prev,
+        status: 'Waiting for wallet signature...',
+      }));
+
+      // Send transaction via CSPR.click
+      const result = await send(
+        transaction,
+        activeAccount.publicKey,
+        handleStatusUpdate
+      );
+
+      if (result.success) {
+        // Store transaction in localStorage for history
+        const txRecord = {
+          id: Date.now().toString(),
+          txHash: result.deployHash || '',
+          actionType: 'claim',
+          amount: '0', // Amount is determined by the request
+          timestamp: new Date().toISOString(),
+          userAddress: activeAccount.publicKey,
+        };
+        const existingTxs = JSON.parse(localStorage.getItem('stakevue_transactions') || '[]');
+        localStorage.setItem('stakevue_transactions', JSON.stringify([txRecord, ...existingTxs]));
+
+        // Dispatch event to notify history component
+        window.dispatchEvent(new CustomEvent('stakevue_transaction_added'));
+
+        setTransactionState({
+          isProcessing: false,
+          status: 'Claim successful! CSPR sent to your wallet.',
+          deployHash: result.deployHash || null,
+          error: null,
+        });
+        return {
+          success: true,
+          deployHash: result.deployHash,
+        };
+      } else {
+        setTransactionState({
+          isProcessing: false,
+          status: null,
+          deployHash: null,
+          error: result.error || 'Claim failed',
+        });
+        return {
+          success: false,
+          error: result.error,
+        };
+      }
+    } catch (err: any) {
+      const error = err?.message || 'Failed to claim';
+      setTransactionState({
+        isProcessing: false,
+        status: null,
+        deployHash: null,
+        error,
+      });
+      return { success: false, error };
+    }
+  };
+
+  /**
    * Reset transaction state
    */
   const resetState = useCallback(() => {
@@ -356,6 +455,7 @@ export const useStaking = () => {
     // Actions
     stake,
     unstake,
+    claim,
     resetState,
 
     // Utilities
