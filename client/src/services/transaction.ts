@@ -36,9 +36,10 @@ const config = window.config;
 
 // Cache for proxy_caller.wasm bytes
 let proxyCallerWasmCache: Uint8Array | null = null;
+let proxyCallerWithReturnWasmCache: Uint8Array | null = null;
 
 /**
- * Load proxy_caller.wasm from public folder
+ * Load proxy_caller.wasm from public folder (for functions without return)
  */
 const loadProxyCallerWasm = async (): Promise<Uint8Array> => {
   if (proxyCallerWasmCache) {
@@ -53,6 +54,24 @@ const loadProxyCallerWasm = async (): Promise<Uint8Array> => {
   const arrayBuffer = await response.arrayBuffer();
   proxyCallerWasmCache = new Uint8Array(arrayBuffer);
   return proxyCallerWasmCache;
+};
+
+/**
+ * Load proxy_caller_with_return.wasm from public folder (for functions with return values)
+ */
+const loadProxyCallerWithReturnWasm = async (): Promise<Uint8Array> => {
+  if (proxyCallerWithReturnWasmCache) {
+    return proxyCallerWithReturnWasmCache;
+  }
+
+  const response = await fetch('/proxy_caller_with_return.wasm');
+  if (!response.ok) {
+    throw new Error('Failed to load proxy_caller_with_return.wasm');
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  proxyCallerWithReturnWasmCache = new Uint8Array(arrayBuffer);
+  return proxyCallerWithReturnWasmCache;
 };
 
 /**
@@ -300,11 +319,10 @@ const serializeUnstakeArgsU512 = (stcsprAmount: bigint): Uint8Array => {
 };
 
 /**
- * Build a Request Unstake Transaction using proxy_caller.wasm
+ * Build a Request Unstake Transaction using proxy_caller_with_return.wasm
  *
- * NOTE: There's a known issue with JS SDK Deploy format vs Odra 2.5.0's
- * Transaction V1 format. Unstake via frontend may fail with Error 19.
- * Use CLI: cargo run --bin test_stake_v22 --features livenet
+ * V22 request_unstake returns a u64 (request_id), so we must use
+ * proxy_caller_with_return.wasm which handles return values properly.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param amountStCspr - Amount of stCSPR to unstake (as string)
@@ -323,11 +341,12 @@ export const buildUnstakeTransaction = async (
     throw new Error('Contract package hash not configured');
   }
 
-  const proxyCallerWasm = await loadProxyCallerWasm();
+  // Use proxy_caller_with_return.wasm because request_unstake returns u64
+  const proxyCallerWasm = await loadProxyCallerWithReturnWasm();
   const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000';
 
-  console.log('Unstake V22 via proxy_caller');
+  console.log('Unstake V22 via proxy_caller_with_return');
   console.log('Amount (motes):', amountMotes);
 
   // Build args for request_unstake(stcspr_amount: U512)
