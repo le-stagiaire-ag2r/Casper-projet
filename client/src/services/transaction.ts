@@ -229,12 +229,23 @@ const serializeU256 = (value: bigint): Uint8Array => {
 };
 
 /**
- * Manually serialize RuntimeArgs for request_unstake(stcspr_amount: U256)
- * This avoids potential SDK serialization issues
+ * Manually serialize RuntimeArgs for request_unstake(stcspr_amount: U512)
+ * V22: Uses U512 (type tag 9) instead of U256 for SDK compatibility
  */
-const serializeUnstakeArgs = (stcsprAmount: bigint): Uint8Array => {
-  // Serialize the U256 value
-  const u256Bytes = serializeU256(stcsprAmount);
+const serializeUnstakeArgsU512 = (stcsprAmount: bigint): Uint8Array => {
+  // Serialize the U512 value (same format as U256: length byte + little-endian bytes)
+  let u512Bytes: Uint8Array;
+  if (stcsprAmount === 0n) {
+    u512Bytes = new Uint8Array([0]); // Zero is serialized as just 0x00
+  } else {
+    const bytes: number[] = [];
+    let remaining = stcsprAmount;
+    while (remaining > 0n) {
+      bytes.push(Number(remaining & 0xffn));
+      remaining = remaining >> 8n;
+    }
+    u512Bytes = new Uint8Array([bytes.length, ...bytes]);
+  }
 
   // RuntimeArgs format:
   // - u32: number of args (1)
@@ -246,8 +257,8 @@ const serializeUnstakeArgs = (stcsprAmount: bigint): Uint8Array => {
   const argNameBytes = new TextEncoder().encode(argName);
 
   // Calculate sizes
-  const innerBytesLen = u256Bytes.length;
-  const typeBytes = [8]; // U256 type tag is 8
+  const innerBytesLen = u512Bytes.length;
+  const typeBytes = [9]; // U512 type tag is 9
 
   // Total size calculation:
   // 4 (num args) + 4 (name len) + argNameBytes.length + 4 (inner len) + innerBytesLen + typeBytes.length
@@ -278,11 +289,11 @@ const serializeUnstakeArgs = (stcsprAmount: bigint): Uint8Array => {
   buffer[offset++] = 0;
   buffer[offset++] = 0;
 
-  // CLValue inner bytes (the U256 serialization)
-  buffer.set(u256Bytes, offset);
+  // CLValue inner bytes (the U512 serialization)
+  buffer.set(u512Bytes, offset);
   offset += innerBytesLen;
 
-  // CLType bytes (U256 = 8)
+  // CLType bytes (U512 = 9)
   buffer.set(typeBytes, offset);
 
   return buffer;
@@ -322,11 +333,9 @@ export const buildUnstakeTransaction = async (
   const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // V22: Use SDK U512 serialization (contract now accepts U512)
-  const unstakeArgs = Args.fromMap({
-    stcspr_amount: CLValue.newCLUInt512(amountMotes),
-  });
-  const serializedArgs = unstakeArgs.toBytes();
+  // V22: Use manual U512 serialization (type tag 9) for SDK compatibility
+  // SDK's Args.fromMap() doesn't serialize correctly for Odra 2.5.0's RuntimeArgs::from_bytes()
+  const serializedArgs = serializeUnstakeArgsU512(BigInt(amountMotes));
 
   // Build proxy_caller arguments
   const proxyArgs = Args.fromMap({
