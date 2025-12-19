@@ -639,6 +639,22 @@ export const StakingForm: React.FC = () => {
         playSuccessSound();
         toastSuccess('Withdrawal Queued!', `${txAmount} stCSPR → ${csprReceived.toFixed(4)} CSPR (available after ~7 eras)`);
         setAmount('');
+
+        // Save withdrawal to localStorage for WithdrawalStatus component
+        try {
+          const stored = localStorage.getItem('pendingWithdrawals');
+          const withdrawals = stored ? JSON.parse(stored) : [];
+          withdrawals.push({
+            requestId: Date.now(), // Temporary ID
+            csprAmount: csprReceived,
+            isReady: false,
+            isClaimed: false,
+            requestTime: new Date().toISOString(),
+          });
+          localStorage.setItem('pendingWithdrawals', JSON.stringify(withdrawals));
+        } catch (e) {
+          console.warn('Failed to save withdrawal to localStorage', e);
+        }
       }
     }
   };
