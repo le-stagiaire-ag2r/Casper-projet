@@ -441,7 +441,7 @@ export const buildClaimWithdrawalTransaction = async (
 
   // Build runtime arguments for claim_withdrawal(request_id: u64)
   const args = Args.fromMap({
-    request_id: CLValue.newCLUInt64(requestId.toString()),
+    request_id: CLValue.newCLUint64(requestId.toString()),
   });
 
   // Call contract directly via StoredContractByHash (no proxy_caller needed for non-payable)
