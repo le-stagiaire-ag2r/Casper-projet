@@ -2,6 +2,7 @@
 //! Run with: cargo run --bin add_validators_v20 --features livenet
 
 use std::str::FromStr;
+use std::{thread, time::Duration};
 use odra::casper_types::{AsymmetricType, PublicKey};
 use odra::host::HostRefLoader;
 use odra::prelude::*;
@@ -61,6 +62,12 @@ fn main() {
 
         println!("[{}/{}] Adding: {}...", i + 1, VALIDATORS.len(), &validator_hex[..16]);
         stakevue.add_validator(validator);
+
+        // Wait 3 seconds between transactions to avoid timestamp errors
+        if i < VALIDATORS.len() - 1 {
+            println!("    Waiting 3s before next...");
+            thread::sleep(Duration::from_secs(3));
+        }
     }
 
     let final_count = stakevue.get_validator_count();
