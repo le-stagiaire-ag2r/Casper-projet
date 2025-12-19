@@ -333,9 +333,13 @@ export const buildUnstakeTransaction = async (
   const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // V22: Use manual U512 serialization (type tag 9) for SDK compatibility
-  // SDK's Args.fromMap() doesn't serialize correctly for Odra 2.5.0's RuntimeArgs::from_bytes()
-  const serializedArgs = serializeUnstakeArgsU512(BigInt(amountMotes));
+  // V22: Use SDK U512 serialization with logging
+  const unstakeArgs = Args.fromMap({
+    stcspr_amount: CLValue.newCLUInt512(amountMotes),
+  });
+  const serializedArgs = unstakeArgs.toBytes();
+  console.log('Unstake SDK args bytes:', Array.from(serializedArgs).map(b => b.toString(16).padStart(2, '0')).join(' '));
+  console.log('Unstake amount (motes):', amountMotes);
 
   // Build proxy_caller arguments
   const proxyArgs = Args.fromMap({
