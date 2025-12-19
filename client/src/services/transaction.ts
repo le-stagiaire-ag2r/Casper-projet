@@ -300,24 +300,21 @@ const serializeUnstakeArgsU512 = (stcsprAmount: bigint): Uint8Array => {
 };
 
 /**
- * Build a Request Unstake Transaction using proxy_caller.wasm for V21
+ * Build a Request Unstake Transaction using proxy_caller.wasm
  *
- * V21 uses pool-based architecture: request_unstake only burns stCSPR,
- * NO validator parameter needed (admin handles undelegation separately).
- *
- * Uses proxy_caller to call the versioned contract via package hash.
- * Uses U512 for amount as that's what Odra 2.5.0 examples use.
+ * NOTE: There's a known issue with JS SDK Deploy format vs Odra 2.5.0's
+ * Transaction V1 format. Unstake via frontend may fail with Error 19.
+ * Use CLI: cargo run --bin test_stake_v22 --features livenet
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
- * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
- * @param _validatorPublicKeyHex - IGNORED in V21 (kept for backwards compatibility)
+ * @param amountStCspr - Amount of stCSPR to unstake (as string)
+ * @param _validatorPublicKeyHex - IGNORED in V22
  */
 export const buildUnstakeTransaction = async (
   senderPublicKeyHex: string,
   amountStCspr: string,
-  _validatorPublicKeyHex?: string // Ignored in V21
+  _validatorPublicKeyHex?: string
 ): Promise<{ deploy: any }> => {
-  // Validate inputs
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
   }
@@ -326,20 +323,18 @@ export const buildUnstakeTransaction = async (
     throw new Error('Contract package hash not configured');
   }
 
-  // Load proxy_caller.wasm
   const proxyCallerWasm = await loadProxyCallerWasm();
-
-  // Convert stCSPR to internal units (like motes but for stCSPR - 9 decimals)
   const amountMotes = csprToMotes(amountStCspr);
-  const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
+  const paymentMotes = config.transaction_payment || '10000000000';
 
-  // V22: Use SDK U512 serialization with logging
+  console.log('Unstake V22 via proxy_caller');
+  console.log('Amount (motes):', amountMotes);
+
+  // Build args for request_unstake(stcspr_amount: U512)
   const unstakeArgs = Args.fromMap({
     stcspr_amount: CLValue.newCLUInt512(amountMotes),
   });
   const serializedArgs = unstakeArgs.toBytes();
-  console.log('Unstake SDK args bytes:', Array.from(serializedArgs).map(b => b.toString(16).padStart(2, '0')).join(' '));
-  console.log('Unstake amount (motes):', amountMotes);
 
   // Build proxy_caller arguments
   const proxyArgs = Args.fromMap({
@@ -350,22 +345,16 @@ export const buildUnstakeTransaction = async (
     amount: CLValue.newCLUInt512('0'),
   });
 
-  // Build session using ModuleBytes with proxy_caller.wasm
   const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
 
-  // Build deploy header
   const deployHeader = DeployHeader.default();
   deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
   deployHeader.chainName = config.chain_name || 'casper-test';
   deployHeader.gasPrice = 1;
 
-  // Build payment
   const payment = ExecutableDeployItem.standardPayment(paymentMotes);
-
-  // Create deploy
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
-  // Serialize deploy for CSPR.click
   return { deploy: Deploy.toJSON(deploy) };
 };
 
