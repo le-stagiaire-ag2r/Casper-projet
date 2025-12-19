@@ -9,7 +9,7 @@ use stakevue_contract::stakevue_v20::StakeVueV20HostRef;
 use std::{thread, time::Duration};
 
 // Configuration
-const CONTRACT_HASH: &str = "hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f";
+const CONTRACT_HASH: &str = "hash-2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937";
 const MIN_DELEGATION_AMOUNT: u64 = 500_000_000_000; // 500 CSPR minimum
 const CHECK_INTERVAL_SECS: u64 = 300; // Check every 5 minutes
 const VALIDATOR: &str = "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca";

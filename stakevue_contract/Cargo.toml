@@ -131,6 +131,12 @@ path = "bin/auto_delegate_bot.rs"
 required-features = ["livenet"]
 test = false
 
+[[bin]]
+name = "stakevue_bot"
+path = "bin/stakevue_bot.rs"
+required-features = ["livenet"]
+test = false
+
 # ============================================================================
 # V19 SCRIPTS (Native Odra delegate/undelegate - fixes error 64658)
 # ============================================================================

@@ -2,13 +2,14 @@
 //! Run with: cargo run --bin add_validators_v20 --features livenet
 
 use std::str::FromStr;
+use std::{thread, time::Duration};
 use odra::casper_types::{AsymmetricType, PublicKey};
 use odra::host::HostRefLoader;
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
 // TODO: Update with your V20 contract address after deployment
-const CONTRACT_HASH: &str = "hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f";
+const CONTRACT_HASH: &str = "hash-2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937";
 
 // Testnet validators - same as V19
 // All from https://testnet.cspr.live/validators
@@ -61,6 +62,12 @@ fn main() {
 
         println!("[{}/{}] Adding: {}...", i + 1, VALIDATORS.len(), &validator_hex[..16]);
         stakevue.add_validator(validator);
+
+        // Wait 3 seconds between transactions to avoid timestamp errors
+        if i < VALIDATORS.len() - 1 {
+            println!("    Waiting 3s before next...");
+            thread::sleep(Duration::from_secs(3));
+        }
     }
 
     let final_count = stakevue.get_validator_count();
