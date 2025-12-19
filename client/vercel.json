@@ -14,7 +14,11 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|.*\\.wasm$).*)",
+      "source": "/:file*.wasm",
+      "destination": "/:file*.wasm"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
@@ -25,6 +29,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).wasm",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/wasm"
         }
       ]
     }
