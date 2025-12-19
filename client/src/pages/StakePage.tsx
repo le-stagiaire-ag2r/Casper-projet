@@ -16,6 +16,7 @@ import { ExportCSV } from '../components/ExportCSV';
 import { ValidatorComparator } from '../components/ValidatorComparator';
 import { V15StatsCard } from '../components/V15StatsCard';
 import { AdminPanel } from '../components/AdminPanel';
+import { WithdrawalStatus } from '../components/WithdrawalStatus';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -423,6 +424,10 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
             <StakingForm />
             <StakeHistory />
           </TwoColumnGrid>
+
+          <FullWidth className="animate-on-scroll" style={{ marginTop: spacing[8] }}>
+            <WithdrawalStatus />
+          </FullWidth>
 
           <FullWidth className="animate-on-scroll" style={{ marginTop: spacing[8] }}>
             <AdminPanel isOwner={true} />

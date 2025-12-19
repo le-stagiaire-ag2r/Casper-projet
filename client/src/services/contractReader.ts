@@ -244,8 +244,44 @@ export async function getContractStats(): Promise<{
   };
 }
 
+/**
+ * Withdrawal request info
+ */
+export interface WithdrawalInfo {
+  requestId: number;
+  csprAmount: number; // in CSPR
+  isReady: boolean;
+  isClaimed: boolean;
+  requestBlock: number;
+  estimatedReadyTime: Date;
+}
+
+/**
+ * Read user's withdrawal requests
+ */
+export async function getUserWithdrawals(accountHash: string): Promise<WithdrawalInfo[]> {
+  try {
+    const response = await fetch(`/api/withdrawals?account=${encodeURIComponent(accountHash)}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (!response.ok) {
+      console.warn('Withdrawals API returned', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    return data.withdrawals || [];
+  } catch (err) {
+    console.warn('Failed to fetch withdrawals:', err);
+    return [];
+  }
+}
+
 export default {
   readContractState,
   readUserStCsprBalance,
   getContractStats,
+  getUserWithdrawals,
 };
