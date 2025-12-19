@@ -289,12 +289,13 @@ const serializeUnstakeArgs = (stcsprAmount: bigint): Uint8Array => {
 };
 
 /**
- * Build a Request Unstake Transaction using proxy_caller.wasm for V21
+ * Build a Request Unstake Transaction for V21
  *
  * V21 uses pool-based architecture: request_unstake only burns stCSPR,
  * NO validator parameter needed (admin handles undelegation separately).
  *
- * Uses SDK Args.fromMap() like the working stake function.
+ * IMPORTANT: request_unstake is NOT payable, so we call it directly via
+ * StoredContractByHash instead of using proxy_caller.wasm.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
@@ -314,35 +315,22 @@ export const buildUnstakeTransaction = async (
     throw new Error('Contract package hash not configured');
   }
 
-  // Load proxy_caller.wasm
-  const proxyCallerWasm = await loadProxyCallerWasm();
-
   // Convert stCSPR to internal units (like motes but for stCSPR - 9 decimals)
   const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // Use SDK Args.fromMap() like the working stake function
-  const unstakeArgs = Args.fromMap({
+  // Build runtime arguments for request_unstake(stcspr_amount: U256)
+  const args = Args.fromMap({
     stcspr_amount: CLValue.newCLUInt256(amountMotes),
   });
-  const serializedArgs = unstakeArgs.toBytes();
 
-  // Build proxy_caller arguments
-  const proxyArgs = Args.fromMap({
-    // Package hash of the StakeVue contract (32 bytes)
-    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
-    // Entry point to call
-    entry_point: CLValue.newCLString('request_unstake'),
-    // SDK-serialized RuntimeArgs as Bytes (List<U8>)
-    args: bytesToCLList(serializedArgs),
-    // No attached value for unstake (non-payable)
-    attached_value: CLValue.newCLUInt512('0'),
-    // Special Casper argument (0 for non-payable calls)
-    amount: CLValue.newCLUInt512('0'),
-  });
-
-  // Build session using ModuleBytes with proxy_caller.wasm
-  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+  // Call contract directly via StoredContractByHash (no proxy_caller needed for non-payable)
+  const session = new ExecutableDeployItem();
+  session.storedContractByHash = new StoredContractByHash(
+    ContractHash.newContract(getPackageHashHex()),
+    'request_unstake',
+    args
+  );
 
   // Build deploy header
   const deployHeader = DeployHeader.default();
@@ -426,11 +414,12 @@ const serializeClaimArgs = (requestId: bigint): Uint8Array => {
 };
 
 /**
- * Build a Claim Withdrawal Transaction using proxy_caller.wasm for V21
+ * Build a Claim Withdrawal Transaction for V21
  *
  * After the unbonding period (7 eras), user can claim their CSPR.
- * Uses proxy_caller to call versioned contract via package hash.
- * Uses SDK Args.fromMap() like the working stake function.
+ *
+ * IMPORTANT: claim_withdrawal is NOT payable, so we call it directly via
+ * StoredContractByHash instead of using proxy_caller.wasm.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param requestId - The withdrawal request ID returned by request_unstake
@@ -448,28 +437,20 @@ export const buildClaimWithdrawalTransaction = async (
     throw new Error('Contract package hash not configured');
   }
 
-  // Load proxy_caller.wasm
-  const proxyCallerWasm = await loadProxyCallerWasm();
-
   const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
 
-  // Use SDK Args.fromMap() like the working stake function
-  const claimArgs = Args.fromMap({
+  // Build runtime arguments for claim_withdrawal(request_id: u64)
+  const args = Args.fromMap({
     request_id: CLValue.newCLUInt64(requestId.toString()),
   });
-  const serializedArgs = claimArgs.toBytes();
 
-  // Build proxy_caller arguments
-  const proxyArgs = Args.fromMap({
-    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
-    entry_point: CLValue.newCLString('claim_withdrawal'),
-    args: bytesToCLList(serializedArgs),
-    attached_value: CLValue.newCLUInt512('0'),
-    amount: CLValue.newCLUInt512('0'),
-  });
-
-  // Build session using ModuleBytes with proxy_caller.wasm
-  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+  // Call contract directly via StoredContractByHash (no proxy_caller needed for non-payable)
+  const session = new ExecutableDeployItem();
+  session.storedContractByHash = new StoredContractByHash(
+    ContractHash.newContract(getPackageHashHex()),
+    'claim_withdrawal',
+    args
+  );
 
   // Build deploy header
   const deployHeader = DeployHeader.default();
