@@ -432,6 +432,63 @@ impl StakeVue {
         });
     }
 
+    /// Admin process claim - allows bot to claim for users automatically
+    ///
+    /// V20+: Admin/bot can process ready claims on behalf of users.
+    /// CSPR is sent directly to the original staker, not the caller.
+    pub fn admin_process_claim(&mut self, request_id: u64) {
+        self.ownable.assert_owner(&self.env().caller());
+
+        // Get withdrawal request
+        let request = self.withdrawal_requests.get(&request_id);
+        if request.is_none() {
+            self.env().revert(Error::WithdrawalNotFound);
+        }
+        let mut request = request.unwrap();
+
+        // Check not already claimed
+        if request.claimed {
+            self.env().revert(Error::WithdrawalAlreadyClaimed);
+        }
+
+        // Check unbonding period has passed
+        let current_block = self.env().get_block_time();
+        if current_block < request.request_block + UNBONDING_BLOCKS {
+            self.env().revert(Error::WithdrawalNotReady);
+        }
+
+        // Check pool has enough liquidity
+        let liquidity = self.available_liquidity.get_or_default();
+        if request.cspr_amount > liquidity {
+            self.env().revert(Error::InsufficientLiquidity);
+        }
+
+        // Mark as claimed
+        request.claimed = true;
+        self.withdrawal_requests.set(&request_id, request.clone());
+
+        // Remove from pending withdrawals
+        let pending = self.pending_withdrawals.get_or_default();
+        self.pending_withdrawals.set(pending - request.cspr_amount);
+
+        // Reduce available liquidity
+        self.available_liquidity.set(liquidity - request.cspr_amount);
+
+        // Transfer CSPR to original STAKER (not caller!)
+        self.env().transfer_tokens(&request.staker, &request.cspr_amount);
+
+        self.env().emit_event(Claimed {
+            staker: request.staker,
+            request_id,
+            cspr_amount: request.cspr_amount,
+        });
+    }
+
+    /// Get next request ID (for bot to iterate through claims)
+    pub fn get_next_request_id(&self) -> u64 {
+        self.next_request_id.get_or_default()
+    }
+
     // ========================================================================
     // EXCHANGE RATE FUNCTIONS
     // ========================================================================
