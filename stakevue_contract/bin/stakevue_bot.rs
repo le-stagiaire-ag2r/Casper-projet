@@ -22,7 +22,7 @@ use std::{thread, time::Duration};
 // CONFIGURATION
 // ============================================================================
 
-const CONTRACT_HASH: &str = "hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f";
+const CONTRACT_HASH: &str = "hash-2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937";
 
 // Validators to delegate to (round-robin distribution)
 const VALIDATORS: &[&str] = &[

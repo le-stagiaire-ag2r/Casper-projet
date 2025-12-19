@@ -3,13 +3,13 @@
 
 window.config = {
   // Smart Contract Configuration - V20 (Wise Lending Pool Architecture)
-  // V20 Contract Hash: hash-ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f
+  // V20 Contract Hash: hash-2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937
   // Features: stake(validator) -> pool, request_unstake(amount) -> burn only, claim(request_id)
   // Architecture: Pool-based like Wise Lending - admin handles delegate/undelegate
   // Min stake: 1 CSPR (no direct delegation, funds go to pool)
-  contract_hash: "ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f",
+  contract_hash: "2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937",
   // V20 package hash
-  contract_package_hash: "ccc0c534ac1b46cde529b3fa0ec69c3d1c0fae878846185c7d274497ff326d4f",
+  contract_package_hash: "2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937",
 
   // Contract owner address (for admin features)
   owner_account_hash: "2f63ef2c9db78bcf2288529e2217cd8e70614f0b1aad4f8ef8871acd39ac2f7e",
