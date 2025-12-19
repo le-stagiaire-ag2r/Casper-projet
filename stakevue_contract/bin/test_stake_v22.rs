@@ -2,19 +2,13 @@
 //! Run with: cargo run --bin test_stake_v22 --features livenet
 
 use std::str::FromStr;
-use odra::casper_types::{AsymmetricType, PublicKey, U512};
-use odra::host::{HostRef, HostRefLoader};
+use odra::casper_types::{AsymmetricType, U512};
+use odra::host::HostRefLoader;
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
 // V22 Contract (U512 SDK fix)
 const CONTRACT_HASH: &str = "hash-2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3";
-
-// MAKE validator (Casper testnet)
-const VALIDATOR_PUBLIC_KEY: &str = "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca";
-
-// Stake amount: 10 CSPR
-const STAKE_AMOUNT_CSPR: u64 = 10;
 
 fn main() {
     let env = odra_casper_livenet_env::env();
@@ -32,10 +26,12 @@ fn main() {
 
     // Check validators
     println!("\n--- Validators ---");
-    let validators = stakevue.get_validators();
-    println!("Total validators: {}", validators.len());
-    for (i, v) in validators.iter().enumerate() {
-        println!("  [{}] {}", i + 1, v.to_hex());
+    let count = stakevue.get_validator_count();
+    println!("Total validators: {}", count);
+    for i in 0..count {
+        if let Some(v) = stakevue.get_validator(i) {
+            println!("  [{}] {}", i + 1, v.to_hex());
+        }
     }
 
     // Check state
