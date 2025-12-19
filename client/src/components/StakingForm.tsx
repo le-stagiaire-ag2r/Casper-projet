@@ -271,6 +271,115 @@ const ExplorerLink = styled.a`
   }
 `;
 
+const SuccessBanner = styled.div`
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.15) 0%, rgba(52, 199, 89, 0.1) 100%);
+  border: 2px solid rgba(48, 209, 88, 0.4);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  animation: ${slideIn} 0.4s ease;
+`;
+
+const SuccessHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+const SuccessIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #30d158, #34c759);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+`;
+
+const SuccessTitle = styled.h3`
+  color: #30d158;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+`;
+
+const SuccessSubtitle = styled.p`
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  margin: 4px 0 0 0;
+`;
+
+const SuccessDetails = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+const SuccessDetailBox = styled.div`
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+`;
+
+const SuccessDetailLabel = styled.div`
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+`;
+
+const SuccessDetailValue = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+`;
+
+const SuccessActions = styled.div`
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+const SuccessButton = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: rgba(48, 209, 88, 0.2);
+  border: 1px solid rgba(48, 209, 88, 0.3);
+  border-radius: 8px;
+  color: #30d158;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(48, 209, 88, 0.3);
+  }
+`;
+
+const DismissButton = styled.button`
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+  }
+`;
+
 const InfoBox = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
     ? 'rgba(255, 255, 255, 0.03)'
@@ -478,6 +587,14 @@ export const StakingForm: React.FC = () => {
   // Track last error for toast
   const [lastError, setLastError] = useState<string | null>(null);
 
+  // Track successful transaction for banner
+  const [successTx, setSuccessTx] = useState<{
+    type: 'stake' | 'unstake';
+    amount: number;
+    received: number;
+    deployHash: string;
+  } | null>(null);
+
   // Show error toast
   useEffect(() => {
     if (error && error !== lastError) {
@@ -627,6 +744,13 @@ export const StakingForm: React.FC = () => {
         triggerConfetti();
         toastSuccess('Stake Successful!', `${txAmount} CSPR staked → ${stcsprReceived.toFixed(4)} stCSPR received`);
         setAmount('');
+        // Show success banner
+        setSuccessTx({
+          type: 'stake',
+          amount: txAmount,
+          received: stcsprReceived,
+          deployHash: result.deployHash || '',
+        });
       }
     } else {
       // V17: Pass validator to unstake function (request_unstake)
@@ -639,6 +763,13 @@ export const StakingForm: React.FC = () => {
         playSuccessSound();
         toastSuccess('Withdrawal Queued!', `${txAmount} stCSPR → ${csprReceived.toFixed(4)} CSPR (available after ~7 eras)`);
         setAmount('');
+        // Show success banner
+        setSuccessTx({
+          type: 'unstake',
+          amount: txAmount,
+          received: csprReceived,
+          deployHash: result.deployHash || '',
+        });
 
         // Save withdrawal to localStorage for WithdrawalStatus component
         try {
@@ -686,6 +817,58 @@ export const StakingForm: React.FC = () => {
     <>
       <ToastComponent />
       <ConfettiComponent />
+
+      {/* Success Banner */}
+      {successTx && (
+        <SuccessBanner>
+          <SuccessHeader>
+            <SuccessIcon>{successTx.type === 'stake' ? '✓' : '⏳'}</SuccessIcon>
+            <div>
+              <SuccessTitle>
+                {successTx.type === 'stake' ? 'Stake Successful!' : 'Unstake Queued!'}
+              </SuccessTitle>
+              <SuccessSubtitle>
+                {successTx.type === 'stake'
+                  ? 'Your CSPR has been staked and is earning rewards'
+                  : 'Your withdrawal will be ready in ~14 hours (7 eras)'}
+              </SuccessSubtitle>
+            </div>
+          </SuccessHeader>
+
+          <SuccessDetails>
+            <SuccessDetailBox>
+              <SuccessDetailLabel>
+                {successTx.type === 'stake' ? 'Staked' : 'Unstaked'}
+              </SuccessDetailLabel>
+              <SuccessDetailValue>
+                {successTx.amount.toLocaleString()} {successTx.type === 'stake' ? 'CSPR' : 'stCSPR'}
+              </SuccessDetailValue>
+            </SuccessDetailBox>
+            <SuccessDetailBox>
+              <SuccessDetailLabel>
+                {successTx.type === 'stake' ? 'Received' : 'Will receive'}
+              </SuccessDetailLabel>
+              <SuccessDetailValue>
+                {successTx.received.toLocaleString(undefined, { maximumFractionDigits: 4 })} {successTx.type === 'stake' ? 'stCSPR' : 'CSPR'}
+              </SuccessDetailValue>
+            </SuccessDetailBox>
+          </SuccessDetails>
+
+          <SuccessActions>
+            <SuccessButton
+              href={`${window.config?.cspr_live_url || 'https://testnet.cspr.live'}/deploy/${successTx.deployHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View on Explorer →
+            </SuccessButton>
+            <DismissButton onClick={() => setSuccessTx(null)}>
+              Dismiss
+            </DismissButton>
+          </SuccessActions>
+        </SuccessBanner>
+      )}
+
       <Container $isDark={isDark}>
         <Header>
         <Title $isDark={isDark}>
