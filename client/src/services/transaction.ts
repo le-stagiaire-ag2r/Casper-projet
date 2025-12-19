@@ -208,27 +208,23 @@ export const buildStakeTransaction = async (
 };
 
 /**
- * Build a Request Unstake Transaction using proxy_caller.wasm for V17
+ * Build a Request Unstake Transaction using proxy_caller.wasm for V20
  *
- * V17 uses a withdrawal queue: request_unstake queues the withdrawal,
- * then after 7 eras (~14 hours on testnet), the user can claim_withdrawal.
+ * V20 uses pool-based architecture: request_unstake only burns stCSPR,
+ * NO validator parameter needed (admin handles undelegation separately).
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
- * @param validatorPublicKeyHex - The validator to undelegate from
+ * @param _validatorPublicKeyHex - IGNORED in V20 (kept for backwards compatibility)
  */
 export const buildUnstakeTransaction = async (
   senderPublicKeyHex: string,
   amountStCspr: string,
-  validatorPublicKeyHex: string
+  _validatorPublicKeyHex?: string // Ignored in V20
 ): Promise<{ deploy: any }> => {
   // Validate inputs
   if (!senderPublicKeyHex) {
     throw new Error('Sender public key is required');
-  }
-
-  if (!validatorPublicKeyHex) {
-    throw new Error('Validator public key is required');
   }
 
   if (!config.contract_package_hash) {
@@ -242,11 +238,10 @@ export const buildUnstakeTransaction = async (
   const amountUnits = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // Build RuntimeArgs for request_unstake(amount: U256, validator: PublicKey)
-  const validatorPubKey = PublicKey.fromHex(validatorPublicKeyHex);
+  // Build RuntimeArgs for V20 request_unstake(stcspr_amount: U256)
+  // NOTE: V20 does NOT take a validator parameter!
   const unstakeArgs = Args.fromMap({
-    amount: CLValue.newCLUInt256(amountUnits),
-    validator: CLValue.newCLPublicKey(validatorPubKey),
+    stcspr_amount: CLValue.newCLUInt256(amountUnits),
   });
   const serializedArgs = unstakeArgs.toBytes();
 
