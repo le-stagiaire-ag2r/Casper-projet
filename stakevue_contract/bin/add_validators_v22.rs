@@ -8,8 +8,8 @@ use odra::host::HostRefLoader;
 use odra::prelude::*;
 use stakevue_contract::StakeVue;
 
-// TODO: Update with your V22 contract address after deployment
-const CONTRACT_HASH: &str = "hash-REPLACE_WITH_V22_HASH";
+// V22 contract deployed on testnet
+const CONTRACT_HASH: &str = "hash-2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3";
 
 // Testnet validators
 const VALIDATORS: &[&str] = &[
