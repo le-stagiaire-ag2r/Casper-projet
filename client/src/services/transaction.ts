@@ -289,21 +289,21 @@ const serializeUnstakeArgs = (stcsprAmount: bigint): Uint8Array => {
 };
 
 /**
- * Build a Request Unstake Transaction using proxy_caller.wasm for V20
+ * Build a Request Unstake Transaction using proxy_caller.wasm for V21
  *
- * V20 uses pool-based architecture: request_unstake only burns stCSPR,
+ * V21 uses pool-based architecture: request_unstake only burns stCSPR,
  * NO validator parameter needed (admin handles undelegation separately).
  *
- * Uses manual RuntimeArgs serialization to avoid SDK compatibility issues.
+ * Uses SDK Args.fromMap() like the working stake function.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param amountStCspr - Amount of stCSPR to unstake (as string, will be converted to U256)
- * @param _validatorPublicKeyHex - IGNORED in V20 (kept for backwards compatibility)
+ * @param _validatorPublicKeyHex - IGNORED in V21 (kept for backwards compatibility)
  */
 export const buildUnstakeTransaction = async (
   senderPublicKeyHex: string,
   amountStCspr: string,
-  _validatorPublicKeyHex?: string // Ignored in V20
+  _validatorPublicKeyHex?: string // Ignored in V21
 ): Promise<{ deploy: any }> => {
   // Validate inputs
   if (!senderPublicKeyHex) {
@@ -318,11 +318,14 @@ export const buildUnstakeTransaction = async (
   const proxyCallerWasm = await loadProxyCallerWasm();
 
   // Convert stCSPR to internal units (like motes but for stCSPR - 9 decimals)
-  const amountUnits = BigInt(csprToMotes(amountStCspr));
+  const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000'; // 10 CSPR for gas
 
-  // Manually serialize RuntimeArgs to avoid SDK issues
-  const serializedArgs = serializeUnstakeArgs(amountUnits);
+  // Use SDK Args.fromMap() like the working stake function
+  const unstakeArgs = Args.fromMap({
+    stcspr_amount: CLValue.newCLUInt256(amountMotes),
+  });
+  const serializedArgs = unstakeArgs.toBytes();
 
   // Build proxy_caller arguments
   const proxyArgs = Args.fromMap({
@@ -330,7 +333,7 @@ export const buildUnstakeTransaction = async (
     package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
     // Entry point to call
     entry_point: CLValue.newCLString('request_unstake'),
-    // Manually serialized RuntimeArgs as Bytes (List<U8>)
+    // SDK-serialized RuntimeArgs as Bytes (List<U8>)
     args: bytesToCLList(serializedArgs),
     // No attached value for unstake (non-payable)
     attached_value: CLValue.newCLUInt512('0'),
@@ -423,10 +426,11 @@ const serializeClaimArgs = (requestId: bigint): Uint8Array => {
 };
 
 /**
- * Build a Claim Withdrawal Transaction using proxy_caller.wasm for V20
+ * Build a Claim Withdrawal Transaction using proxy_caller.wasm for V21
  *
  * After the unbonding period (7 eras), user can claim their CSPR.
  * Uses proxy_caller to call versioned contract via package hash.
+ * Uses SDK Args.fromMap() like the working stake function.
  *
  * @param senderPublicKeyHex - The sender's public key in hex format
  * @param requestId - The withdrawal request ID returned by request_unstake
@@ -449,8 +453,11 @@ export const buildClaimWithdrawalTransaction = async (
 
   const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
 
-  // Manually serialize RuntimeArgs to avoid SDK issues
-  const serializedArgs = serializeClaimArgs(BigInt(requestId));
+  // Use SDK Args.fromMap() like the working stake function
+  const claimArgs = Args.fromMap({
+    request_id: CLValue.newCLUInt64(requestId.toString()),
+  });
+  const serializedArgs = claimArgs.toBytes();
 
   // Build proxy_caller arguments
   const proxyArgs = Args.fromMap({
