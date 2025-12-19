@@ -61,16 +61,38 @@ const loadProxyCallerWasm = async (): Promise<Uint8Array> => {
  */
 const loadProxyCallerWithReturnWasm = async (): Promise<Uint8Array> => {
   if (proxyCallerWithReturnWasmCache) {
+    console.log('Using cached proxy_caller_with_return.wasm');
     return proxyCallerWithReturnWasmCache;
   }
 
+  console.log('Fetching /proxy_caller_with_return.wasm...');
   const response = await fetch('/proxy_caller_with_return.wasm');
+  console.log('Response status:', response.status);
+  console.log('Response content-type:', response.headers.get('content-type'));
+
   if (!response.ok) {
     throw new Error('Failed to load proxy_caller_with_return.wasm');
   }
 
   const arrayBuffer = await response.arrayBuffer();
   proxyCallerWithReturnWasmCache = new Uint8Array(arrayBuffer);
+
+  // Debug: check first 4 bytes (should be 0x00 0x61 0x73 0x6d = "\0asm")
+  const magicBytes = Array.from(proxyCallerWithReturnWasmCache.slice(0, 4))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join(' ');
+  console.log('WASM magic bytes:', magicBytes);
+  console.log('WASM size:', proxyCallerWithReturnWasmCache.length, 'bytes');
+
+  if (proxyCallerWithReturnWasmCache[0] !== 0x00 ||
+      proxyCallerWithReturnWasmCache[1] !== 0x61 ||
+      proxyCallerWithReturnWasmCache[2] !== 0x73 ||
+      proxyCallerWithReturnWasmCache[3] !== 0x6d) {
+    console.error('ERROR: Not a valid WASM file! First 100 chars:',
+      new TextDecoder().decode(proxyCallerWithReturnWasmCache.slice(0, 100)));
+    throw new Error('proxy_caller_with_return.wasm is not a valid WASM file');
+  }
+
   return proxyCallerWithReturnWasmCache;
 };
 
