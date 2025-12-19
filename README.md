@@ -1,14 +1,14 @@
 # 🌌 StakeVue
 
 ![Casper Network](https://img.shields.io/badge/Casper-2.0_Testnet-blue)
-![Status](https://img.shields.io/badge/Status-V20_Pool--Based-brightgreen)
-![Framework](https://img.shields.io/badge/Framework-Odra_2.4.0-purple)
+![Status](https://img.shields.io/badge/Status-V21_Odra_2.5.0-brightgreen)
+![Framework](https://img.shields.io/badge/Framework-Odra_2.5.0-purple)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 <p align="center">
   <img src="https://img.shields.io/badge/Casper-2.0_Testnet-00D4FF?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Version-20-8B5CF6?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Odra-2.4.0-FF6B35?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Version-21-8B5CF6?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Odra-2.5.0-FF6B35?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge"/>
 </p>
 
@@ -18,24 +18,26 @@
 
 --- Please note that when reading this, the site is constantly evolving. This readme may not be up-to-date, some figures may have changed, or the logic may have been altered. In short, nothing technically serious, but be aware.
 
-**V20 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937)
+**V21 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655)
 
 ---
 
-## 🎉 V20 - Pool-Based Architecture (Wise Lending Style)
+## 🎉 V21 - Odra 2.5.0 Upgrade (Pool-Based Architecture)
 
-### ✅ Fully Tested & Working via CLI
+### ✅ Deployed & Ready for Testing
 
-V20 implements a **pool-based liquid staking** architecture inspired by Wise Lending on Casper. The complete cycle has been validated:
+V21 upgrades to **Odra 2.5.0** while maintaining the same pool-based liquid staking architecture from V20:
 
 | Step | Command | Status |
 |------|---------|--------|
-| ✅ User Stake | `cargo run --bin test_stake_v20 --features livenet` | **Working** |
-| ✅ Admin Delegate | `cargo run --bin admin_delegate_v20 --features livenet` | **Working** |
-| ✅ User Request Unstake | `cargo run --bin test_request_unstake_v20 --features livenet` | **Working** |
-| ✅ Admin Undelegate | `cargo run --bin admin_undelegate_v20 --features livenet` | **Working** |
-| ✅ Admin Add Liquidity | `cargo run --bin admin_add_liquidity_v20 --features livenet` | **Working** |
-| ✅ User Claim | `cargo run --bin test_claim_v20 --features livenet` | **Working** |
+| ✅ Deploy | `cargo run --bin deploy_v21 --features livenet` | **Done** |
+| 🔧 Add Validators | `cargo run --bin add_validators_v21 --features livenet` | **Next** |
+| 🔧 User Stake | `cargo run --bin test_stake_v21 --features livenet` | Pending |
+| 🔧 Admin Delegate | `cargo run --bin admin_delegate_v20 --features livenet` | Pending |
+| 🔧 User Request Unstake | `cargo run --bin test_request_unstake_v20 --features livenet` | Pending |
+| 🔧 Admin Undelegate | `cargo run --bin admin_undelegate_v20 --features livenet` | Pending |
+| 🔧 Admin Add Liquidity | `cargo run --bin admin_add_liquidity_v20 --features livenet` | Pending |
+| 🔧 User Claim | `cargo run --bin test_claim_v20 --features livenet` | Pending |
 
 ### V20 Architecture
 
@@ -162,18 +164,25 @@ V15 implements a **dynamic exchange rate** that increases over time as rewards a
 
 ## Contract Details
 
-### V20 Contract (Current)
+### V21 Contract (Current - Odra 2.5.0)
 
 | Property | Value |
 |----------|-------|
-| **Package Hash** | `2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937` |
+| **Package Hash** | `550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655` |
 | **Network** | casper-test |
-| **Framework** | Odra 2.4.0 |
+| **Framework** | Odra 2.5.0 |
 | **Token Standard** | CEP-18 (integrated stCSPR) |
 | **Min Stake** | 500 CSPR |
 | **Architecture** | Pool-based (Wise Lending style) |
 
-### Entry Points (V20)
+### V20 Contract (Archived)
+
+| Property | Value |
+|----------|-------|
+| **Package Hash** | `2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937` |
+| **Status** | Archived - Upgraded to V21 with Odra 2.5.0 |
+
+### Entry Points (V21)
 
 #### User Functions
 | Function | Type | Description |
@@ -330,6 +339,7 @@ cargo run --bin test_unstake_v17 --features livenet
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **V21** | Dec 2025 | **Odra 2.5.0 Upgrade** - Same pool-based architecture, upgraded framework for better validator support |
 | **V20** | Dec 2025 | **Pool-based architecture** - Wise Lending style, admin delegation, full cycle working via CLI |
 | **V19** | Dec 2025 | Debug attempt - still had 64658 |
 | **V18** | Dec 2025 | Debug attempt - purse mismatch issues |
@@ -361,7 +371,8 @@ cargo run --bin test_unstake_v17 --features livenet
 | | |
 |---|---|
 | 🌐 **Live Demo** | https://casper-projet.vercel.app |
-| 📜 **V20 Contract** | [View on Testnet](https://testnet.cspr.live/contract-package/2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937) |
+| 📜 **V21 Contract** | [View on Testnet](https://testnet.cspr.live/contract-package/550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655) |
+| 📜 **V20 Contract (Archived)** | [View on Testnet](https://testnet.cspr.live/contract-package/2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937) |
 | 📜 **V17 Contract (Archived)** | [View on Testnet](https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747) |
 | 🛠️ **Odra Framework** | https://odra.dev |
 | 🌍 **Casper Network** | https://casper.network |
