@@ -83,6 +83,12 @@ path = "bin/add_validators_v22.rs"
 required-features = ["livenet"]
 test = false
 
+[[bin]]
+name = "test_stake_v22"
+path = "bin/test_stake_v22.rs"
+required-features = ["livenet"]
+test = false
+
 # ============================================================================
 # V21 SCRIPTS (Odra 2.5.0 Upgrade - has U256 SDK issue)
 # ============================================================================
