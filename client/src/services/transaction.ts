@@ -31,69 +31,26 @@ import {
   CLValueList,
 } from 'casper-js-sdk';
 
+// Import embedded wasm files (bypasses Vercel file serving issues)
+import { getProxyCallerWasm, getProxyCallerWithReturnWasm } from './proxyCallerWasm';
+
 // Get runtime config
 const config = window.config;
 
-// Cache for proxy_caller.wasm bytes
-let proxyCallerWasmCache: Uint8Array | null = null;
-let proxyCallerWithReturnWasmCache: Uint8Array | null = null;
-
 /**
- * Load proxy_caller.wasm from public folder (for functions without return)
+ * Get proxy_caller.wasm (for functions without return value)
+ * Uses embedded base64 wasm to bypass Vercel file serving issues
  */
-const loadProxyCallerWasm = async (): Promise<Uint8Array> => {
-  if (proxyCallerWasmCache) {
-    return proxyCallerWasmCache;
-  }
-
-  const response = await fetch('/proxy_caller.wasm');
-  if (!response.ok) {
-    throw new Error('Failed to load proxy_caller.wasm');
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  proxyCallerWasmCache = new Uint8Array(arrayBuffer);
-  return proxyCallerWasmCache;
+const loadProxyCallerWasm = (): Uint8Array => {
+  return getProxyCallerWasm();
 };
 
 /**
- * Load proxy_caller_with_return.wasm from public folder (for functions with return values)
+ * Get proxy_caller_with_return.wasm (for functions with return values like request_unstake)
+ * Uses embedded base64 wasm to bypass Vercel file serving issues
  */
-const loadProxyCallerWithReturnWasm = async (): Promise<Uint8Array> => {
-  if (proxyCallerWithReturnWasmCache) {
-    console.log('Using cached proxy_caller_with_return.wasm');
-    return proxyCallerWithReturnWasmCache;
-  }
-
-  console.log('Fetching /proxy_caller_with_return.wasm...');
-  const response = await fetch('/proxy_caller_with_return.wasm');
-  console.log('Response status:', response.status);
-  console.log('Response content-type:', response.headers.get('content-type'));
-
-  if (!response.ok) {
-    throw new Error('Failed to load proxy_caller_with_return.wasm');
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  proxyCallerWithReturnWasmCache = new Uint8Array(arrayBuffer);
-
-  // Debug: check first 4 bytes (should be 0x00 0x61 0x73 0x6d = "\0asm")
-  const magicBytes = Array.from(proxyCallerWithReturnWasmCache.slice(0, 4))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join(' ');
-  console.log('WASM magic bytes:', magicBytes);
-  console.log('WASM size:', proxyCallerWithReturnWasmCache.length, 'bytes');
-
-  if (proxyCallerWithReturnWasmCache[0] !== 0x00 ||
-      proxyCallerWithReturnWasmCache[1] !== 0x61 ||
-      proxyCallerWithReturnWasmCache[2] !== 0x73 ||
-      proxyCallerWithReturnWasmCache[3] !== 0x6d) {
-    console.error('ERROR: Not a valid WASM file! First 100 chars:',
-      new TextDecoder().decode(proxyCallerWithReturnWasmCache.slice(0, 100)));
-    throw new Error('proxy_caller_with_return.wasm is not a valid WASM file');
-  }
-
-  return proxyCallerWithReturnWasmCache;
+const loadProxyCallerWithReturnWasm = (): Uint8Array => {
+  return getProxyCallerWithReturnWasm();
 };
 
 /**
@@ -196,7 +153,7 @@ export const buildStakeTransaction = async (
   }
 
   // Load proxy_caller.wasm
-  const proxyCallerWasm = await loadProxyCallerWasm();
+  const proxyCallerWasm = loadProxyCallerWasm();
 
   // Convert amounts
   const amountMotes = csprToMotes(amountCspr);
@@ -364,7 +321,7 @@ export const buildUnstakeTransaction = async (
   }
 
   // Use proxy_caller_with_return.wasm because request_unstake returns u64
-  const proxyCallerWasm = await loadProxyCallerWithReturnWasm();
+  const proxyCallerWasm = loadProxyCallerWithReturnWasm();
   const amountMotes = csprToMotes(amountStCspr);
   const paymentMotes = config.transaction_payment || '10000000000';
 
@@ -487,7 +444,7 @@ export const buildClaimWithdrawalTransaction = async (
   }
 
   // Load proxy_caller.wasm
-  const proxyCallerWasm = await loadProxyCallerWasm();
+  const proxyCallerWasm = loadProxyCallerWasm();
 
   const paymentMotes = config.transaction_payment || '5000000000'; // 5 CSPR for gas
 
@@ -601,7 +558,7 @@ export const buildAddRewardsTransaction = async (
   }
 
   // Load proxy_caller.wasm
-  const proxyCallerWasm = await loadProxyCallerWasm();
+  const proxyCallerWasm = loadProxyCallerWasm();
 
   // Convert amounts
   const amountMotes = csprToMotes(amountCspr);
