@@ -123,7 +123,7 @@ StakeVue: ~14 hours unbonding 🚀
 > "I have serious capital and need serious solutions"
 
 - ✅ Multi-validator distribution (spread your risk)
-- ✅ 11 vetted validators on testnet
+- ✅ Multiple vetted validators supported
 - ✅ No minimum unstake (need 50 CSPR back? no problem)
 - ✅ Transparent on-chain tracking
 
@@ -321,28 +321,9 @@ cargo odra test
 | **Contract** | [`2d6a39...`](https://testnet.cspr.live/contract/2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3) |
 | **Network** | Casper Testnet 2.0 |
 | **Framework** | Odra 2.5.0 |
-| **Validators** | 11 approved |
+| **Validators** | 11 active |
 | **Tests** | 12/12 passing |
 | **Unbonding** | ~14 hours (7 eras) |
-
----
-
-## 🗺️ Roadmap
-
-### ✅ Done
-- [x] Core staking/unstaking
-- [x] CEP-18 stCSPR token
-- [x] Multi-validator support
-- [x] Exchange rate mechanism
-- [x] Security hardening
-- [x] Full cycle tested on testnet
-
-### 🔜 Coming Soon
-- [ ] Mainnet deployment
-- [ ] Auto-compounding bot
-- [ ] stCSPR/CSPR DEX pool
-- [ ] Governance token
-- [ ] Mobile app
 
 ---
 
@@ -368,7 +349,7 @@ Unbonding takes ~14 hours. If you need CSPR faster, you could (once DEX integrat
 <details>
 <summary><b>How are validators chosen?</b></summary>
 
-We've whitelisted 11 reliable testnet validators. On mainnet, we'll implement a more sophisticated selection based on performance, commission, and uptime.
+Validators are whitelisted by the admin. The contract supports multiple validators for risk distribution.
 </details>
 
 <details>
@@ -387,6 +368,29 @@ Your stCSPR should always be worth at least what you put in, plus rewards. Howev
 
 Not financial advice!
 </details>
+
+---
+
+## 📜 Version History
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| **V22** | Dec 2025 | SDK Compatibility - U512 for request_unstake, fixes Error 19 |
+| **V21** | Dec 2025 | Odra 2.5.0 framework upgrade |
+| **V20** | Dec 2025 | Pool Architecture (Wise Lending style) - fixes error 64658 |
+| **V19** | Dec 2025 | Native Odra delegation attempt (failed) |
+| **V18** | Dec 2025 | Delegation debug tools |
+| **V17** | Dec 2025 | Multi-validator delegation |
+| **V16** | Dec 2025 | Visual overhaul, validator selector |
+| **V15** | Dec 2025 | Exchange rate mechanism |
+| **V14** | Dec 2025 | Integrated CEP-18 token |
+| **V13** | Dec 2025 | Minimal payable test |
+| **V8** | Dec 2025 | First Odra version |
+| **V5** | Nov 2025 | Security hardening (overflow/underflow) |
+| **V4** | Nov 2025 | Multi-validator support |
+| **V3** | Nov 2025 | stCSPR liquid token |
+| **V2** | Nov 2025 | Per-user stake tracking |
+| **V1** | Nov 2025 | Initial prototype |
 
 ---
 
