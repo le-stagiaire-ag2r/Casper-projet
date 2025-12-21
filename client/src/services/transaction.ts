@@ -454,7 +454,7 @@ export const buildClaimWithdrawalTransaction = async (
   // Build proxy_caller arguments
   const proxyArgs = Args.fromMap({
     package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
-    entry_point: CLValue.newCLString('claim_withdrawal'),
+    entry_point: CLValue.newCLString('claim'),
     args: bytesToCLList(serializedArgs),
     attached_value: CLValue.newCLUInt512('0'),
     amount: CLValue.newCLUInt512('0'),
