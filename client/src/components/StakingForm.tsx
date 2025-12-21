@@ -775,8 +775,12 @@ export const StakingForm: React.FC = () => {
         try {
           const stored = localStorage.getItem('pendingWithdrawals');
           const withdrawals = stored ? JSON.parse(stored) : [];
+          // Get next request ID (contract uses sequential IDs starting from 1)
+          const lastRequestId = localStorage.getItem('lastRequestId');
+          const nextRequestId = lastRequestId ? parseInt(lastRequestId) + 1 : 1;
+          localStorage.setItem('lastRequestId', nextRequestId.toString());
           withdrawals.push({
-            requestId: Date.now(), // Temporary ID
+            requestId: nextRequestId,
             csprAmount: csprReceived,
             isReady: false,
             isClaimed: false,
