@@ -123,7 +123,7 @@ StakeVue: ~14 hours unbonding 🚀
 > "I have serious capital and need serious solutions"
 
 - ✅ Multi-validator distribution (spread your risk)
-- ✅ 11 vetted validators on testnet
+- ✅ Multiple vetted validators supported
 - ✅ No minimum unstake (need 50 CSPR back? no problem)
 - ✅ Transparent on-chain tracking
 
@@ -321,28 +321,9 @@ cargo odra test
 | **Contract** | [`2d6a39...`](https://testnet.cspr.live/contract/2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3) |
 | **Network** | Casper Testnet 2.0 |
 | **Framework** | Odra 2.5.0 |
-| **Validators** | 11 approved |
+| **Validators** | Multi-validator ready |
 | **Tests** | 12/12 passing |
 | **Unbonding** | ~14 hours (7 eras) |
-
----
-
-## 🗺️ Roadmap
-
-### ✅ Done
-- [x] Core staking/unstaking
-- [x] CEP-18 stCSPR token
-- [x] Multi-validator support
-- [x] Exchange rate mechanism
-- [x] Security hardening
-- [x] Full cycle tested on testnet
-
-### 🔜 Coming Soon
-- [ ] Mainnet deployment
-- [ ] Auto-compounding bot
-- [ ] stCSPR/CSPR DEX pool
-- [ ] Governance token
-- [ ] Mobile app
 
 ---
 
@@ -368,7 +349,7 @@ Unbonding takes ~14 hours. If you need CSPR faster, you could (once DEX integrat
 <details>
 <summary><b>How are validators chosen?</b></summary>
 
-We've whitelisted 11 reliable testnet validators. On mainnet, we'll implement a more sophisticated selection based on performance, commission, and uptime.
+Validators are whitelisted by the admin. The contract supports multiple validators for risk distribution.
 </details>
 
 <details>
