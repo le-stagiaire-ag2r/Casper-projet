@@ -321,7 +321,7 @@ cargo odra test
 | **Contract** | [`2d6a39...`](https://testnet.cspr.live/contract/2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3) |
 | **Network** | Casper Testnet 2.0 |
 | **Framework** | Odra 2.5.0 |
-| **Validators** | Multi-validator ready |
+| **Validators** | 11 active |
 | **Tests** | 12/12 passing |
 | **Unbonding** | ~14 hours (7 eras) |
 
@@ -368,6 +368,29 @@ Your stCSPR should always be worth at least what you put in, plus rewards. Howev
 
 Not financial advice!
 </details>
+
+---
+
+## 📜 Version History
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| **V22** | Dec 2025 | SDK Compatibility - U512 for request_unstake, fixes Error 19 |
+| **V21** | Dec 2025 | Odra 2.5.0 framework upgrade |
+| **V20** | Dec 2025 | Pool Architecture (Wise Lending style) - fixes error 64658 |
+| **V19** | Dec 2025 | Native Odra delegation attempt (failed) |
+| **V18** | Dec 2025 | Delegation debug tools |
+| **V17** | Dec 2025 | Multi-validator delegation |
+| **V16** | Dec 2025 | Visual overhaul, validator selector |
+| **V15** | Dec 2025 | Exchange rate mechanism |
+| **V14** | Dec 2025 | Integrated CEP-18 token |
+| **V13** | Dec 2025 | Minimal payable test |
+| **V8** | Dec 2025 | First Odra version |
+| **V5** | Nov 2025 | Security hardening (overflow/underflow) |
+| **V4** | Nov 2025 | Multi-validator support |
+| **V3** | Nov 2025 | stCSPR liquid token |
+| **V2** | Nov 2025 | Per-user stake tracking |
+| **V1** | Nov 2025 | Initial prototype |
 
 ---
 
