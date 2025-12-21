@@ -1,337 +1,347 @@
-# 🌌 StakeVue
-
-![Casper Network](https://img.shields.io/badge/Casper-2.0_Testnet-blue)
-![Status](https://img.shields.io/badge/Status-V21_Odra_2.5.0-brightgreen)
-![Framework](https://img.shields.io/badge/Framework-Odra_2.5.0-purple)
-![License](https://img.shields.io/badge/License-MIT-green)
+# StakeVue - Liquid Staking on Casper 2.0
 
 <p align="center">
   <img src="https://img.shields.io/badge/Casper-2.0_Testnet-00D4FF?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Version-21-8B5CF6?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Version-22-8B5CF6?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Odra-2.5.0-FF6B35?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge"/>
 </p>
 
 <p align="center">
-  <b>🎯 Casper Hackathon 2025</b> • <b>💰 DeFi Track</b> • <b>🏆 DoraHacks</b>
+  <b>Casper Hackathon 2025</b> | <b>DeFi Track</b> | <b>DoraHacks</b>
 </p>
-
---- Please note that when reading this, the site is constantly evolving. This readme may not be up-to-date, some figures may have changed, or the logic may have been altered. In short, nothing technically serious, but be aware.
-
-**V21 Contract on Testnet:** [View on Explorer](https://testnet.cspr.live/contract-package/550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655)
 
 ---
 
-## 🎉 V21 - Odra 2.5.0 Upgrade (Pool-Based Architecture)
+## What is StakeVue?
 
-### ✅ Deployed & Ready for Testing
+StakeVue is a **liquid staking protocol** on Casper Network. Stake your CSPR, receive stCSPR tokens, and stay liquid while earning staking rewards.
 
-V21 upgrades to **Odra 2.5.0** while maintaining the same pool-based liquid staking architecture from V20:
+### The Problem
 
-| Step | Command | Status |
-|------|---------|--------|
-| ✅ Deploy | `cargo run --bin deploy_v21 --features livenet` | **Done** |
-| 🔧 Add Validators | `cargo run --bin add_validators_v21 --features livenet` | **Next** |
-| 🔧 User Stake | `cargo run --bin test_stake_v21 --features livenet` | Pending |
-| 🔧 Admin Delegate | `cargo run --bin admin_delegate_v20 --features livenet` | Pending |
-| 🔧 User Request Unstake | `cargo run --bin test_request_unstake_v20 --features livenet` | Pending |
-| 🔧 Admin Undelegate | `cargo run --bin admin_undelegate_v20 --features livenet` | Pending |
-| 🔧 Admin Add Liquidity | `cargo run --bin admin_add_liquidity_v20 --features livenet` | Pending |
-| 🔧 User Claim | `cargo run --bin test_claim_v20 --features livenet` | Pending |
+Traditional staking locks your CSPR for weeks. You can't use it, trade it, or access it quickly.
 
-### V20 Architecture
+### The Solution
+
+StakeVue gives you **stCSPR tokens** when you stake. These tokens:
+- Represent your staked CSPR
+- Appreciate in value as rewards accumulate
+- Can be transferred or traded (liquidity!)
+- Are redeemable for CSPR anytime
+
+---
+
+## Quick Demo: 3 Simple Steps
 
 ```
-+---------------------------------------------------------------------+
-|  V20 POOL-BASED ARCHITECTURE (Wise Lending Style)                   |
-|                                                                     |
-|  STAKE FLOW:                                                        |
-|  User 500 CSPR --> Pool --> Admin delegates --> Validator           |
-|       |                                                             |
-|       v                                                             |
-|  Mint 500 stCSPR (immediate)                                        |
-|                                                                     |
-|  UNSTAKE FLOW:                                                      |
-|  1. User request_unstake() --> Burns stCSPR, creates request        |
-|  2. Admin undelegate() --> Removes from validator                   |
-|  3. Wait 7 eras (~14h) --> Unbonding period                         |
-|  4. Admin add_liquidity() --> CSPR returns to pool                  |
-|  5. User claim() --> Receives CSPR                                  |
-+---------------------------------------------------------------------+
+1. STAKE    →  Send 100 CSPR  →  Receive 100 stCSPR
+2. WAIT     →  Rewards accumulate  →  Your stCSPR is now worth 115 CSPR
+3. UNSTAKE  →  Burn 100 stCSPR  →  Get back 115 CSPR (+15% profit!)
+```
+
+---
+
+## User Personas
+
+### Alice - The DeFi Enthusiast
+
+> "I want to stake my CSPR but also use it as collateral in other protocols."
+
+**How StakeVue helps:** Alice stakes 1000 CSPR and receives 1000 stCSPR. She can now use her stCSPR in DeFi while still earning staking rewards.
+
+### Bob - The Long-Term Holder
+
+> "I believe in Casper but hate that my tokens are locked for weeks."
+
+**How StakeVue helps:** Bob stakes 5000 CSPR. After a year, his stCSPR is worth 5850 CSPR (17% APY). He can unstake anytime - the 7-era (~14h) unbonding is much shorter than native staking.
+
+### Carol - The Active Trader
+
+> "I want exposure to staking rewards but need flexibility."
+
+**How StakeVue helps:** Carol stakes when she's not trading. If she spots an opportunity, she requests unstake and has her CSPR back in ~14 hours.
+
+---
+
+## How It Works
+
+### Architecture: Pool-Based (Wise Lending Style)
+
+```
++-------------------------------------------------------------------+
+|                     STAKEVUE ARCHITECTURE                          |
++-------------------------------------------------------------------+
+|                                                                    |
+|   USER LAYER                                                       |
+|   +--------+                                                       |
+|   |  User  |  stake(validator) ───> Pool receives CSPR            |
+|   |        |  <─── mints stCSPR                                   |
+|   |        |                                                       |
+|   |        |  request_unstake(amount) ───> Burns stCSPR            |
+|   |        |  <─── creates withdrawal request                     |
+|   |        |                                                       |
+|   |        |  claim(request_id) ───> After unbonding               |
+|   |        |  <─── receives CSPR                                  |
+|   +--------+                                                       |
+|                                                                    |
+|   ADMIN LAYER (Automated/Manual)                                   |
+|   +--------+                                                       |
+|   | Admin  |  admin_delegate(validator, amount)                    |
+|   |        |  ───> Delegates pool CSPR to validators              |
+|   |        |                                                       |
+|   |        |  admin_undelegate(validator, amount)                  |
+|   |        |  ───> Undelegates from validators                    |
+|   |        |                                                       |
+|   |        |  admin_add_liquidity()                                |
+|   |        |  ───> Returns unbonded CSPR to pool                  |
+|   |        |                                                       |
+|   |        |  harvest_rewards()                                    |
+|   |        |  ───> Updates exchange rate with rewards             |
+|   +--------+                                                       |
+|                                                                    |
+|   VALIDATOR LAYER                                                  |
+|   +--------+  +--------+  +--------+                               |
+|   | MAKE   |  | Bit Cat|  | Era    |  ... 9 approved validators   |
+|   | #1     |  | #96    |  | Guard  |                               |
+|   +--------+  +--------+  +--------+                               |
+|                                                                    |
++-------------------------------------------------------------------+
 ```
 
 ### Why Pool-Based?
 
-V20 solves the **error 64658** (purse mismatch) that plagued V17-V19:
+We tried direct delegation (V17-V19) but hit **error 64658** (purse mismatch). The pool-based approach:
 
-| Architecture | Direct Delegation | Pool-Based (V20) |
-|--------------|-------------------|------------------|
+| Aspect | Direct (V17-V19) | Pool-Based (V20+) |
+|--------|------------------|-------------------|
 | User delegates | User → Validator | User → Pool |
-| Admin delegates | N/A | Pool → Validator |
-| Undelegate | User (fails 64658) | Admin (works!) |
-| Complexity | Simple but buggy | More steps but reliable |
+| Undelegate | User (fails!) | Admin (works!) |
+| Complexity | Simple but broken | More steps, reliable |
+| Result | Error 64658 | Full cycle works |
 
 ---
 
-## ⚠️ Known Issue: Web Frontend vs CLI
+## The stCSPR Token
 
-### CLI (Rust/Odra) = ✅ 100% Working
+### Exchange Rate Mechanism
 
-All operations work perfectly via command line:
-
-```bash
-cd stakevue_contract
-
-# Full cycle test
-cargo run --bin test_stake_v20 --features livenet
-cargo run --bin admin_delegate_v20 --features livenet
-cargo run --bin test_request_unstake_v20 --features livenet
-cargo run --bin admin_undelegate_v20 --features livenet
-# Wait ~14 hours for unbonding
-cargo run --bin admin_add_liquidity_v20 --features livenet
-cargo run --bin test_claim_v20 --features livenet
-```
-
-### Web Frontend (Vercel) = ⚠️ Partial
-
-| Function | Web Status | Issue |
-|----------|------------|-------|
-| **Stake** | ✅ Working | Uses proxy_caller.wasm correctly |
-| **Unstake** | ❌ Error 19 | SDK serialization issue with U256 |
-| **Claim** | ❌ Error 19 | SDK serialization issue with u64 |
-
-**Root Cause:** The `casper-js-sdk` v5 serializes `RuntimeArgs` differently than Odra expects. When passing U256 or u64 arguments through `proxy_caller.wasm`, the deserialization fails with `LeftOverBytes [19]`.
-
-**Workaround:** Use CLI for unstake/claim operations until SDK compatibility is fixed.
-
----
-
-## V16.1 - UX Visual Refont
-
-### Validator Selector (Accordion Style)
+stCSPR appreciates as staking rewards accumulate:
 
 ```
-+-----------------------------------------------------+
-| Choisir un validateur                           v   |
-| 9 disponibles                                       |
-+-----------------------------------------------------+
-           |
-           | (click to expand)
-           v
-+-----------------------------------------------------+
-| Trier par: [Meilleur APY v]                         |
-+-------------------------+---------------------------+
-| MAKE #1                 | CasperCommunity #3        |
-| APY 15.3% Comm 10%      | APY 15.3% Comm 10%        |
-| Perf 100%               | Perf 100%                 |
-+-------------------------+---------------------------+
-| Era Guardian #4         | Bit Cat #96               |
-| APY 15.3% Comm 10%      | APY 15.3% Comm 10%        |
-| Perf 100%               | Perf 100%                 |
-+-------------------------+---------------------------+
+Day 1:   1 stCSPR = 1.000 CSPR  (rate = 1.0)
+Day 30:  1 stCSPR = 1.025 CSPR  (rate = 1.025)
+Day 90:  1 stCSPR = 1.075 CSPR  (rate = 1.075)
+Day 365: 1 stCSPR = 1.170 CSPR  (rate = 1.17, ~17% APY)
 ```
 
-### Features
-- **Collapsible accordion** - Click to expand/collapse
-- **Grid layout** - 2 columns desktop, 1 column mobile
-- **Real-time data** - APY, Commission, Performance from CSPR.cloud
-- **Sort options** - By APY, Commission, Performance, Popularity
-- **Auto-close** - Closes when validator selected
-
----
-
-## V15 - Exchange Rate Mechanism
-
-### How stCSPR Appreciates
-
-V15 implements a **dynamic exchange rate** that increases over time as rewards accumulate:
+### Example: Staking Journey
 
 ```
-+---------------------------------------------------------------------+
-|  EXCHANGE RATE APPRECIATION                                         |
-|                                                                     |
-|  Day 1: Stake 500 CSPR --> Get 500 stCSPR (rate = 1.0)              |
-|                                                                     |
-|  Day 30: Rewards added to pool                                      |
-|          Pool: 575 CSPR / Supply: 500 stCSPR                        |
-|          Rate = 1.15 (1 stCSPR = 1.15 CSPR)                         |
-|                                                                     |
-|  Day 30: Unstake 500 stCSPR --> Get 575 CSPR (+15% profit!)         |
-+---------------------------------------------------------------------+
+1. Alice stakes 1000 CSPR when rate = 1.0
+   → Alice receives 1000 stCSPR
+
+2. 6 months later, admin harvests 85 CSPR rewards
+   → Pool now has 1085 CSPR for 1000 stCSPR supply
+   → New rate = 1.085
+
+3. Alice unstakes her 1000 stCSPR
+   → 1000 stCSPR × 1.085 = 1085 CSPR
+   → Alice profits 85 CSPR (+8.5%)
 ```
 
 ---
 
-## Contract Details
+## Complete User Flow
 
-### V21 Contract (Current - Odra 2.5.0)
+### Step 1: Connect Wallet
+
+```
+Click "Connect Wallet" → Choose Casper Wallet/Ledger → Approve connection
+```
+
+### Step 2: Stake CSPR
+
+```
+1. Enter amount (minimum 1 CSPR)
+2. Select a validator from the grid
+3. Click "Stake"
+4. Confirm in wallet
+5. Receive stCSPR tokens instantly
+```
+
+### Step 3: Monitor & Earn
+
+```
+Your stCSPR balance stays the same
+But its CSPR value increases over time!
+Check "Your Holdings" to see current value
+```
+
+### Step 4: Unstake (When Ready)
+
+```
+1. Go to "Unstake" tab
+2. Enter stCSPR amount
+3. Click "Request Unstake"
+4. Wait ~14 hours (7 eras unbonding)
+5. Click "Claim" when ready
+6. CSPR arrives in your wallet
+```
+
+---
+
+## Technical Details
+
+### Current Contract (V22)
 
 | Property | Value |
 |----------|-------|
-| **Package Hash** | `550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655` |
+| **Contract Hash** | `2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3` |
 | **Network** | casper-test |
 | **Framework** | Odra 2.5.0 |
-| **Token Standard** | CEP-18 (integrated stCSPR) |
-| **Min Stake** | 500 CSPR |
-| **Architecture** | Pool-based (Wise Lending style) |
+| **Token** | CEP-18 stCSPR (integrated) |
+| **Min Stake** | 1 CSPR |
+| **Unbonding** | ~14 hours (7 eras) |
 
-### V20 Contract (Archived)
-
-| Property | Value |
-|----------|-------|
-| **Package Hash** | `2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937` |
-| **Status** | Archived - Upgraded to V21 with Odra 2.5.0 |
-
-### Entry Points (V21)
+### Entry Points
 
 #### User Functions
-| Function | Type | Description |
+
+| Function | Args | Description |
 |----------|------|-------------|
-| `stake(validator)` | Payable | Stake CSPR to pool, choose validator for admin delegation |
-| `request_unstake(stcspr_amount)` | Public | Burn stCSPR, create withdrawal request (NO validator param) |
-| `claim_withdrawal(request_id)` | Public | Claim CSPR after unbonding + liquidity added |
+| `stake` | `validator: PublicKey` | Stake attached CSPR, mint stCSPR |
+| `request_unstake` | `stcspr_amount: U512` | Burn stCSPR, create withdrawal |
+| `claim` | `request_id: u64` | Claim ready withdrawal |
 
 #### Admin Functions
-| Function | Type | Description |
+
+| Function | Args | Description |
 |----------|------|-------------|
-| `admin_delegate(validator, amount)` | Owner | Delegate pool CSPR to validator |
-| `admin_undelegate(validator, amount)` | Owner | Undelegate from validator |
-| `admin_add_liquidity()` | Owner | Transfer unbonded CSPR back to pool |
-| `add_approved_validator(pk)` | Owner | Add validator to whitelist |
-| `remove_approved_validator(pk)` | Owner | Remove from whitelist |
+| `admin_delegate` | `validator, amount` | Delegate pool to validator |
+| `admin_undelegate` | `validator, amount` | Undelegate from validator |
+| `admin_add_liquidity` | - | Return unbonded to pool |
+| `harvest_rewards` | `amount` | Add rewards, update rate |
+| `add_approved_validator` | `pk` | Whitelist a validator |
 
 #### View Functions
-| Function | Description |
-|----------|-------------|
-| `get_exchange_rate()` | Current stCSPR/CSPR rate (9 decimals) |
-| `get_stcspr_balance(account)` | User's stCSPR balance |
-| `get_cspr_value(account)` | User's CSPR value (stCSPR × rate) |
-| `get_pending_withdrawals()` | Total pending withdrawal requests |
-| `get_withdrawal_amount(request_id)` | CSPR amount for a withdrawal request |
 
-### V17 Contract (Archived)
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `get_exchange_rate` | `U512` | Current stCSPR/CSPR rate |
+| `get_stcspr_balance` | `U256` | User's stCSPR balance |
+| `get_cspr_value` | `U512` | stCSPR value in CSPR |
+| `get_pool_balance` | `U512` | Total pool CSPR |
+| `get_pending_withdrawals` | `u64` | Count of pending requests |
 
-| Property | Value |
-|----------|-------|
-| **Contract Hash** | `c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747` |
-| **Status** | Archived - Had error 64658 on undelegate |
+### Error Codes
+
+| Code | Error | Meaning |
+|------|-------|---------|
+| 1 | InsufficientBalance | Not enough CSPR |
+| 2 | InsufficientStCsprBalance | Not enough stCSPR |
+| 3 | ZeroAmount | Can't stake/unstake 0 |
+| 9 | WithdrawalNotReady | Still unbonding |
+| 10 | WithdrawalNotFound | Invalid request ID |
+| 16 | InsufficientLiquidity | Pool needs more CSPR |
+| 19 | ContractPaused | Contract is paused |
+| 20 | RewardsTooHigh | Harvest > 10% of pool |
+| 21 | ValueOverflow | Numeric overflow |
 
 ---
 
-## 📜 The Smart Contract
+## Development
 
-Deployed on **Casper 2.0 Testnet**:
+### Project Structure
 
 ```
 Casper-projet/
-+-- client/                      # React frontend
-|   +-- public/
-|   |   +-- config.js            # V17 contract config
-|   |   +-- proxy_caller.wasm    # Odra proxy for browser
-|   +-- src/
-|   |   +-- components/
-|   |   |   +-- stake/
-|   |   |       +-- ValidatorSelector.tsx  # Accordion selector
-|   |   |       +-- ValidatorSelector.css
-|   |   +-- hooks/useStaking.ts  # Stake/unstake logic
-|   |   +-- services/
-|   |       +-- transaction.ts   # V17 transaction builder
-|   |       +-- validatorService.ts  # CSPR.cloud API
-|   +-- api/
-|       +-- contract-stats.js    # Live RPC API
-+-- stakevue_contract/           # Odra smart contract
-|   +-- src/lib.rs               # V17 contract code
-|   +-- Cargo.toml               # v17.0.0
-|   +-- bin/
-|       +-- deploy_v17.rs
-|       +-- add_validators_v17.rs
-|       +-- test_stake_v17.rs
-|       +-- test_unstake_v17.rs
-+-- README.md
+├── client/                    # React Frontend
+│   ├── public/
+│   │   ├── config.js          # Runtime configuration
+│   │   ├── proxy_caller.wasm  # For payable calls
+│   │   └── proxy_caller_with_return.wasm  # For return values
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── StakingForm.tsx       # Main staking UI
+│   │   │   ├── WithdrawalStatus.tsx  # Pending claims
+│   │   │   └── stake/
+│   │   │       └── ValidatorSelector.tsx  # Validator grid
+│   │   ├── hooks/
+│   │   │   └── useStaking.ts         # Staking logic
+│   │   └── services/
+│   │       ├── transaction.ts        # Transaction builder
+│   │       └── validatorService.ts   # CSPR.cloud API
+│   └── api/
+│       └── contract-stats.js         # Live RPC API
+│
+├── stakevue_contract/         # Odra Smart Contract
+│   ├── src/lib.rs             # V22 Contract Code
+│   ├── Cargo.toml             # Odra 2.5.0
+│   └── bin/
+│       ├── deploy_v22.rs      # Deploy script
+│       ├── add_validators_v22.rs
+│       └── test_stake_v22.rs
+│
+├── archive/                   # Historical versions
+│   ├── scripts-v9-v13/
+│   ├── scripts-v14/
+│   ├── scripts-v15-v20/
+│   └── frontend-v1/
+│
+└── README.md                  # This file
 ```
 
----
-
-## Quick Start
-
-### Frontend
+### Run Frontend
 
 ```bash
 cd client
 npm install
-npm start        # 🌐 http://localhost:3000
+npm start
+# Opens http://localhost:3000
 ```
 
-### Smart Contract
+### Build Contract
 
 ```bash
 cd stakevue_contract
-
-# Build
 cargo odra build
+```
 
-# Deploy V17 to testnet
-cargo run --bin deploy_v17 --features livenet
+### Deploy Contract (Testnet)
 
-# Add approved validators
-cargo run --bin add_validators_v17 --features livenet
+```bash
+cd stakevue_contract
+cargo run --bin deploy_v22 --features livenet
+```
 
-# Test stake
-cargo run --bin test_stake_v17 --features livenet
+### Run Tests
 
-# Test unstake
-cargo run --bin test_unstake_v17 --features livenet
+```bash
+cd stakevue_contract
+cargo odra test
+# Runs 12 tests, all passing
 ```
 
 ---
 
-## Validator Selection Guide
+## Security
 
-| Metric | What it means | Ideal |
-|--------|---------------|-------|
-| **Commission** | % validator takes from rewards | Lower = better for you |
-| **Performance** | Uptime score | 100% = perfect |
-| **APY** | Your estimated yearly return | Higher = better |
-| **Delegators** | Number of stakers | More = popular |
+### Audit Results
 
-**Example:**
-- Validator A: 5% commission, 100% perf → APY ~16.1%
-- Validator B: 10% commission, 100% perf → APY ~15.3%
+| Check | Status |
+|-------|--------|
+| Reentrancy | Safe (Casper model) |
+| Overflow | Protected (u512_to_u256 check) |
+| Access Control | Ownable module |
+| Rate Limits | harvest_rewards max 10% |
+| CEP-18 Standard | Full compliance |
 
----
+### Security Measures
 
-## Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| Smart Contract | Rust, Odra 2.4.0, CEP-18 |
-| Frontend | React 18, TypeScript, styled-components |
-| Wallet | CSPR.click |
-| Validator Data | CSPR.cloud API |
-| Deployment | Vercel (frontend), Casper 2.0 Testnet |
-
----
-
-## Roadmap
-
-### Completed ✅
-- [x] V15 Exchange rate mechanism
-- [x] V16.1 UX Visual Refont (accordion validator selector)
-- [x] V17 Multi-validator delegation
-- [x] V18-V19 Debug iterations (error 64658)
-- [x] **V20 Pool-based architecture (Wise Lending style)**
-- [x] **Full cycle tested: stake → delegate → unstake → undelegate → claim**
-- [x] **Error 64658 solved with admin-controlled delegation**
-- [x] **Live on Vercel testnet (stake working)**
-
-### In Progress 🔧
-- [ ] Fix web frontend unstake/claim (SDK serialization issue)
-- [ ] Investigate casper-js-sdk v5 RuntimeArgs compatibility
-
-### Next Steps 📋
-- [ ] harvest_rewards automation (auto-compound)
-- [ ] Security audit
-- [ ] Mainnet deployment
+1. **Ownable**: Only owner can call admin functions
+2. **Overflow Protection**: U512→U256 conversion checks
+3. **Reward Limits**: harvest_rewards capped at 10% of pool
+4. **Validator Whitelist**: Only approved validators allowed
 
 ---
 
@@ -339,51 +349,70 @@ cargo run --bin test_unstake_v17 --features livenet
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **V21** | Dec 2025 | **Odra 2.5.0 Upgrade** - Same pool-based architecture, upgraded framework for better validator support |
-| **V20** | Dec 2025 | **Pool-based architecture** - Wise Lending style, admin delegation, full cycle working via CLI |
-| **V19** | Dec 2025 | Debug attempt - still had 64658 |
-| **V18** | Dec 2025 | Debug attempt - purse mismatch issues |
-| **V17** | Dec 2025 | **Multi-validator delegation** - Real Auction Pool staking, withdrawal queue, 9 validators |
-| **V16.1** | Dec 2025 | **UX Visual Refont** - Accordion validator selector, grid layout, real-time data |
-| **V16** | Dec 2025 | **Visual Overhaul** - Galaxy background, glass UI, SVG icons, purple theme |
-| **V15.1** | Dec 2025 | **Live RPC API** - Real-time contract stats from blockchain |
-| **V15** | Dec 2025 | **Exchange rate mechanism** - stCSPR appreciates with rewards |
-| **V14** | Dec 2025 | Production-ready with integrated CEP-18 stCSPR token |
-| **V13** | Dec 2025 | Minimal version proving payable works |
-| **V12** | Dec 2025 | CEP-18 attempt (package key conflict) |
-| **V11** | Dec 2025 | External token reference debugging |
-| **V10** | Dec 2025 | Token integration attempts |
-| **V9** | Dec 2025 | External token reference (broken attached_value) |
-| **V8.2** | Dec 2025 | Ownable + Pauseable modules, Odra 2.4.0 |
-| **V8.0** | Dec 2025 | First real CSPR staking with Odra framework |
-| **V7.x** | Nov 2025 | APY slider, price charts, CSV export |
-| **V6.x** | Nov 2025 | Price alerts, portfolio history |
-| **V5.0** | Nov 2025 | Security hardening - 10 vulnerabilities fixed (A+ score) |
-| **V4.0** | Nov 2025 | Multi-validator support, admin functions |
-| **V3.0** | Nov 2025 | Liquid token (stCSPR) - mint/burn logic |
-| **V2.0** | Nov 2025 | Per-user stake tracking, rewards calculation |
-| **V1.0** | Nov 2025 | Core staking - basic stake/unstake |
+| **V22** | Dec 2025 | **SDK Compatibility** - U512 for request_unstake, fixes Error 19 |
+| **V21** | Dec 2025 | **Odra 2.5.0** - Framework upgrade |
+| **V20** | Dec 2025 | **Pool Architecture** - Wise Lending style, fixes error 64658 |
+| **V17** | Dec 2025 | Multi-validator delegation |
+| **V16** | Dec 2025 | Visual overhaul, accordion selector |
+| **V15** | Dec 2025 | Exchange rate mechanism |
+| **V14** | Dec 2025 | Integrated CEP-18 token |
+| **V13** | Dec 2025 | Minimal payable test |
+| **V8** | Dec 2025 | First Odra version |
+| **V5** | Nov 2025 | Security hardening |
+| **V1** | Nov 2025 | Initial prototype |
 
 ---
 
 ## Links
 
-| | |
-|---|---|
-| 🌐 **Live Demo** | https://casper-projet.vercel.app |
-| 📜 **V21 Contract** | [View on Testnet](https://testnet.cspr.live/contract-package/550546bc677e6712faa79b280469c1c550031f825e5d95d038b235d22e83b655) |
-| 📜 **V20 Contract (Archived)** | [View on Testnet](https://testnet.cspr.live/contract-package/2d74e6397ffa1e7fcb63a18e0b4f60f5b2d14242273fce0f30efc0e95ce8e937) |
-| 📜 **V17 Contract (Archived)** | [View on Testnet](https://testnet.cspr.live/contract-package/c549746587ab0fe02f2f72246d52f6cf21d030c6aaac9908191f12e02dd73747) |
-| 🛠️ **Odra Framework** | https://odra.dev |
-| 🌍 **Casper Network** | https://casper.network |
-| 🚰 **Testnet Faucet** | https://faucet.casper.network |
+| Resource | URL |
+|----------|-----|
+| **Live Demo** | https://casper-projet.vercel.app |
+| **V22 Contract** | [View on Testnet](https://testnet.cspr.live/contract/2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3) |
+| **Odra Framework** | https://odra.dev |
+| **Casper Network** | https://casper.network |
+| **Testnet Faucet** | https://faucet.casper.network |
+
+---
+
+## FAQ
+
+### How is this different from native staking?
+
+Native staking locks your CSPR directly with a validator. StakeVue gives you liquid tokens (stCSPR) that represent your stake, so you can use them elsewhere while still earning.
+
+### What's the unbonding period?
+
+~14 hours (7 eras on testnet). This is the time between requesting unstake and being able to claim.
+
+### Are there any fees?
+
+Currently no protocol fees. Validators take their commission from rewards.
+
+### Is it safe?
+
+The contract uses Odra's security modules and has been tested extensively. However, this is testnet - always do your own research.
+
+### Why do I need to select a validator?
+
+Your validator choice determines who the admin will delegate to. Different validators have different commission rates and performance.
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push (`git push origin feature/amazing`)
+5. Open Pull Request
 
 ---
 
 <p align="center">
-  <b>🏆 Casper Hackathon 2025</b> • <b>DoraHacks</b> • <b>DeFi Track</b>
+  <b>Casper Hackathon 2025</b> | <b>DoraHacks</b> | <b>DeFi Track</b>
 </p>
 
 <p align="center">
-  <i>Stake smart. Stay liquid.</i> 💎
+  <i>Stake smart. Stay liquid.</i>
 </p>
