@@ -1,20 +1,20 @@
 # StakeVue Release Notes: V18 → V22
 
-> **Période de développement**: Décembre 2025
+> **Development Period**: December 2025
 > **Framework**: Odra 2.4.0 → 2.5.0
-> **Réseau**: Casper Testnet 2.0
+> **Network**: Casper Testnet 2.0
 
 ---
 
-## 📋 Résumé des Versions
+## 📋 Version Summary
 
-| Version | Date | Changement Principal | Statut |
-|---------|------|---------------------|--------|
-| **V22** | 19 Dec | SDK Compatibility (U512 fix) | ✅ **Actuelle** |
-| **V21** | 19 Dec | Odra 2.5.0 Upgrade | ✅ Testé |
-| **V20** | 18 Dec | Pool Architecture (Wise Lending) | ✅ Testé |
-| **V19** | 17 Dec | Native Odra delegate/undelegate | ❌ Error 64658 |
-| **V18** | 16 Dec | Delegation Debug Tools | ❌ Error 64658 |
+| Version | Date | Main Change | Status |
+|---------|------|-------------|--------|
+| **V22** | Dec 19 | SDK Compatibility (U512 fix) | ✅ **Current** |
+| **V21** | Dec 19 | Odra 2.5.0 Upgrade | ✅ Tested |
+| **V20** | Dec 18 | Pool Architecture (Wise Lending) | ✅ Tested |
+| **V19** | Dec 17 | Native Odra delegate/undelegate | ❌ Error 64658 |
+| **V18** | Dec 16 | Delegation Debug Tools | ❌ Error 64658 |
 
 ---
 
@@ -22,41 +22,41 @@
 
 **Contract Hash**: `2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3`
 
-### Problème Résolu
+### Problem Solved
 
-L'appel `request_unstake` depuis le frontend web causait l'**Error 19 (LeftOverBytes)**. Le SDK JavaScript encodait les montants en U512 mais le contrat attendait U256.
+Calling `request_unstake` from the web frontend caused **Error 19 (LeftOverBytes)**. The JavaScript SDK encoded amounts as U512 but the contract expected U256.
 
-### Changements
+### Changes
 
 ```rust
-// AVANT (V21)
+// BEFORE (V21)
 pub fn request_unstake(&mut self, stcspr_amount: U256) -> u64
 
-// APRÈS (V22)
+// AFTER (V22)
 pub fn request_unstake(&mut self, stcspr_amount: U512) -> u64
 ```
 
-### Évènement Modifié
+### Modified Event
 
 ```rust
 pub struct UnstakeRequested {
     pub staker: Address,
     pub request_id: u64,
-    pub stcspr_amount: U512,  // Changé de U256 à U512
+    pub stcspr_amount: U512,  // Changed from U256 to U512
     pub cspr_amount: U512,
 }
 ```
 
-### Résultat
+### Result
 
-- ✅ Unstake fonctionne depuis le frontend
-- ✅ Cycle complet stake → unstake → claim testé et validé
-- ✅ 12 tests passent
+- ✅ Unstake works from frontend
+- ✅ Full cycle stake → unstake → claim tested and validated
+- ✅ 12 tests passing
 
-### Transactions de Test
+### Test Transactions
 
-| Action | Transaction Hash | Montant | Statut |
-|--------|-----------------|---------|--------|
+| Action | Transaction Hash | Amount | Status |
+|--------|-----------------|--------|--------|
 | Stake | `43dc3f14...` | 25 CSPR | ✅ Success |
 | Unstake | `edc4cd05...` | 20 CSPR | ✅ Success |
 | Claim | `75f598bd...` | 5 CSPR | ✅ Success |
@@ -65,14 +65,14 @@ pub struct UnstakeRequested {
 
 ## V21 - Odra 2.5.0 Upgrade
 
-### Changements
+### Changes
 
-- Upgrade framework Odra 2.4.0 → **2.5.0**
-- Meilleur support des validateurs
-- Même architecture pool-based que V20
-- Corrections de bugs internes Odra
+- Framework upgrade Odra 2.4.0 → **2.5.0**
+- Better validator support
+- Same pool-based architecture as V20
+- Internal Odra bug fixes
 
-### Dépendances
+### Dependencies
 
 ```toml
 [dependencies]
@@ -85,19 +85,19 @@ odra-test = "2.5.0"
 
 ### Tests
 
-- ✅ 12/12 tests passent
-- ✅ Déploiement testnet réussi
-- ❌ Frontend unstake échouait (Error 19) → Corrigé en V22
+- ✅ 12/12 tests passing
+- ✅ Testnet deployment successful
+- ❌ Frontend unstake failed (Error 19) → Fixed in V22
 
 ---
 
 ## V20 - Pool Architecture (Wise Lending Style) ✅
 
-### Pourquoi Ce Changement ?
+### Why This Change?
 
-Les versions V17-V19 tentaient de déléguer directement depuis le contrat vers les validateurs, mais Casper 2.0 retournait systématiquement **Error 64658** (purse mismatch).
+Versions V17-V19 attempted to delegate directly from the contract to validators, but Casper 2.0 consistently returned **Error 64658** (purse mismatch).
 
-Après analyse des transactions de **Wise Lending** sur testnet, nous avons adopté leur architecture pool-based.
+After analyzing **Wise Lending** transactions on testnet, we adopted their pool-based architecture.
 
 ### Architecture
 
@@ -106,8 +106,8 @@ Après analyse des transactions de **Wise Lending** sur testnet, nous avons adop
 │                    POOL ARCHITECTURE V20                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│   UTILISATEUR                    ADMIN                      │
-│   ───────────                    ─────                      │
+│   USER                           ADMIN                      │
+│   ────                           ─────                      │
 │   stake() ────────────┐   ┌───── admin_delegate()           │
 │                       │   │                                 │
 │   request_unstake() ──┼───┼───── admin_undelegate()         │
@@ -116,94 +116,94 @@ Après analyse des transactions de **Wise Lending** sur testnet, nous avons adop
 │                       ▼   ▼                                 │
 │                 ┌───────────────┐                           │
 │                 │     POOL      │                           │
-│                 │   (CSPR)      │                           │
+│                 │    (CSPR)     │                           │
 │                 └───────┬───────┘                           │
 │                         │                                   │
 │                         ▼                                   │
 │              ┌─────────────────────┐                        │
-│              │    VALIDATORS       │                        │
-│              │  (délégation admin) │                        │
+│              │     VALIDATORS      │                        │
+│              │  (admin delegation) │                        │
 │              └─────────────────────┘                        │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Entry Points Utilisateur
+### User Entry Points
 
-| Fonction | Description |
+| Function | Description |
 |----------|-------------|
 | `stake(validator)` | CSPR → pool, mint stCSPR |
-| `request_unstake(amount)` | Burn stCSPR, crée demande |
-| `claim(request_id)` | Récupère CSPR (si prêt) |
+| `request_unstake(amount)` | Burn stCSPR, create request |
+| `claim(request_id)` | Retrieve CSPR (if ready) |
 
-### Entry Points Admin
+### Admin Entry Points
 
-| Fonction | Description |
+| Function | Description |
 |----------|-------------|
-| `admin_delegate(validator, amount)` | Délègue du pool vers validateur |
-| `admin_undelegate(validator, amount)` | Undélègue d'un validateur |
-| `admin_add_liquidity()` | Retourne CSPR undélégué au pool |
-| `harvest_rewards(amount)` | Ajoute rewards, update taux |
+| `admin_delegate(validator, amount)` | Delegate from pool to validator |
+| `admin_undelegate(validator, amount)` | Undelegate from a validator |
+| `admin_add_liquidity()` | Return undelegated CSPR to pool |
+| `harvest_rewards(amount)` | Add rewards, update exchange rate |
 
-### Résultat
+### Result
 
-- ✅ Plus d'erreur 64658
-- ✅ Cycle complet fonctionne
-- ✅ Architecture production-ready
+- ✅ No more error 64658
+- ✅ Full cycle works
+- ✅ Production-ready architecture
 
 ---
 
 ## V19 - Native Odra Delegation ❌
 
-### Tentative
+### Attempt
 
-Utiliser les fonctions natives Odra pour la délégation :
+Use native Odra functions for delegation:
 
 ```rust
 self.env().delegate(validator, amount, None);
 self.env().undelegate(validator, amount, None);
 ```
 
-### Problème
+### Problem
 
-**Error 64658** (purse mismatch) persistait. Le contrat ne peut pas undéléguer des fonds qu'il a délégués car le "purse" (portefeuille interne) ne correspond pas.
+**Error 64658** (purse mismatch) persisted. The contract cannot undelegate funds it delegated because the "purse" (internal wallet) doesn't match.
 
-### Leçon Apprise
+### Lesson Learned
 
-Sur Casper 2.0, les opérations d'undelegation doivent être faites par la même entité qui a délégué. Un contrat smart ne peut pas facilement récupérer des fonds délégués.
+On Casper 2.0, undelegation operations must be performed by the same entity that delegated. A smart contract cannot easily recover delegated funds.
 
 ---
 
 ## V18 - Delegation Debug ❌
 
-### Fonctionnalités
+### Features
 
-- Pre-flight checks avant undelegate
-- Fonctions de diagnostic pour debugger l'état de délégation
-- Logs détaillés des opérations
+- Pre-flight checks before undelegate
+- Diagnostic functions to debug delegation state
+- Detailed operation logs
 
-### Fonctions Debug Ajoutées
+### Debug Functions Added
 
 ```rust
 pub fn get_delegation_info(&self, validator: PublicKey) -> DelegationInfo
 pub fn check_undelegate_feasibility(&self, validator: PublicKey, amount: U512) -> bool
 ```
 
-### Problème
+### Problem
 
-Malgré les diagnostics, **Error 64658** continuait. Le problème était fondamental dans l'architecture, pas dans l'implémentation.
+Despite diagnostics, **Error 64658** continued. The problem was fundamental to the architecture, not the implementation.
 
 ### Conclusion
 
-V18 a permis de comprendre que le problème n'était pas un bug mais une limitation architecturale de Casper 2.0.
+V18 helped understand that the issue wasn't a bug but an architectural limitation of Casper 2.0.
 
 ---
 
-## 🔧 Corrections Sécurité (V22)
+## 🔧 Security Fixes (V22)
 
-Après l'analyse CasperSecure, les corrections suivantes ont été ajoutées :
+After CasperSecure analysis, the following fixes were added:
 
-### 1. Limite harvest_rewards
+### 1. harvest_rewards Limit
 
 ```rust
 pub fn harvest_rewards(&mut self, reward_amount: U512) {
@@ -219,7 +219,7 @@ pub fn harvest_rewards(&mut self, reward_amount: U512) {
 }
 ```
 
-### 2. Protection Overflow U512→U256
+### 2. U512→U256 Overflow Protection
 
 ```rust
 fn u512_to_u256(value: U512) -> U256 {
@@ -236,80 +236,80 @@ fn u512_to_u256(value: U512) -> U256 {
 }
 ```
 
-### 3. Nouveaux Codes d'Erreur
+### 3. New Error Codes
 
-| Code | Erreur | Description |
-|------|--------|-------------|
-| 19 | ContractPaused | Contrat en pause |
-| 20 | RewardsTooHigh | Harvest > 10% pool |
-| 21 | ValueOverflow | Overflow numérique |
+| Code | Error | Description |
+|------|-------|-------------|
+| 19 | ContractPaused | Contract is paused |
+| 20 | RewardsTooHigh | Harvest > 10% of pool |
+| 21 | ValueOverflow | Numeric overflow |
 
 ---
 
-## 📊 Évolution des Métriques
+## 📊 Metrics Evolution
 
-| Métrique | V18 | V19 | V20 | V21 | V22 |
-|----------|-----|-----|-----|-----|-----|
+| Metric | V18 | V19 | V20 | V21 | V22 |
+|--------|-----|-----|-----|-----|-----|
 | **Tests** | 8 | 8 | 10 | 12 | 12 |
 | **Entry Points** | 18 | 16 | 20 | 20 | 20 |
-| **Lignes Rust** | ~450 | ~420 | ~520 | ~520 | ~540 |
+| **Rust Lines** | ~450 | ~420 | ~520 | ~520 | ~540 |
 | **Architecture** | Direct | Direct | Pool | Pool | Pool |
-| **Statut** | ❌ | ❌ | ✅ | ⚠️ | ✅ |
+| **Status** | ❌ | ❌ | ✅ | ⚠️ | ✅ |
 
 ---
 
 ## 🚀 Migration V21 → V22
 
-### Changements Breaking
+### Breaking Changes
 
-**Aucun pour les utilisateurs**. Seule la signature interne de `request_unstake` change.
+**None for users**. Only the internal signature of `request_unstake` changes.
 
-### Pour le Frontend
+### For Frontend
 
 ```typescript
-// AVANT (V21 - causait Error 19)
+// BEFORE (V21 - caused Error 19)
 const args = Args.fromMap({
     stcspr_amount: CLValue.newCLU256(amount),  // ❌
 });
 
-// APRÈS (V22 - fonctionne)
+// AFTER (V22 - works)
 const args = Args.fromMap({
     stcspr_amount: CLValue.newCLU512(amount),  // ✅
 });
 ```
 
-### Étapes de Migration
+### Migration Steps
 
-1. Redéployer le contrat V22
-2. Mettre à jour `config.js` avec nouveau hash
-3. ✅ C'est tout!
-
----
-
-## 🎯 Leçons Clés
-
-1. **Casper 2.0 purse model**: Les contrats ne peuvent pas undéléguer directement → utiliser architecture pool
-2. **SDK type matching**: Le type Rust doit correspondre exactement au type JS SDK
-3. **Error 19 = LeftOverBytes**: Souvent un problème de type (U256 vs U512)
-4. **Error 64658 = Purse mismatch**: Problème architectural, pas de bug
+1. Redeploy V22 contract
+2. Update `config.js` with new hash
+3. ✅ That's it!
 
 ---
 
-## 📝 Fichiers Modifiés
+## 🎯 Key Lessons
+
+1. **Casper 2.0 purse model**: Contracts cannot undelegate directly → use pool architecture
+2. **SDK type matching**: Rust type must exactly match JS SDK type
+3. **Error 19 = LeftOverBytes**: Often a type mismatch issue (U256 vs U512)
+4. **Error 64658 = Purse mismatch**: Architectural problem, not a bug
+
+---
+
+## 📝 Modified Files
 
 ### V22
-- `stakevue_contract/src/lib.rs` - U512 pour request_unstake
-- `client/src/services/transaction.ts` - Fix entry point claim
+- `stakevue_contract/src/lib.rs` - U512 for request_unstake
+- `client/src/services/transaction.ts` - Fix claim entry point
 - `client/src/components/StakingForm.tsx` - Fix request ID tracking
 
 ### V20
-- Architecture complètement réécrite
-- Nouveaux entry points admin_*
-- Suppression des appels directs à auction contract
+- Architecture completely rewritten
+- New admin_* entry points
+- Removed direct auction contract calls
 
 ---
 
-## 🔗 Liens Utiles
+## 🔗 Useful Links
 
 | Resource | URL |
 |----------|-----|
@@ -320,4 +320,4 @@ const args = Args.fromMap({
 
 ---
 
-*Dernière mise à jour: 21 Décembre 2025*
+*Last updated: December 21, 2025*
