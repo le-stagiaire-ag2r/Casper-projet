@@ -43,6 +43,9 @@ pub enum Error {
     InsufficientLiquidity = 16,
     NothingToDelegate = 17,
     NothingToUndelegate = 18,
+    ContractPaused = 19,
+    RewardsTooHigh = 20,
+    ValueOverflow = 21,
 }
 
 // ============================================================================
@@ -683,6 +686,7 @@ impl StakeVue {
 
     /// Harvest rewards and add to pool (owner only)
     /// This increases the exchange rate
+    /// Limited to 10% of pool per call to prevent manipulation
     #[odra(payable)]
     pub fn harvest_rewards(&mut self) {
         self.ownable.assert_owner(&self.env().caller());
@@ -693,6 +697,13 @@ impl StakeVue {
         }
 
         let pool = self.total_cspr_pool.get_or_default();
+
+        // Security: limit rewards to 10% of current pool to prevent manipulation
+        let max_reward = pool / U512::from(10); // 10% max
+        if reward_amount > max_reward && pool > U512::zero() {
+            self.env().revert(Error::RewardsTooHigh);
+        }
+
         self.total_cspr_pool.set(pool + reward_amount);
 
         let new_rate = self.get_exchange_rate();
@@ -833,6 +844,14 @@ impl StakeVue {
 fn u512_to_u256(value: U512) -> U256 {
     let mut bytes = [0u8; 64];
     value.to_little_endian(&mut bytes);
+    // Check for overflow - upper 32 bytes must be zero
+    for i in 32..64 {
+        if bytes[i] != 0 {
+            // Value too large for U256 - this should never happen with normal token amounts
+            // but we handle it gracefully by returning max U256
+            return U256::MAX;
+        }
+    }
     U256::from_little_endian(&bytes[..32])
 }
 
