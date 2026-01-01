@@ -16,7 +16,7 @@
 
 ---
 
-## 💡 The Pitch (30 seconds)
+## 💡 The Pitch 
 
 You know what sucks? Staking your crypto and watching it sit there, **locked**, while the market moves.
 
@@ -36,7 +36,7 @@ StakeVue:               💰 ────> 🪙 stCSPR ────> 🌍 DeFi /
 
 ## 🎬 See It In Action
 
-### The 60-Second Demo
+### The Demo
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
