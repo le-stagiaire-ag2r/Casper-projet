@@ -156,9 +156,8 @@ export const V15StatsCard: React.FC = () => {
     return cspr.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
 
-  // Estimated APY based on Casper network staking rewards (~10% average)
-  // The exchange rate increase shown is from testnet simulation, not real time
-  const estimatedAPY = '9-11';
+  // Estimated APY based on Casper testnet staking rewards
+  const estimatedAPY = '2.35';
 
   const rateChange = ((exchangeRate - 1) * 100);
 
