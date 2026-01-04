@@ -156,10 +156,8 @@ export const V15StatsCard: React.FC = () => {
     return cspr.toLocaleString(undefined, { maximumFractionDigits: 2 });
   };
 
-  // Calculate APY estimate based on rate change
-  const estimatedAPY = exchangeRate > 1
-    ? ((exchangeRate - 1) * 100 * 12).toFixed(1) // Annualized from monthly rate change
-    : '15-18';
+  // Estimated APY based on Casper testnet staking rewards
+  const estimatedAPY = '2.35';
 
   const rateChange = ((exchangeRate - 1) * 100);
 
