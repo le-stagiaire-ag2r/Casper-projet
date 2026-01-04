@@ -784,6 +784,7 @@ export const StakingForm: React.FC = () => {
 
         // Save withdrawal to localStorage for WithdrawalStatus component
         // V22 FIX: Use the REAL request_id from the contract, not a local counter
+        // V22 FIX: Store userAccount to filter by connected wallet
         try {
           const stored = localStorage.getItem('pendingWithdrawals');
           const withdrawals = stored ? JSON.parse(stored) : [];
@@ -793,9 +794,10 @@ export const StakingForm: React.FC = () => {
             isReady: false,
             isClaimed: false,
             requestTime: new Date().toISOString(),
+            userAccount: activeAccount?.publicKey, // V22: Track which account made this withdrawal
           });
           localStorage.setItem('pendingWithdrawals', JSON.stringify(withdrawals));
-          console.log('Saved withdrawal with request_id:', realRequestId);
+          console.log('Saved withdrawal with request_id:', realRequestId, 'for account:', activeAccount?.publicKey);
         } catch (e) {
           console.warn('Failed to save withdrawal to localStorage', e);
         }

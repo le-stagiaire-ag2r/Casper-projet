@@ -242,15 +242,20 @@ interface Withdrawal {
   isReady: boolean;
   isClaimed: boolean;
   requestTime: Date;
+  userAccount?: string; // V22: Track which account made this withdrawal
 }
 
-// Get withdrawals from localStorage
-const getWithdrawals = (): Withdrawal[] => {
+// Get withdrawals from localStorage, filtered by account
+const getWithdrawals = (accountPublicKey?: string): Withdrawal[] => {
   const stored = localStorage.getItem('pendingWithdrawals');
   if (stored) {
     try {
       const data = JSON.parse(stored);
-      return data.map((w: any) => ({
+      // V22: Filter by current account (if userAccount is stored)
+      const filtered = accountPublicKey
+        ? data.filter((w: any) => !w.userAccount || w.userAccount === accountPublicKey)
+        : data;
+      return filtered.map((w: any) => ({
         ...w,
         requestTime: new Date(w.requestTime),
       }));
@@ -295,21 +300,35 @@ export const WithdrawalStatus: React.FC = () => {
     const loadWithdrawals = async () => {
       setLoading(true);
       try {
-        const data = getWithdrawals();
+        // V22: Get ALL withdrawals from storage
+        const stored = localStorage.getItem('pendingWithdrawals');
+        const allData = stored ? JSON.parse(stored) : [];
+
         // Check if any withdrawals are now ready based on time
         const now = new Date();
-        const updated = data.map(w => {
+        let hasChanges = false;
+        const allUpdated = allData.map((w: any) => {
           if (!w.isClaimed && !w.isReady) {
             const elapsed = (now.getTime() - new Date(w.requestTime).getTime()) / (1000 * 60 * 60);
             if (elapsed >= UNBONDING_HOURS) {
+              hasChanges = true;
               return { ...w, isReady: true };
             }
           }
           return w;
         });
-        setWithdrawals(updated);
-        // Update localStorage with ready status
-        localStorage.setItem('pendingWithdrawals', JSON.stringify(updated));
+
+        // Only update localStorage if something changed
+        if (hasChanges) {
+          localStorage.setItem('pendingWithdrawals', JSON.stringify(allUpdated));
+        }
+
+        // V22: Filter by current account for display
+        const myWithdrawals = allUpdated
+          .filter((w: any) => !w.userAccount || w.userAccount === activeAccount?.publicKey)
+          .map((w: any) => ({ ...w, requestTime: new Date(w.requestTime) }));
+
+        setWithdrawals(myWithdrawals);
       } catch (err) {
         console.error('Failed to load withdrawals:', err);
       }
