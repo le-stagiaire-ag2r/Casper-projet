@@ -9,6 +9,7 @@ import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
 import { useConfetti } from './Confetti';
 import ValidatorSelector from './stake/ValidatorSelector';
 import './stake/ValidatorSelector.css';
+import { getNextRequestId } from '../services/contractReader';
 
 // Get config values
 const config = (window as any).config || {};
@@ -753,6 +754,16 @@ export const StakingForm: React.FC = () => {
         });
       }
     } else {
+      // V22: Read the REAL next_request_id from contract BEFORE unstaking
+      // The contract will assign this ID to our withdrawal request
+      let realRequestId = 1;
+      try {
+        realRequestId = await getNextRequestId();
+        console.log('Contract next_request_id:', realRequestId);
+      } catch (e) {
+        console.warn('Failed to read next_request_id, using fallback:', e);
+      }
+
       // V17: Pass validator to unstake function (request_unstake)
       const result = await unstake(amount, selectedValidator);
       // Update balance immediately on success (demo mode support)
@@ -772,21 +783,19 @@ export const StakingForm: React.FC = () => {
         });
 
         // Save withdrawal to localStorage for WithdrawalStatus component
+        // V22 FIX: Use the REAL request_id from the contract, not a local counter
         try {
           const stored = localStorage.getItem('pendingWithdrawals');
           const withdrawals = stored ? JSON.parse(stored) : [];
-          // Get next request ID (contract uses sequential IDs starting from 1)
-          const lastRequestId = localStorage.getItem('lastRequestId');
-          const nextRequestId = lastRequestId ? parseInt(lastRequestId) + 1 : 1;
-          localStorage.setItem('lastRequestId', nextRequestId.toString());
           withdrawals.push({
-            requestId: nextRequestId,
+            requestId: realRequestId,
             csprAmount: csprReceived,
             isReady: false,
             isClaimed: false,
             requestTime: new Date().toISOString(),
           });
           localStorage.setItem('pendingWithdrawals', JSON.stringify(withdrawals));
+          console.log('Saved withdrawal with request_id:', realRequestId);
         } catch (e) {
           console.warn('Failed to save withdrawal to localStorage', e);
         }

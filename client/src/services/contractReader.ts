@@ -279,9 +279,43 @@ export async function getUserWithdrawals(accountHash: string): Promise<Withdrawa
   }
 }
 
+/**
+ * Read next_request_id from contract
+ * This is the ID that will be assigned to the next withdrawal request
+ */
+export async function getNextRequestId(): Promise<number> {
+  try {
+    const stateRootHash = await getStateRootHash();
+    const value = await queryContractKey(stateRootHash, 'next_request_id');
+
+    if (value?.CLValue?.parsed) {
+      return parseInt(value.CLValue.parsed.toString(), 10);
+    }
+
+    // Fallback: try API
+    const response = await fetch('/api/contract-stats', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.nextRequestId) {
+        return parseInt(data.nextRequestId.toString(), 10);
+      }
+    }
+
+    return 1; // Default if nothing found
+  } catch (err) {
+    console.warn('Failed to read next_request_id:', err);
+    return 1;
+  }
+}
+
 export default {
   readContractState,
   readUserStCsprBalance,
   getContractStats,
   getUserWithdrawals,
+  getNextRequestId,
 };
