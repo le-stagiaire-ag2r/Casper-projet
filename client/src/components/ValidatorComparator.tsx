@@ -159,6 +159,13 @@ const ValidatorAvatar = styled.div<{ $color: string }>`
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const ValidatorInfo = styled.div`
@@ -301,6 +308,7 @@ interface Validator {
   isActive: boolean;
   selfStake: number;
   networkShare: number;
+  logo?: string;
 }
 
 interface MetricData {
@@ -389,6 +397,9 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
           isActive: v.is_active,
           selfStake: motesToCSPR(v.self_stake),
           networkShare: v.network_share * 100,
+          logo: v.account_info?.info?.owner?.branding?.logo?.png_256 ||
+                v.account_info?.info?.owner?.branding?.logo?.svg ||
+                undefined,
         }));
       }
     } catch (error) {
@@ -588,7 +599,11 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
         <ValidatorCard $isDark={isDark} $highlight={comparison.v1Wins > comparison.v2Wins}>
           <ValidatorHeader>
             <ValidatorAvatar $color={getColorFromKey(validator1.publicKey)}>
-              {getValidatorIcon(validator1.name, validator1Index)}
+              {validator1.logo ? (
+                <img src={validator1.logo} alt={validator1.name} />
+              ) : (
+                getValidatorIcon(validator1.name, validator1Index)
+              )}
             </ValidatorAvatar>
             <ValidatorInfo>
               <ValidatorName $isDark={isDark}>{validator1.name}</ValidatorName>
@@ -623,7 +638,11 @@ export const ValidatorComparator: React.FC<ValidatorComparatorProps> = ({ isDark
         <ValidatorCard $isDark={isDark} $highlight={comparison.v2Wins > comparison.v1Wins}>
           <ValidatorHeader>
             <ValidatorAvatar $color={getColorFromKey(validator2.publicKey)}>
-              {getValidatorIcon(validator2.name, validator2Index)}
+              {validator2.logo ? (
+                <img src={validator2.logo} alt={validator2.name} />
+              ) : (
+                getValidatorIcon(validator2.name, validator2Index)
+              )}
             </ValidatorAvatar>
             <ValidatorInfo>
               <ValidatorName $isDark={isDark}>{validator2.name}</ValidatorName>
