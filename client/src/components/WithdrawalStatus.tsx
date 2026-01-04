@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { useStaking } from '../hooks/useStaking';
 
@@ -123,7 +123,7 @@ const StatusIcon = styled.span<{ $status: 'pending' | 'ready' | 'claimed' }>`
   height: 8px;
   border-radius: 50%;
   background: currentColor;
-  ${props => props.$status === 'pending' && `animation: ${pulse} 1.5s infinite;`}
+  ${props => props.$status === 'pending' && css`animation: ${pulse} 1.5s infinite;`}
 `;
 
 const ProgressSection = styled.div`
