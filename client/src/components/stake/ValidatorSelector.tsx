@@ -87,10 +87,10 @@ const ValidatorSelector: React.FC<ValidatorSelectorProps> = ({
   if (loading) {
     return (
       <div className="validator-selector-v2">
-        <label className="validator-label">Choisir un Validateur</label>
+        <label className="validator-label">Choose a Validator</label>
         <div className="validator-trigger loading">
           <div className="loading-spinner"></div>
-          <span>Chargement des validateurs...</span>
+          <span>Loading validators...</span>
         </div>
       </div>
     );
@@ -99,7 +99,7 @@ const ValidatorSelector: React.FC<ValidatorSelectorProps> = ({
   if (error) {
     return (
       <div className="validator-selector-v2">
-        <label className="validator-label">Choisir un Validateur</label>
+        <label className="validator-label">Choose a Validator</label>
         <div className="validator-trigger error">
           <span>❌ {error}</span>
         </div>
@@ -109,7 +109,7 @@ const ValidatorSelector: React.FC<ValidatorSelectorProps> = ({
 
   return (
     <div className={`validator-selector-v2 ${disabled ? 'disabled' : ''}`} ref={dropdownRef}>
-      <label className="validator-label">Choisir un Validateur</label>
+      <label className="validator-label">Choose a Validator</label>
 
       {/* Selected validator display / trigger */}
       <div

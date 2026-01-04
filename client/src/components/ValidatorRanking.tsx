@@ -146,6 +146,40 @@ const Rank = styled.div<{ $rank: number }>`
 
 const ValidatorInfo = styled.div`
   display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+`;
+
+const ValidatorAvatar = styled.div<{ $isDark: boolean }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: ${props => props.$isDark
+    ? 'linear-gradient(135deg, #5856d6 0%, #af52de 100%)'
+    : 'linear-gradient(135deg, #007aff 0%, #5856d6 100%)'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  span {
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+  }
+`;
+
+const ValidatorDetails = styled.div`
+  display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
@@ -272,6 +306,7 @@ interface Validator {
   delegators: number;
   fee: number;
   isActive: boolean;
+  logo?: string;
 }
 
 interface ValidatorRankingProps {
@@ -323,9 +358,12 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
       const validatorsResponse = await csprCloudApi.getValidators(currentEraId, 10);
 
       return validatorsResponse.data.map((v) => {
-        // Extract name from account_info if available
+        // Extract name and logo from account_info if available
         const name = v.account_info?.info?.owner?.name ||
                      `Validator ${v.public_key.substring(0, 8)}...`;
+        const logo = v.account_info?.info?.owner?.branding?.logo?.png_256 ||
+                     v.account_info?.info?.owner?.branding?.logo?.svg ||
+                     undefined;
 
         return {
           publicKey: v.public_key,
@@ -334,6 +372,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
           delegators: v.delegators_number,
           fee: v.fee,
           isActive: v.is_active,
+          logo,
         };
       });
     } catch (error) {
@@ -434,19 +473,28 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
               {index + 1 === 1 ? '' : index + 1 === 2 ? '' : index + 1 === 3 ? '' : index + 1}
             </Rank>
             <ValidatorInfo>
-              <ValidatorName $isDark={isDark}>{validator.name}</ValidatorName>
-              <ValidatorAddress $isDark={isDark}>
-                {formatPublicKey(validator.publicKey)}
-                {isLive && (
-                  <CopyButton
-                    $isDark={isDark}
-                    onClick={() => copyToClipboard(validator.publicKey)}
-                    title="Copy full address"
-                  >
-                    {copiedKey === validator.publicKey ? '✓' : ''}
-                  </CopyButton>
+              <ValidatorAvatar $isDark={isDark}>
+                {validator.logo ? (
+                  <img src={validator.logo} alt={validator.name} />
+                ) : (
+                  <span>{validator.name.charAt(0).toUpperCase()}</span>
                 )}
-              </ValidatorAddress>
+              </ValidatorAvatar>
+              <ValidatorDetails>
+                <ValidatorName $isDark={isDark}>{validator.name}</ValidatorName>
+                <ValidatorAddress $isDark={isDark}>
+                  {formatPublicKey(validator.publicKey)}
+                  {isLive && (
+                    <CopyButton
+                      $isDark={isDark}
+                      onClick={() => copyToClipboard(validator.publicKey)}
+                      title="Copy full address"
+                    >
+                      {copiedKey === validator.publicKey ? '✓' : ''}
+                    </CopyButton>
+                  )}
+                </ValidatorAddress>
+              </ValidatorDetails>
             </ValidatorInfo>
             <StatValue $isDark={isDark}>
               {formatStake(validator.stake)}
