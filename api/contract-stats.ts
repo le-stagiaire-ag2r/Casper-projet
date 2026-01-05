@@ -2,8 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Casper RPC endpoint (testnet)
 const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
-// V15 Contract Package Hash
-const CONTRACT_PACKAGE_HASH = '2b6c14a2cac5cfe4a1fd1efc2fc02b1090dbc3a6b661a329b90c829245540985';
+// V22 Contract Package Hash (Pool-based architecture with U512 fix)
+const CONTRACT_PACKAGE_HASH = '2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3';
 // Rate precision (9 decimals)
 const RATE_PRECISION = 1_000_000_000;
 
@@ -15,9 +15,10 @@ const ODRA_KEYS = {
 };
 
 /**
- * API endpoint to fetch StakeVue V15 contract stats
+ * API endpoint to fetch StakeVue V22 contract stats
  *
  * Returns: exchange rate, total pool, stCSPR supply
+ * V22: Pool-based architecture (Wise Lending style)
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
