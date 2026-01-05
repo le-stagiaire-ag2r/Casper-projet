@@ -61,9 +61,10 @@ const WithdrawalList = styled.div`
   gap: 12px;
 `;
 
-const WithdrawalCard = styled.div<{ $status: 'pending' | 'ready' | 'claimed' }>`
+const WithdrawalCard = styled.div<{ $status: 'pending' | 'ready' | 'claimed' | 'confirming' }>`
   background: ${props => {
     switch (props.$status) {
+      case 'confirming': return 'rgba(94, 92, 230, 0.1)';
       case 'pending': return 'rgba(255, 159, 10, 0.1)';
       case 'ready': return 'rgba(48, 209, 88, 0.1)';
       case 'claimed': return 'rgba(255, 255, 255, 0.05)';
@@ -71,6 +72,7 @@ const WithdrawalCard = styled.div<{ $status: 'pending' | 'ready' | 'claimed' }>`
   }};
   border: 1px solid ${props => {
     switch (props.$status) {
+      case 'confirming': return 'rgba(94, 92, 230, 0.3)';
       case 'pending': return 'rgba(255, 159, 10, 0.3)';
       case 'ready': return 'rgba(48, 209, 88, 0.3)';
       case 'claimed': return 'rgba(255, 255, 255, 0.1)';
@@ -93,7 +95,7 @@ const Amount = styled.div`
   color: #fff;
 `;
 
-const StatusBadge = styled.span<{ $status: 'pending' | 'ready' | 'claimed' }>`
+const StatusBadge = styled.span<{ $status: 'pending' | 'ready' | 'claimed' | 'confirming' }>`
   display: flex;
   align-items: center;
   gap: 6px;
@@ -103,6 +105,7 @@ const StatusBadge = styled.span<{ $status: 'pending' | 'ready' | 'claimed' }>`
   border-radius: 20px;
   background: ${props => {
     switch (props.$status) {
+      case 'confirming': return 'rgba(94, 92, 230, 0.2)';
       case 'pending': return 'rgba(255, 159, 10, 0.2)';
       case 'ready': return 'rgba(48, 209, 88, 0.2)';
       case 'claimed': return 'rgba(255, 255, 255, 0.1)';
@@ -110,6 +113,7 @@ const StatusBadge = styled.span<{ $status: 'pending' | 'ready' | 'claimed' }>`
   }};
   color: ${props => {
     switch (props.$status) {
+      case 'confirming': return '#5e5ce6';
       case 'pending': return '#ff9f0a';
       case 'ready': return '#30d158';
       case 'claimed': return 'rgba(255, 255, 255, 0.5)';
@@ -117,13 +121,13 @@ const StatusBadge = styled.span<{ $status: 'pending' | 'ready' | 'claimed' }>`
   }};
 `;
 
-const StatusIcon = styled.span<{ $status: 'pending' | 'ready' | 'claimed' }>`
+const StatusIcon = styled.span<{ $status: 'pending' | 'ready' | 'claimed' | 'confirming' }>`
   display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: currentColor;
-  ${props => props.$status === 'pending' && css`animation: ${pulse} 1.5s infinite;`}
+  ${props => (props.$status === 'pending' || props.$status === 'confirming') && css`animation: ${pulse} 1.5s infinite;`}
 `;
 
 const ProgressSection = styled.div`
@@ -237,12 +241,14 @@ const ExplorerLink = styled.a`
 `;
 
 interface Withdrawal {
-  requestId: number;
+  requestId: number | string; // Can be temp string while waiting for confirmation
   csprAmount: number;
   isReady: boolean;
   isClaimed: boolean;
   requestTime: Date;
   userAccount?: string; // V22: Track which account made this withdrawal
+  pendingRequestId?: boolean; // V23: True if waiting for request_id confirmation
+  deployHash?: string; // V23: Deploy hash for tracking
 }
 
 // Get withdrawals from localStorage, filtered by account
@@ -308,7 +314,8 @@ export const WithdrawalStatus: React.FC = () => {
         const now = new Date();
         let hasChanges = false;
         const allUpdated = allData.map((w: any) => {
-          if (!w.isClaimed && !w.isReady) {
+          // V23: Don't mark as ready if still waiting for request_id confirmation
+          if (!w.isClaimed && !w.isReady && !w.pendingRequestId) {
             const elapsed = (now.getTime() - new Date(w.requestTime).getTime()) / (1000 * 60 * 60);
             if (elapsed >= UNBONDING_HOURS) {
               hasChanges = true;
@@ -326,7 +333,11 @@ export const WithdrawalStatus: React.FC = () => {
         // V22: Filter by current account for display
         const myWithdrawals = allUpdated
           .filter((w: any) => !w.userAccount || w.userAccount === activeAccount?.publicKey)
-          .map((w: any) => ({ ...w, requestTime: new Date(w.requestTime) }));
+          .map((w: any) => ({
+            ...w,
+            requestTime: new Date(w.requestTime),
+            pendingRequestId: w.pendingRequestId || false,
+          }));
 
         setWithdrawals(myWithdrawals);
       } catch (err) {
@@ -339,7 +350,18 @@ export const WithdrawalStatus: React.FC = () => {
 
     // Refresh every 30 seconds
     const interval = setInterval(loadWithdrawals, 30000);
-    return () => clearInterval(interval);
+
+    // V23: Listen for withdrawal_updated event (when request_id is confirmed)
+    const handleWithdrawalUpdate = () => {
+      console.log('Withdrawal updated, refreshing...');
+      loadWithdrawals();
+    };
+    window.addEventListener('withdrawal_updated', handleWithdrawalUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('withdrawal_updated', handleWithdrawalUpdate);
+    };
   }, [activeAccount]);
 
   // Update time remaining every minute
@@ -362,8 +384,11 @@ export const WithdrawalStatus: React.FC = () => {
     };
   };
 
-  const getStatus = (w: Withdrawal): 'pending' | 'ready' | 'claimed' => {
+  const getStatus = (w: Withdrawal): 'pending' | 'ready' | 'claimed' | 'confirming' => {
     if (w.isClaimed) return 'claimed';
+
+    // V23: Check if still waiting for request_id confirmation
+    if (w.pendingRequestId) return 'confirming';
 
     // Check if enough time has passed
     const now = new Date();
@@ -373,8 +398,9 @@ export const WithdrawalStatus: React.FC = () => {
     return 'pending';
   };
 
-  const getStatusText = (status: 'pending' | 'ready' | 'claimed'): string => {
+  const getStatusText = (status: 'pending' | 'ready' | 'claimed' | 'confirming'): string => {
     switch (status) {
+      case 'confirming': return 'Confirming...';
       case 'pending': return 'Unbonding...';
       case 'ready': return 'Ready to claim';
       case 'claimed': return 'Completed';
@@ -382,6 +408,12 @@ export const WithdrawalStatus: React.FC = () => {
   };
 
   const handleClaim = async (w: Withdrawal) => {
+    // V23: Don't allow claiming if request_id is pending or not a number
+    if (w.pendingRequestId || typeof w.requestId !== 'number') {
+      console.warn('Cannot claim: request_id not confirmed yet');
+      return;
+    }
+
     setClaimingId(w.requestId);
     setClaimSuccess(null);
 
@@ -451,6 +483,13 @@ export const WithdrawalStatus: React.FC = () => {
                   {getStatusText(status)}
                 </StatusBadge>
               </CardHeader>
+
+              {status === 'confirming' && (
+                <InfoNote style={{ background: 'rgba(94, 92, 230, 0.1)', color: '#5e5ce6' }}>
+                  <Spinner style={{ width: 12, height: 12, borderTopColor: '#5e5ce6', borderColor: 'rgba(94, 92, 230, 0.3)' }} />
+                  Waiting for transaction confirmation...
+                </InfoNote>
+              )}
 
               {status === 'pending' && (
                 <ProgressSection>
