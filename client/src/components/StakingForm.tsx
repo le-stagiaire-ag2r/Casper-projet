@@ -11,6 +11,17 @@ import ValidatorSelector from './stake/ValidatorSelector';
 import './stake/ValidatorSelector.css';
 import { getNextRequestId } from '../services/contractReader';
 import { TransactionTracker, TrackedTransaction } from './TransactionTracker';
+import {
+  ChartUpIcon,
+  ChartDownIcon,
+  WarningIcon,
+  TipIcon,
+  InfoIcon,
+  SparkleIcon,
+  CoinsIcon,
+  RocketIcon,
+  SendIcon
+} from './ui/Icons';
 
 // Get config values
 const config = (window as any).config || {};
@@ -1027,7 +1038,7 @@ export const StakingForm: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
         <Title $isDark={isDark}>
-          <TitleIcon>{activeTab === 'stake' ? '📈' : '📉'}</TitleIcon>
+          <TitleIcon>{activeTab === 'stake' ? <ChartUpIcon size={24} color="#30d158" /> : <ChartDownIcon size={24} color="#ff9f0a" />}</TitleIcon>
           {activeTab === 'stake' ? 'Stake' : 'Unstake'}
         </Title>
         <TabContainer $isDark={isDark}>
@@ -1119,8 +1130,10 @@ export const StakingForm: React.FC = () => {
           </InputWrapper>
           {validation.message && (
             <ValidationMessage $type={validation.type}>
-              {validation.type === 'error' ? '⚠️ ' : validation.type === 'warning' ? '💡 ' : 'ℹ️ '}
-              {validation.message}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {validation.type === 'error' ? <WarningIcon size={14} /> : validation.type === 'warning' ? <TipIcon size={14} /> : <InfoIcon size={14} />}
+                {validation.message}
+              </span>
             </ValidationMessage>
           )}
         </InputGroup>
@@ -1129,7 +1142,10 @@ export const StakingForm: React.FC = () => {
         {preview && selectedValidator && (
           <PreviewBox $isDark={isDark}>
             <PreviewTitle $isDark={isDark}>
-              {activeTab === 'stake' ? '✨ You will receive' : '💰 You will get back'}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {activeTab === 'stake' ? <SparkleIcon size={14} color="#30d158" /> : <CoinsIcon size={14} color="#ff9f0a" />}
+                {activeTab === 'stake' ? 'You will receive' : 'You will get back'}
+              </span>
             </PreviewTitle>
             <PreviewRow>
               <PreviewLabel $isDark={isDark}>Amount</PreviewLabel>
@@ -1180,9 +1196,10 @@ export const StakingForm: React.FC = () => {
               Processing...
             </>
           ) : (
-            <>
-              {activeTab === 'stake' ? '🚀 Stake CSPR' : '📤 Unstake stCSPR'}
-            </>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              {activeTab === 'stake' ? <RocketIcon size={18} /> : <SendIcon size={18} />}
+              {activeTab === 'stake' ? 'Stake CSPR' : 'Unstake stCSPR'}
+            </span>
           )}
         </SubmitButton>
 
