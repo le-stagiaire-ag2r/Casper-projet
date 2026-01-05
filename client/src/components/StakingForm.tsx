@@ -1027,7 +1027,7 @@ export const StakingForm: React.FC = () => {
       <Container $isDark={isDark}>
         <Header>
         <Title $isDark={isDark}>
-          <TitleIcon>{activeTab === 'stake' ? '' : ''}</TitleIcon>
+          <TitleIcon>{activeTab === 'stake' ? '📈' : '📉'}</TitleIcon>
           {activeTab === 'stake' ? 'Stake' : 'Unstake'}
         </Title>
         <TabContainer $isDark={isDark}>
@@ -1119,7 +1119,7 @@ export const StakingForm: React.FC = () => {
           </InputWrapper>
           {validation.message && (
             <ValidationMessage $type={validation.type}>
-              {validation.type === 'error' ? '' : validation.type === 'warning' ? '' : ''}
+              {validation.type === 'error' ? '⚠️ ' : validation.type === 'warning' ? '💡 ' : 'ℹ️ '}
               {validation.message}
             </ValidationMessage>
           )}
@@ -1129,7 +1129,7 @@ export const StakingForm: React.FC = () => {
         {preview && selectedValidator && (
           <PreviewBox $isDark={isDark}>
             <PreviewTitle $isDark={isDark}>
-              {activeTab === 'stake' ? ' You will receive' : ' You will get back'}
+              {activeTab === 'stake' ? '✨ You will receive' : '💰 You will get back'}
             </PreviewTitle>
             <PreviewRow>
               <PreviewLabel $isDark={isDark}>Amount</PreviewLabel>
@@ -1181,7 +1181,7 @@ export const StakingForm: React.FC = () => {
             </>
           ) : (
             <>
-              {activeTab === 'stake' ? ' Stake CSPR' : ' Unstake stCSPR'}
+              {activeTab === 'stake' ? '🚀 Stake CSPR' : '📤 Unstake stCSPR'}
             </>
           )}
         </SubmitButton>

@@ -57,7 +57,9 @@ const GlobalStyle = createGlobalStyle`
     overflow-x: hidden;
   }
 
-  /* Fix CSPR Click dropdown - escape all stacking contexts */
+  /* ===========================================
+     FIX: CSPR Click dropdown - prevent closing on hover
+     =========================================== */
 
   /* Force ClickUI to be above everything */
   #cspr-click-topbar,
@@ -68,7 +70,7 @@ const GlobalStyle = createGlobalStyle`
     position: relative !important;
   }
 
-  /* Force dropdown/popover to use fixed positioning */
+  /* Force dropdown/popover z-index */
   [class*="Popover"],
   [class*="popover"],
   [data-radix-popper-content-wrapper],
@@ -89,20 +91,34 @@ const GlobalStyle = createGlobalStyle`
     pointer-events: auto !important;
   }
 
-  /* FIX: Create invisible bridge between trigger and dropdown */
+  /* FIX: Create large invisible bridge between trigger button and dropdown */
   [data-radix-popper-content-wrapper] {
-    padding-top: 8px !important;
-    margin-top: -8px !important;
+    padding-top: 15px !important;
+    margin-top: -15px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    margin-left: -10px !important;
+    margin-right: -10px !important;
   }
 
-  /* Extend hover area around dropdown */
-  [class*="AccountMenu"],
-  [class*="click-ui"] [role="menu"] {
-    padding: 10px !important;
-    margin: -10px !important;
+  /* FIX: Make the trigger button have extended hover area */
+  [class*="click-ui"] button[aria-haspopup="menu"],
+  [class*="click-ui"] [role="button"][aria-haspopup] {
+    position: relative !important;
   }
 
-  /* FIX: Make dropdown stay visible longer */
+  [class*="click-ui"] button[aria-haspopup="menu"]::after,
+  [class*="click-ui"] [role="button"][aria-haspopup]::after {
+    content: '' !important;
+    position: absolute !important;
+    top: -5px !important;
+    left: -10px !important;
+    right: -10px !important;
+    bottom: -25px !important;
+    z-index: 1 !important;
+  }
+
+  /* FIX: Keep dropdown open and extend its clickable area */
   [class*="click-ui"] [data-state="open"],
   [class*="click-ui"] [data-state="open"] + [data-radix-popper-content-wrapper],
   [data-radix-popper-content-wrapper]:hover,
@@ -110,17 +126,33 @@ const GlobalStyle = createGlobalStyle`
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: auto !important;
+    display: block !important;
   }
 
-  /* Extend hover area at bottom of dropdown */
-  [class*="AccountMenu"]::after {
-    content: '';
-    position: absolute;
-    top: -20px;
-    left: -10px;
-    right: -10px;
-    bottom: -20px;
-    z-index: -1;
+  /* FIX: Prevent dropdown from closing with transition delay */
+  [data-radix-popper-content-wrapper] > * {
+    transition-delay: 150ms !important;
+  }
+
+  /* FIX: Extended hover zone around entire menu */
+  [class*="AccountMenu"],
+  [class*="click-ui"] [role="menu"] {
+    padding: 12px !important;
+    margin: -12px !important;
+    position: relative !important;
+  }
+
+  /* FIX: Add pseudo-element to extend hover area around dropdown */
+  [class*="AccountMenu"]::before,
+  [class*="click-ui"] [role="menu"]::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -30px !important;
+    left: -20px !important;
+    right: -20px !important;
+    bottom: -20px !important;
+    z-index: -1 !important;
+    pointer-events: auto !important;
   }
 
   /* Selection */
