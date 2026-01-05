@@ -58,79 +58,32 @@ const GlobalStyle = createGlobalStyle`
   }
 
   /* ===========================================
-     FIX: CSPR Click dropdown - FORCE on top of everything
+     FIX: CSPR Click dropdowns/modals on TOP
      =========================================== */
 
-  /* CRITICAL: Force ALL CSPR Click dropdowns to be on top with fixed positioning */
-  [data-radix-popper-content-wrapper] {
-    z-index: 2147483647 !important; /* Max z-index value */
-    position: fixed !important;
-    isolation: isolate !important;
-  }
-
-  /* Force ClickUI topbar to be above navigation */
-  #cspr-click-topbar,
-  [class*="TopBar"],
-  [class*="click-ui"],
-  #cspr-click-ui {
-    z-index: 1000 !important;
+  /* Radix Portal - contains all dropdowns/modals - MUST be on top */
+  [data-radix-portal] {
+    z-index: 2147483647 !important;
     position: relative !important;
-    isolation: isolate !important;
   }
 
-  /* Force ALL dropdowns, popovers, menus to max z-index */
-  [class*="Popover"],
-  [class*="popover"],
-  [class*="AccountMenu"],
-  [class*="ProductsMenu"],
-  [role="menu"],
-  [role="listbox"],
-  [role="dialog"],
-  [data-radix-menu-content],
-  [data-radix-dropdown-menu-content],
-  [data-radix-popper-content-wrapper] * {
+  /* Everything inside the portal */
+  [data-radix-portal] > * {
     z-index: 2147483647 !important;
   }
 
-  /* Ensure menu items are clickable and visible */
-  [class*="AccountMenu"],
-  [class*="Menu"],
-  [class*="MenuItem"],
-  [class*="click-ui"] ul,
-  [class*="click-ui"] li,
-  [class*="click-ui"] button,
-  [class*="click-ui"] a,
-  [data-radix-popper-content-wrapper] button,
-  [data-radix-popper-content-wrapper] a {
-    pointer-events: auto !important;
-    position: relative !important;
-  }
-
-  /* FIX: Create large invisible bridge between trigger button and dropdown */
+  /* Dropdown wrapper */
   [data-radix-popper-content-wrapper] {
-    padding-top: 15px !important;
-    margin-top: -15px !important;
-    padding-left: 15px !important;
-    padding-right: 15px !important;
-    margin-left: -15px !important;
-    margin-right: -15px !important;
+    z-index: 2147483647 !important;
+    padding: 15px !important;
+    margin: -15px !important;
   }
 
-  /* FIX: Keep dropdown open */
-  [data-state="open"],
-  [data-state="open"] + [data-radix-popper-content-wrapper],
-  [data-radix-popper-content-wrapper]:hover,
-  [data-radix-popper-content-wrapper]:focus-within {
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    display: block !important;
-  }
-
-  /* FIX: Extended hover zone */
-  [role="menu"] {
-    padding: 12px !important;
-    margin: -12px !important;
+  /* Modal overlay */
+  [class*="Overlay"],
+  [class*="overlay"],
+  [data-state="open"][role="dialog"] {
+    z-index: 2147483646 !important;
   }
 
   /* Selection */
