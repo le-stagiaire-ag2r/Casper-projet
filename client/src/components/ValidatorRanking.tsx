@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
+import { AddressCopy } from './ui/AddressCopy';
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -205,26 +206,6 @@ const ValidatorAddress = styled.div<{ $isDark: boolean }>`
   gap: 4px;
 `;
 
-const CopyButton = styled.button<{ $isDark: boolean }>`
-  background: none;
-  border: none;
-  padding: 2px;
-  cursor: pointer;
-  font-size: 10px;
-  color: ${props => props.$isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'};
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: ${props => props.$isDark ? '#fff' : '#000'};
-  }
-`;
-
-// Standardized public key format: 01ab...cdef (6 + 4)
-const formatPublicKey = (key: string): string => {
-  if (!key || key.length < 12) return key;
-  return `${key.substring(0, 6)}...${key.substring(key.length - 4)}`;
-};
-
 const StatValue = styled.div<{ $isDark: boolean; $highlight?: boolean }>`
   font-size: 13px;
   font-weight: 600;
@@ -331,16 +312,13 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
   const [validators, setValidators] = useState<Validator[]>(FALLBACK_VALIDATORS);
   const [isLoading, setIsLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const copyToClipboard = async (key: string) => {
-    try {
-      await navigator.clipboard.writeText(key);
-      setCopiedKey(key);
-      setTimeout(() => setCopiedKey(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
+  // Get rank medal icon
+  const getRankIcon = (rank: number): string => {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return String(rank);
   };
 
   const fetchFromCsprCloud = useCallback(async (): Promise<Validator[] | null> => {
@@ -470,7 +448,7 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
         {validators.map((validator, index) => (
           <TableRow key={validator.publicKey} $isDark={isDark} $rank={index + 1}>
             <Rank $rank={index + 1}>
-              {index + 1 === 1 ? '' : index + 1 === 2 ? '' : index + 1 === 3 ? '' : index + 1}
+              {getRankIcon(index + 1)}
             </Rank>
             <ValidatorInfo>
               <ValidatorAvatar $isDark={isDark}>
@@ -483,16 +461,11 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
               <ValidatorDetails>
                 <ValidatorName $isDark={isDark}>{validator.name}</ValidatorName>
                 <ValidatorAddress $isDark={isDark}>
-                  {formatPublicKey(validator.publicKey)}
-                  {isLive && (
-                    <CopyButton
-                      $isDark={isDark}
-                      onClick={() => copyToClipboard(validator.publicKey)}
-                      title="Copy full address"
-                    >
-                      {copiedKey === validator.publicKey ? '✓' : ''}
-                    </CopyButton>
-                  )}
+                  <AddressCopy
+                    address={validator.publicKey}
+                    size="small"
+                    isDark={isDark}
+                  />
                 </ValidatorAddress>
               </ValidatorDetails>
             </ValidatorInfo>

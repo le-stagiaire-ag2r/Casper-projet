@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { csprCloudApi, motesToCSPR } from '../services/csprCloud';
+import { AddressCopy } from './ui/AddressCopy';
 
 const slideIn = keyframes`
   from {
@@ -414,7 +415,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ isDark = true, maxIt
                     </>
                   ) : (
                     <>
-                      <Address>{shortenAddress(activity.address)}</Address>
+                      <AddressCopy
+                        address={activity.address}
+                        size="small"
+                        isDark={isDark}
+                      />
                       {' '}{getActionText(activity.type)}{' '}
                       <Amount $type={activity.type}>
                         {activity.amount.toLocaleString()} {activity.type === 'unstake' ? 'stCSPR' : 'CSPR'}

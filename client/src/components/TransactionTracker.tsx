@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { AddressCopy } from './ui/AddressCopy';
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -467,14 +468,16 @@ export const TransactionTracker: React.FC<TransactionTrackerProps> = ({
         <DeployInfo>
           <DeployRow>
             <DeployLabel>Deploy Hash</DeployLabel>
-            <DeployLink
-              href={`${explorerUrl}/deploy/${transaction.deployHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {truncateHash(transaction.deployHash)}
-              <ExternalLinkIcon />
-            </DeployLink>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AddressCopy address={transaction.deployHash} size="small" isDark={isDark} />
+              <DeployLink
+                href={`${explorerUrl}/deploy/${transaction.deployHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLinkIcon />
+              </DeployLink>
+            </div>
           </DeployRow>
           {transaction.amount && (
             <DeployRow>
