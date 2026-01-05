@@ -312,10 +312,150 @@ export async function getNextRequestId(): Promise<number> {
   }
 }
 
+/**
+ * Extract request_id from a confirmed unstake transaction
+ * Fetches transaction details and parses the UnstakeRequested event
+ */
+export async function getRequestIdFromTransaction(deployHash: string): Promise<number | null> {
+  const maxAttempts = 30; // Wait up to 5 minutes (10s intervals)
+  const pollInterval = 10000; // 10 seconds
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      // Try CSPR.live API first (more reliable)
+      const explorerUrl = config.cspr_live_url || 'https://testnet.cspr.live';
+      const apiBase = explorerUrl.includes('testnet')
+        ? 'https://event-store-api-clarity-testnet.make.services'
+        : 'https://event-store-api-clarity-mainnet.make.services';
+
+      const response = await fetch(`${apiBase}/deploys/${deployHash}`, {
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Check if transaction is confirmed
+        if (data.execution_results && data.execution_results.length > 0) {
+          const execResult = data.execution_results[0];
+
+          // Look for request_id in transforms/effects
+          if (execResult.result?.Success?.effect?.transforms) {
+            for (const transform of execResult.result.Success.effect.transforms) {
+              // Look for dictionary writes that contain UnstakeRequested event
+              if (transform.transform?.WriteCLValue?.bytes) {
+                const bytes = transform.transform.WriteCLValue.bytes;
+                // Check if this contains "event_UnstakeRequested" (hex encoded)
+                if (bytes.includes('6576656e745f556e7374616b6552657175657374656')) {
+                  // Parse the request_id from the event bytes
+                  // The request_id is a u64 little-endian value after the staker address
+                  const requestIdMatch = bytes.match(/0026d3a742[a-f0-9]{56}([a-f0-9]{16})/);
+                  if (requestIdMatch) {
+                    const hexBytes = requestIdMatch[1];
+                    // Convert little-endian hex to number
+                    const requestId = parseInt(hexBytes.match(/.{2}/g)!.reverse().join(''), 16);
+                    console.log('Extracted request_id from transaction:', requestId);
+                    return requestId;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Fallback: Try RPC directly
+      const rpcResult = await rpcCall('info_get_deploy', { deploy_hash: deployHash });
+
+      if (rpcResult?.execution_results?.[0]?.result?.Success) {
+        const effects = rpcResult.execution_results[0].result.Success.effect?.transforms || [];
+
+        for (const effect of effects) {
+          if (effect.transform?.WriteCLValue?.bytes) {
+            const bytes = effect.transform.WriteCLValue.bytes;
+            // Look for UnstakeRequested event pattern
+            if (bytes.includes('6576656e745f556e7374616b6552657175657374656')) {
+              // Extract u64 request_id (8 bytes after address)
+              // Pattern: event name + staker address (32 bytes) + request_id (8 bytes)
+              const eventStart = bytes.indexOf('6576656e745f556e7374616b6552657175657374656');
+              if (eventStart !== -1) {
+                // Skip event name and staker, get request_id bytes
+                const afterEvent = bytes.substring(eventStart + 100); // rough offset
+                const requestIdHex = afterEvent.substring(0, 16);
+                if (requestIdHex.length === 16) {
+                  const requestId = parseInt(requestIdHex.match(/.{2}/g)!.reverse().join(''), 16);
+                  console.log('Extracted request_id from RPC:', requestId);
+                  return requestId;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // If transaction not yet confirmed, wait and retry
+      if (attempt < maxAttempts - 1) {
+        console.log(`Waiting for transaction confirmation... (attempt ${attempt + 1}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+    } catch (err) {
+      console.warn('Error fetching transaction:', err);
+      if (attempt < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+    }
+  }
+
+  console.warn('Could not extract request_id from transaction after max attempts');
+  return null;
+}
+
+/**
+ * Parse request_id from raw transaction effects (for use with cspr.live data)
+ */
+export function parseRequestIdFromEffects(effects: any[]): number | null {
+  for (const effect of effects) {
+    // Look for dictionary writes containing UnstakeRequested event
+    if (effect.kind?.Write?.CLValue?.bytes) {
+      const bytes = effect.kind.Write.CLValue.bytes as string;
+
+      // UnstakeRequested event contains: staker address + request_id (u64) + amounts
+      // The event identifier is "event_UnstakeRequested" = 6576656e745f556e7374616b6552657175657374656
+      if (bytes.includes('6576656e745f556e7374616b6552657175657374656')) {
+        // Find the request_id in the bytes
+        // Structure: event_type_len(4) + event_type + staker(33) + request_id(8) + amounts
+        try {
+          // The request_id is after the staker address (account-hash format = 32 bytes + 1 byte prefix)
+          // Look for pattern: 00 + 26d3a742... (account hash) followed by 8 bytes of request_id
+          const stakerPattern = /0026d3a742[a-f0-9]{56}/;
+          const match = bytes.match(stakerPattern);
+          if (match) {
+            const afterStaker = bytes.substring(bytes.indexOf(match[0]) + match[0].length);
+            // Next 16 hex chars = 8 bytes = u64 request_id (little-endian)
+            const requestIdHex = afterStaker.substring(0, 16);
+            if (/^[0-9a-f]{16}$/.test(requestIdHex)) {
+              // Convert little-endian to number
+              const bytes = requestIdHex.match(/.{2}/g)!;
+              const requestId = parseInt(bytes.reverse().join(''), 16);
+              console.log('Parsed request_id from effects:', requestId);
+              return requestId;
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to parse request_id from bytes:', e);
+        }
+      }
+    }
+  }
+  return null;
+}
+
 export default {
   readContractState,
   readUserStCsprBalance,
   getContractStats,
   getUserWithdrawals,
   getNextRequestId,
+  getRequestIdFromTransaction,
+  parseRequestIdFromEffects,
 };

@@ -9,7 +9,7 @@ import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
 import { useConfetti } from './Confetti';
 import ValidatorSelector from './stake/ValidatorSelector';
 import './stake/ValidatorSelector.css';
-import { getNextRequestId } from '../services/contractReader';
+import { getNextRequestId, getRequestIdFromTransaction } from '../services/contractReader';
 import { TransactionTracker, TrackedTransaction } from './TransactionTracker';
 import {
   ChartUpIcon,
@@ -886,16 +886,6 @@ export const StakingForm: React.FC = () => {
         }
       }
     } else {
-      // V22: Read the REAL next_request_id from contract BEFORE unstaking
-      // The contract will assign this ID to our withdrawal request
-      let realRequestId = 1;
-      try {
-        realRequestId = await getNextRequestId();
-        console.log('Contract next_request_id:', realRequestId);
-      } catch (e) {
-        console.warn('Failed to read next_request_id, using fallback:', e);
-      }
-
       // V17: Pass validator to unstake function (request_unstake)
       const result = await unstake(amount, selectedValidator);
       // Update balance immediately on success (demo mode support)
@@ -921,26 +911,86 @@ export const StakingForm: React.FC = () => {
             amount: (txAmount * 1_000_000_000).toString(),
             timestamp: new Date(),
           });
-        }
 
-        // Save withdrawal to localStorage for WithdrawalStatus component
-        // V22 FIX: Use the REAL request_id from the contract, not a local counter
-        // V22 FIX: Store userAccount to filter by connected wallet
-        try {
-          const stored = localStorage.getItem('pendingWithdrawals');
-          const withdrawals = stored ? JSON.parse(stored) : [];
-          withdrawals.push({
-            requestId: realRequestId,
-            csprAmount: csprReceived,
-            isReady: false,
-            isClaimed: false,
-            requestTime: new Date().toISOString(),
-            userAccount: activeAccount?.publicKey, // V22: Track which account made this withdrawal
-          });
-          localStorage.setItem('pendingWithdrawals', JSON.stringify(withdrawals));
-          console.log('Saved withdrawal with request_id:', realRequestId, 'for account:', activeAccount?.publicKey);
-        } catch (e) {
-          console.warn('Failed to save withdrawal to localStorage', e);
+          // V23 FIX: Get the REAL request_id from the confirmed transaction events
+          // This is the only reliable way to get the actual assigned ID
+          const deployHash = result.deployHash;
+          const tempWithdrawalId = `temp_${Date.now()}`;
+
+          // Save withdrawal immediately with temporary ID (will be updated)
+          try {
+            const stored = localStorage.getItem('pendingWithdrawals');
+            const withdrawals = stored ? JSON.parse(stored) : [];
+            withdrawals.push({
+              requestId: tempWithdrawalId, // Temporary until we get real ID
+              csprAmount: csprReceived,
+              isReady: false,
+              isClaimed: false,
+              requestTime: new Date().toISOString(),
+              userAccount: activeAccount?.publicKey,
+              deployHash: deployHash, // Store deploy hash to identify this withdrawal
+              pendingRequestId: true, // Flag that we're waiting for real ID
+            });
+            localStorage.setItem('pendingWithdrawals', JSON.stringify(withdrawals));
+            console.log('Saved withdrawal with temp ID, waiting for transaction confirmation...');
+          } catch (e) {
+            console.warn('Failed to save withdrawal to localStorage', e);
+          }
+
+          // Async: Fetch real request_id from confirmed transaction
+          (async () => {
+            try {
+              console.log('Fetching real request_id from transaction:', deployHash);
+              const realRequestId = await getRequestIdFromTransaction(deployHash);
+
+              if (realRequestId !== null) {
+                // Update the withdrawal with real request_id
+                const stored = localStorage.getItem('pendingWithdrawals');
+                if (stored) {
+                  const withdrawals = JSON.parse(stored);
+                  const updated = withdrawals.map((w: any) => {
+                    if (w.deployHash === deployHash && w.pendingRequestId) {
+                      console.log(`Updated withdrawal: temp -> request_id ${realRequestId}`);
+                      return {
+                        ...w,
+                        requestId: realRequestId,
+                        pendingRequestId: false,
+                      };
+                    }
+                    return w;
+                  });
+                  localStorage.setItem('pendingWithdrawals', JSON.stringify(updated));
+                  // Notify components to refresh
+                  window.dispatchEvent(new CustomEvent('withdrawal_updated'));
+                }
+              } else {
+                // Fallback: try to get next_request_id and use previous value
+                console.warn('Could not get request_id from transaction, trying fallback...');
+                const nextId = await getNextRequestId();
+                const fallbackId = Math.max(1, nextId - 1); // Use previous ID as fallback
+
+                const stored = localStorage.getItem('pendingWithdrawals');
+                if (stored) {
+                  const withdrawals = JSON.parse(stored);
+                  const updated = withdrawals.map((w: any) => {
+                    if (w.deployHash === deployHash && w.pendingRequestId) {
+                      console.log(`Fallback: Using request_id ${fallbackId}`);
+                      return {
+                        ...w,
+                        requestId: fallbackId,
+                        pendingRequestId: false,
+                      };
+                    }
+                    return w;
+                  });
+                  localStorage.setItem('pendingWithdrawals', JSON.stringify(updated));
+                  window.dispatchEvent(new CustomEvent('withdrawal_updated'));
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to fetch real request_id:', e);
+            }
+          })();
         }
       }
     }
