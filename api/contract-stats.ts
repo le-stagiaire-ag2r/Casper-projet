@@ -4,6 +4,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
 // V22 Contract Package Hash (Pool-based architecture with U512 fix)
 const CONTRACT_PACKAGE_HASH = '2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3';
+// V22 Contract main purse URef (for direct balance query)
+const CONTRACT_PURSE_UREF = 'uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007';
 // Rate precision (9 decimals)
 const RATE_PRECISION = 1_000_000_000;
 
@@ -36,15 +38,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get the state root hash first
     const stateRootHash = await getStateRootHash();
 
-    // Try multiple approaches to get contract state
-    let stats = await queryOdraContractState(stateRootHash);
+    // Method 1: Try direct purse balance query (most reliable)
+    let stats = await queryPurseBalance(stateRootHash);
 
-    // Try entity API if first method fails
+    // Method 2: Try Odra contract state
+    if (!stats.success) {
+      stats = await queryOdraContractState(stateRootHash);
+    }
+
+    // Method 3: Try entity API if first method fails
     if (!stats.success) {
       stats = await queryEntityState(stateRootHash);
     }
 
-    // Try named keys approach
+    // Method 4: Try named keys approach
     if (!stats.success) {
       stats = await queryNamedKeys(stateRootHash);
     }
@@ -116,6 +123,92 @@ async function rpcCall(method: string, params: any): Promise<any> {
 async function getStateRootHash(): Promise<string> {
   const data = await rpcCall('chain_get_state_root_hash', {});
   return data.result?.state_root_hash || '';
+}
+
+/**
+ * Query contract purse balance directly using URef
+ * This is the most reliable method for V22 contracts
+ */
+async function queryPurseBalance(stateRootHash: string): Promise<StatsResult> {
+  try {
+    // Try query_balance with purse URef
+    const balanceData = await rpcCall('query_balance', {
+      purse_identifier: {
+        purse_uref: CONTRACT_PURSE_UREF,
+      },
+      state_identifier: { StateRootHash: stateRootHash },
+    });
+
+    if (balanceData.result?.balance) {
+      const balance = parseInt(balanceData.result.balance, 10);
+
+      // For exchange rate, we need to also get stCSPR supply
+      // Try to get it from token total_supply
+      let totalStcspr = balance; // Default to same as pool
+
+      // Try to query stCSPR supply from contract
+      const supplyData = await rpcCall('query_global_state', {
+        state_identifier: { StateRootHash: stateRootHash },
+        key: `hash-${CONTRACT_PACKAGE_HASH}`,
+        path: ['token', 'total_supply'],
+      });
+
+      if (supplyData.result?.stored_value?.CLValue?.parsed) {
+        const supply = parseInt(supplyData.result.stored_value.CLValue.parsed, 10);
+        if (supply > 0) {
+          totalStcspr = supply;
+        }
+      }
+
+      // Calculate exchange rate
+      const exchangeRate = totalStcspr > 0
+        ? Math.floor((balance * RATE_PRECISION) / totalStcspr)
+        : RATE_PRECISION;
+
+      return {
+        success: true,
+        exchangeRate,
+        totalPool: balance,
+        totalStcspr,
+        source: 'purse_uref_balance',
+      };
+    }
+
+    // Fallback: Try state_get_balance (older API)
+    const legacyBalance = await rpcCall('state_get_balance', {
+      purse_uref: CONTRACT_PURSE_UREF,
+      state_root_hash: stateRootHash,
+    });
+
+    if (legacyBalance.result?.balance_value) {
+      const balance = parseInt(legacyBalance.result.balance_value, 10);
+      return {
+        success: true,
+        exchangeRate: RATE_PRECISION, // Assume 1:1 if we can't get supply
+        totalPool: balance,
+        totalStcspr: balance,
+        source: 'legacy_balance',
+      };
+    }
+
+    return {
+      success: false,
+      exchangeRate: RATE_PRECISION,
+      totalPool: 0,
+      totalStcspr: 0,
+      source: 'purse_balance_failed',
+      debug: { balanceData, legacyBalance },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      exchangeRate: RATE_PRECISION,
+      totalPool: 0,
+      totalStcspr: 0,
+      source: 'purse_balance_error',
+      debug: { error: error.message },
+    };
+  }
 }
 
 /**
