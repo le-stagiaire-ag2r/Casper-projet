@@ -2,13 +2,11 @@ import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Dashboard } from '../components/Dashboard';
-import { StakingForm } from '../components/StakingForm';
-import { StakeHistory } from '../components/StakeHistory';
-import { V15StatsCard } from '../components/V15StatsCard';
-import { WithdrawalStatus } from '../components/WithdrawalStatus';
-import { PriceAlertComponent } from '../components/PriceAlert';
-import { ExportCSV } from '../components/ExportCSV';
+import { StakingCalculator } from '../components/StakingCalculator';
+import { GlobalStats } from '../components/GlobalStats';
+import { TVLChart } from '../components/TVLChart';
+import { PortfolioHistory } from '../components/PortfolioHistory';
+import { Leaderboard } from '../components/Leaderboard';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -117,50 +115,6 @@ const SectionDescription = styled.p`
   line-height: ${typography.lineHeight.relaxed};
 `;
 
-const InfoBanner = styled.div`
-  background: ${colors.accent.muted};
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: ${layout.borderRadius.lg};
-  padding: ${spacing[5]} ${spacing[6]};
-  margin-bottom: ${spacing[8]};
-  display: flex;
-  align-items: flex-start;
-  gap: ${spacing[4]};
-`;
-
-const InfoIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  background: ${colors.accent.primary};
-  border-radius: ${layout.borderRadius.md};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  svg {
-    width: 20px;
-    height: 20px;
-    color: white;
-  }
-`;
-
-const InfoContent = styled.div``;
-
-const InfoTitle = styled.h3`
-  font-family: ${typography.fontFamily.display};
-  font-size: ${typography.fontSize.base};
-  font-weight: ${typography.fontWeight.semibold};
-  color: ${colors.text.primary};
-  margin-bottom: ${spacing[1]};
-`;
-
-const InfoText = styled.p`
-  font-size: ${typography.fontSize.sm};
-  color: ${colors.text.secondary};
-  line-height: ${typography.lineHeight.relaxed};
-`;
-
 const TwoColumnGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -175,29 +129,11 @@ const FullWidth = styled.div`
   margin-bottom: ${spacing[8]};
 `;
 
-const ToolsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${spacing[6]};
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const InfoSvgIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="16" x2="12" y2="12" />
-    <line x1="12" y1="8" x2="12.01" y2="8" />
-  </svg>
-);
-
-interface StakePageProps {
+interface AnalyticsPageProps {
   isDark?: boolean;
 }
 
-export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
+export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark = true }) => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 });
@@ -227,96 +163,86 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
   return (
     <PageContainer>
       <HeroHeader>
-        <HeroLabel>Liquid Staking</HeroLabel>
+        <HeroLabel>Analytics</HeroLabel>
         <HeroTitle className="hero-title">
-          Stake & Earn
-          <span>Deposit CSPR, receive stCSPR</span>
+          Portfolio & Stats
+          <span>Track your staking performance</span>
         </HeroTitle>
         <HeroSubtitle className="hero-subtitle">
-          Stake your CSPR tokens and receive liquid stCSPR while earning rewards automatically
+          Monitor network statistics, analyze trends, and optimize your staking strategy
         </HeroSubtitle>
       </HeroHeader>
 
-      {/* Contract Stats */}
-      <Section>
-        <SectionInner>
-          <InfoBanner className="animate-on-scroll">
-            <InfoIcon>
-              <InfoSvgIcon />
-            </InfoIcon>
-            <InfoContent>
-              <InfoTitle>V22 Multi-Validator Staking</InfoTitle>
-              <InfoText>
-                Choose your validator, stake min 500 CSPR, and earn rewards!
-                Unstaking queues a withdrawal (~7 eras unbonding period).
-              </InfoText>
-            </InfoContent>
-          </InfoBanner>
-
-          <FullWidth className="animate-on-scroll">
-            <V15StatsCard />
-          </FullWidth>
-
-          <div className="animate-on-scroll">
-            <Dashboard />
-          </div>
-        </SectionInner>
-      </Section>
-
-      {/* Staking Form & History */}
+      {/* Calculator Section */}
       <Section>
         <SectionInner>
           <SectionHeader className="animate-on-scroll">
-            <SectionLabel>01 / Stake</SectionLabel>
-            <SectionTitle>Stake & Unstake</SectionTitle>
+            <SectionLabel>01 / Calculator</SectionLabel>
+            <SectionTitle>Estimate Your Rewards</SectionTitle>
             <SectionDescription>
-              Deposit CSPR to receive stCSPR tokens. Your balance grows as rewards accumulate.
+              Calculate potential earnings based on your staking amount and duration
+            </SectionDescription>
+          </SectionHeader>
+
+          <FullWidth className="animate-on-scroll">
+            <StakingCalculator />
+          </FullWidth>
+        </SectionInner>
+      </Section>
+
+      {/* Network Stats Section */}
+      <Section>
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>02 / Network</SectionLabel>
+            <SectionTitle>Casper Network Statistics</SectionTitle>
+            <SectionDescription>
+              Live data from the Casper blockchain
+            </SectionDescription>
+          </SectionHeader>
+
+          <FullWidth className="animate-on-scroll">
+            <GlobalStats isDark={isDark} />
+          </FullWidth>
+        </SectionInner>
+      </Section>
+
+      {/* Charts Section */}
+      <Section>
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>03 / Charts</SectionLabel>
+            <SectionTitle>TVL & Portfolio History</SectionTitle>
+            <SectionDescription>
+              Visualize trends and track your portfolio over time
             </SectionDescription>
           </SectionHeader>
 
           <TwoColumnGrid className="animate-on-scroll">
-            <StakingForm />
-            <StakeHistory />
+            <TVLChart isDark={isDark} />
+            <PortfolioHistory isDark={isDark} />
           </TwoColumnGrid>
         </SectionInner>
       </Section>
 
-      {/* Withdrawal Status */}
+      {/* Leaderboard Section */}
       <Section>
         <SectionInner>
           <SectionHeader className="animate-on-scroll">
-            <SectionLabel>02 / Withdrawals</SectionLabel>
-            <SectionTitle>Pending Withdrawals</SectionTitle>
+            <SectionLabel>04 / Community</SectionLabel>
+            <SectionTitle>Top Stakers</SectionTitle>
             <SectionDescription>
-              Track your unstaking requests and claim when ready
+              See the top stakers in the StakeVue community
             </SectionDescription>
           </SectionHeader>
 
           <FullWidth className="animate-on-scroll">
-            <WithdrawalStatus />
+            <Leaderboard isDark={isDark} />
           </FullWidth>
-        </SectionInner>
-      </Section>
-
-      {/* Tools Section */}
-      <Section>
-        <SectionInner>
-          <SectionHeader className="animate-on-scroll">
-            <SectionLabel>03 / Tools</SectionLabel>
-            <SectionTitle>Alerts & Export</SectionTitle>
-            <SectionDescription>
-              Set price alerts and export your staking data
-            </SectionDescription>
-          </SectionHeader>
-
-          <ToolsGrid className="animate-on-scroll">
-            <PriceAlertComponent isDark={isDark} />
-            <ExportCSV isDark={isDark} />
-          </ToolsGrid>
         </SectionInner>
       </Section>
     </PageContainer>
   );
 };
 
-export default StakePage;
+export default AnalyticsPage;

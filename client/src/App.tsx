@@ -15,6 +15,8 @@ import { CsprClickInitOptions, CONTENT_MODE } from '@make-software/csprclick-cor
 import { Navigation } from './components/Navigation';
 import { HomePage } from './pages/HomePage';
 import { StakePage } from './pages/StakePage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
+import { ValidatorsPage } from './pages/ValidatorsPage';
 import { GuidePage } from './pages/GuidePage';
 import { BalanceProvider } from './context/BalanceContext';
 import { FAQBot } from './components/FAQBot';
@@ -236,6 +238,8 @@ const AppContent: React.FC<{
           <Routes>
             <Route path="/" element={<HomePage isDark={isDark} />} />
             <Route path="/stake" element={<StakePage isDark={isDark} />} />
+            <Route path="/analytics" element={<AnalyticsPage isDark={isDark} />} />
+            <Route path="/validators" element={<ValidatorsPage isDark={isDark} />} />
             <Route path="/guide" element={<GuidePage isDark={isDark} />} />
           </Routes>
 

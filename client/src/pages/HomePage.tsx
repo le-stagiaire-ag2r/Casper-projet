@@ -662,7 +662,7 @@ export const HomePage: React.FC<HomePageProps> = () => {
             <span>Earn Rewards.</span>
           </HeroTitle>
           <HeroSubtitle className="hero-subtitle">
-            The liquid staking protocol that lets you earn ~17% APY while keeping
+            The liquid staking protocol that lets you earn staking rewards while keeping
             full liquidity. Stake your CSPR, receive stCSPR, and use it anywhere.
           </HeroSubtitle>
           <HeroButtons className="hero-buttons">
@@ -680,9 +680,9 @@ export const HomePage: React.FC<HomePageProps> = () => {
       <StatsSection ref={statsRef}>
         <StatsGrid>
           <StatCard className="stat-card">
-            <StatValue>~17%</StatValue>
+            <StatValue>~2.35%</StatValue>
             <StatLabel>
-              APY Rewards
+              APY (Testnet)
               <StatIndicator $live>Live</StatIndicator>
             </StatLabel>
           </StatCard>
@@ -740,7 +740,7 @@ export const HomePage: React.FC<HomePageProps> = () => {
             <FeatureNumber>03</FeatureNumber>
             <FeatureTitle>Earn Rewards</FeatureTitle>
             <FeatureDescription>
-              Your CSPR earns ~17% APY automatically. Use your stCSPR
+              Your CSPR earns staking rewards automatically. Use your stCSPR
               freely in DeFi or unstake anytime.
             </FeatureDescription>
           </FeatureCard>
@@ -783,10 +783,10 @@ export const HomePage: React.FC<HomePageProps> = () => {
           <BenefitCard className="benefit-card" $purple>
             <BenefitIcon><TrendingIcon /></BenefitIcon>
             <BenefitContent>
-              <BenefitTitle>~17% APY Returns</BenefitTitle>
+              <BenefitTitle>Staking Rewards</BenefitTitle>
               <BenefitDescription>
                 Earn automatic staking rewards without any effort.
-                Watch your balance grow over time.
+                Your stCSPR value grows as rewards accumulate.
               </BenefitDescription>
             </BenefitContent>
           </BenefitCard>
