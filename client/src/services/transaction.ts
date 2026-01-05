@@ -34,8 +34,8 @@ import {
 // Import embedded wasm files (bypasses Vercel file serving issues)
 import { getProxyCallerWasm, getProxyCallerWithReturnWasm } from './proxyCallerWasm';
 
-// Get runtime config
-const config = window.config;
+// Get runtime config (use any to allow dynamic properties)
+const config: any = window.config;
 
 /**
  * Get proxy_caller.wasm (for functions without return value)
@@ -600,6 +600,196 @@ export const buildAddRewardsTransaction = async (
   const deploy = Deploy.makeDeploy(deployHeader, payment, session);
 
   // Serialize deploy for CSPR.click
+  return { deploy: Deploy.toJSON(deploy) };
+};
+
+/**
+ * Build an Admin Delegate Transaction using proxy_caller.wasm (Owner only)
+ *
+ * admin_delegate(validator: PublicKey, amount: U512)
+ * Delegates pool funds to a specific validator via the auction contract.
+ */
+export const buildAdminDelegateTransaction = async (
+  senderPublicKeyHex: string,
+  validatorPublicKeyHex: string,
+  amountCspr: string
+): Promise<{ deploy: any }> => {
+  // Validate inputs
+  if (!senderPublicKeyHex) {
+    throw new Error('Sender public key is required');
+  }
+
+  if (!validatorPublicKeyHex) {
+    throw new Error('Validator public key is required');
+  }
+
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
+  }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = loadProxyCallerWasm();
+
+  // Convert amount to motes
+  const amountMotes = csprToMotes(amountCspr);
+  const gasMotes = config.admin_delegate_payment || '50000000000'; // 50 CSPR for gas (delegation costs more)
+
+  // Build RuntimeArgs for admin_delegate(validator: PublicKey, amount: U512)
+  const validatorPubKey = PublicKey.fromHex(validatorPublicKeyHex);
+  const delegateArgs = Args.fromMap({
+    validator: CLValue.newCLPublicKey(validatorPubKey),
+    amount: CLValue.newCLUInt512(amountMotes),
+  });
+  const serializedArgs = delegateArgs.toBytes();
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    entry_point: CLValue.newCLString('admin_delegate'),
+    args: bytesToCLList(serializedArgs),
+    attached_value: CLValue.newCLUInt512('0'),
+    amount: CLValue.newCLUInt512('0'),
+  });
+
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+
+  // Build deploy header
+  const deployHeader = DeployHeader.default();
+  deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
+  deployHeader.chainName = config.chain_name || 'casper-test';
+  deployHeader.gasPrice = 1;
+
+  // Build payment
+  const payment = ExecutableDeployItem.standardPayment(gasMotes);
+
+  // Create deploy
+  const deploy = Deploy.makeDeploy(deployHeader, payment, session);
+
+  return { deploy: Deploy.toJSON(deploy) };
+};
+
+/**
+ * Build an Admin Undelegate Transaction using proxy_caller.wasm (Owner only)
+ *
+ * admin_undelegate(validator: PublicKey, amount: U512)
+ * Undelegates from a validator via the auction contract.
+ */
+export const buildAdminUndelegateTransaction = async (
+  senderPublicKeyHex: string,
+  validatorPublicKeyHex: string,
+  amountCspr: string
+): Promise<{ deploy: any }> => {
+  // Validate inputs
+  if (!senderPublicKeyHex) {
+    throw new Error('Sender public key is required');
+  }
+
+  if (!validatorPublicKeyHex) {
+    throw new Error('Validator public key is required');
+  }
+
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
+  }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = loadProxyCallerWasm();
+
+  // Convert amount to motes
+  const amountMotes = csprToMotes(amountCspr);
+  const gasMotes = config.admin_undelegate_payment || '50000000000'; // 50 CSPR for gas
+
+  // Build RuntimeArgs for admin_undelegate(validator: PublicKey, amount: U512)
+  const validatorPubKey = PublicKey.fromHex(validatorPublicKeyHex);
+  const undelegateArgs = Args.fromMap({
+    validator: CLValue.newCLPublicKey(validatorPubKey),
+    amount: CLValue.newCLUInt512(amountMotes),
+  });
+  const serializedArgs = undelegateArgs.toBytes();
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    entry_point: CLValue.newCLString('admin_undelegate'),
+    args: bytesToCLList(serializedArgs),
+    attached_value: CLValue.newCLUInt512('0'),
+    amount: CLValue.newCLUInt512('0'),
+  });
+
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+
+  // Build deploy header
+  const deployHeader = DeployHeader.default();
+  deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
+  deployHeader.chainName = config.chain_name || 'casper-test';
+  deployHeader.gasPrice = 1;
+
+  // Build payment
+  const payment = ExecutableDeployItem.standardPayment(gasMotes);
+
+  // Create deploy
+  const deploy = Deploy.makeDeploy(deployHeader, payment, session);
+
+  return { deploy: Deploy.toJSON(deploy) };
+};
+
+/**
+ * Build an Admin Add Liquidity Transaction using proxy_caller.wasm (Owner only)
+ *
+ * admin_add_liquidity() payable
+ * Adds CSPR to the available liquidity pool for claim payouts.
+ */
+export const buildAdminAddLiquidityTransaction = async (
+  senderPublicKeyHex: string,
+  amountCspr: string
+): Promise<{ deploy: any }> => {
+  // Validate inputs
+  if (!senderPublicKeyHex) {
+    throw new Error('Sender public key is required');
+  }
+
+  if (!config.contract_package_hash) {
+    throw new Error('Contract package hash not configured');
+  }
+
+  // Load proxy_caller.wasm
+  const proxyCallerWasm = loadProxyCallerWasm();
+
+  // Convert amounts
+  const amountMotes = csprToMotes(amountCspr);
+  const gasMotes = config.admin_add_liquidity_payment || '10000000000'; // 10 CSPR for gas
+  const totalPayment = (BigInt(gasMotes) + BigInt(amountMotes)).toString();
+
+  // Build empty RuntimeArgs for admin_add_liquidity() - it uses attached_value
+  const liquidityArgs = Args.fromMap({});
+  const serializedArgs = liquidityArgs.toBytes();
+
+  // Build proxy_caller arguments
+  const proxyArgs = Args.fromMap({
+    package_hash: CLValue.newCLByteArray(hexToBytes(getPackageHashHex())),
+    entry_point: CLValue.newCLString('admin_add_liquidity'),
+    args: bytesToCLList(serializedArgs),
+    attached_value: CLValue.newCLUInt512(amountMotes),
+    amount: CLValue.newCLUInt512(amountMotes),
+  });
+
+  // Build session using ModuleBytes with proxy_caller.wasm
+  const session = ExecutableDeployItem.newModuleBytes(proxyCallerWasm, proxyArgs);
+
+  // Build deploy header
+  const deployHeader = DeployHeader.default();
+  deployHeader.account = PublicKey.fromHex(senderPublicKeyHex);
+  deployHeader.chainName = config.chain_name || 'casper-test';
+  deployHeader.gasPrice = 1;
+
+  // Build payment (includes both gas and attached value)
+  const payment = ExecutableDeployItem.standardPayment(totalPayment);
+
+  // Create deploy
+  const deploy = Deploy.makeDeploy(deployHeader, payment, session);
+
   return { deploy: Deploy.toJSON(deploy) };
 };
 

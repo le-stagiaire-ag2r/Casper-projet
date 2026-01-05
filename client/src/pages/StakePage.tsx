@@ -9,6 +9,7 @@ import { V15StatsCard } from '../components/V15StatsCard';
 import { WithdrawalStatus } from '../components/WithdrawalStatus';
 import { PriceAlertComponent } from '../components/PriceAlert';
 import { ExportCSV } from '../components/ExportCSV';
+import { AdminPanel } from '../components/AdminPanel';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -313,6 +314,23 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
             <PriceAlertComponent isDark={isDark} />
             <ExportCSV isDark={isDark} />
           </ToolsGrid>
+        </SectionInner>
+      </Section>
+
+      {/* Admin Section - Only visible to contract owner */}
+      <Section>
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>04 / Admin</SectionLabel>
+            <SectionTitle>Contract Administration</SectionTitle>
+            <SectionDescription>
+              Manage rewards, delegations, and pool liquidity
+            </SectionDescription>
+          </SectionHeader>
+
+          <FullWidth className="animate-on-scroll">
+            <AdminPanel />
+          </FullWidth>
         </SectionInner>
       </Section>
     </PageContainer>
