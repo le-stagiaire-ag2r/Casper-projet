@@ -992,7 +992,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
           )}
 
           {validatorDelegations.map((v, index) => {
-            const delegatedCspr = Number(BigInt(v.delegatedAmount || '0')) / 1_000_000_000;
+            // Use delegatedCspr from API if available, otherwise calculate from motes
+            const delegatedCspr = v.delegatedCspr ?? Number(BigInt(v.delegatedAmount || '0')) / 1_000_000_000;
             const hasAmount = delegatedCspr > 0;
             return (
               <DelegationRow key={v.publicKey}>
@@ -1012,7 +1013,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
             <InfoBox style={{ marginTop: spacing[3] }}>
               Total delegated: <strong>
                 {validatorDelegations.reduce((sum, v) => {
-                  return sum + Number(BigInt(v.delegatedAmount || '0')) / 1_000_000_000;
+                  const cspr = v.delegatedCspr ?? Number(BigInt(v.delegatedAmount || '0')) / 1_000_000_000;
+                  return sum + cspr;
                 }, 0).toLocaleString()} CSPR
               </strong>
             </InfoBox>

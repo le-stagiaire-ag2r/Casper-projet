@@ -453,12 +453,13 @@ export function parseRequestIdFromEffects(effects: any[]): number | null {
 export interface ValidatorDelegation {
   publicKey: string;
   delegatedAmount: string; // in motes
+  delegatedCspr?: number; // in CSPR
   isActive: boolean;
 }
 
 /**
  * Get delegation amounts for all approved validators
- * Returns an array of validators with their delegated amounts
+ * Returns an array of validators with their delegated amounts from the contract
  */
 export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> {
   const approvedValidators: string[] = config.approved_validators || [];
@@ -468,7 +469,7 @@ export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> 
   }
 
   try {
-    // Try to fetch from API first
+    // Fetch from API
     const response = await fetch('/api/validator-delegations', {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
@@ -476,7 +477,9 @@ export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> 
 
     if (response.ok) {
       const data = await response.json();
-      return data.validators || [];
+      if (data.delegations && Array.isArray(data.delegations)) {
+        return data.delegations;
+      }
     }
   } catch (err) {
     console.warn('Could not fetch validator delegations from API:', err);
@@ -486,7 +489,8 @@ export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> 
   return approvedValidators.map(pk => ({
     publicKey: pk,
     delegatedAmount: '0',
-    isActive: true,
+    delegatedCspr: 0,
+    isActive: false,
   }));
 }
 
