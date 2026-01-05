@@ -244,8 +244,8 @@ export const V15StatsCard: React.FC = () => {
       </StatsGrid>
 
       <Description $isDark={isDark}>
-        V15 introduces the exchange rate mechanism. When rewards are added to the pool,
-        the rate increases, making each stCSPR worth more CSPR over time.
+        Pool-based staking with automatic reward distribution. When rewards are added,
+        the exchange rate increases, making each stCSPR worth more CSPR over time.
         {lastUpdated && (
           <> Last updated: {lastUpdated.toLocaleTimeString()}</>
         )}
