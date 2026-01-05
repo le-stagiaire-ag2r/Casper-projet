@@ -97,7 +97,7 @@ const TimeButton = styled.button<{ $isDark: boolean; $isActive: boolean }>`
 
 const ChartContainer = styled.div`
   position: relative;
-  height: 200px;
+  height: 220px;
   margin-top: 20px;
 `;
 
@@ -287,19 +287,25 @@ export const ExchangeRateChart: React.FC<ExchangeRateChartProps> = ({ isDark }) 
     return data.filter(d => d.timestamp >= cutoff);
   }, [data, timeRange, exchangeRate]);
 
-  const chartPath = useMemo(() => {
-    if (chartData.length === 0) return '';
-
+  // Chart dimensions - shared across calculations
+  const chartDimensions = useMemo(() => {
     const width = 400;
-    const height = 180;
-    const padding = { top: 10, right: 10, bottom: 30, left: 10 };
-
+    const height = 200;
+    const padding = { top: 15, right: 15, bottom: 35, left: 50 };
     const chartWidth = width - padding.left - padding.right;
     const chartHeight = height - padding.top - padding.bottom;
 
-    const rates = chartData.map(d => d.rate);
+    const rates = chartData.length > 0 ? chartData.map(d => d.rate) : [1, exchangeRate];
     const minRate = Math.min(...rates) * 0.999;
     const maxRate = Math.max(...rates) * 1.001;
+
+    return { width, height, padding, chartWidth, chartHeight, minRate, maxRate };
+  }, [chartData, exchangeRate]);
+
+  const chartPath = useMemo(() => {
+    if (chartData.length === 0) return '';
+
+    const { padding, chartWidth, chartHeight, minRate, maxRate } = chartDimensions;
 
     const xScale = (i: number) => padding.left + (i / (chartData.length - 1)) * chartWidth;
     const yScale = (rate: number) => padding.top + chartHeight - ((rate - minRate) / (maxRate - minRate)) * chartHeight;
@@ -312,17 +318,57 @@ export const ExchangeRateChart: React.FC<ExchangeRateChartProps> = ({ isDark }) 
     }
 
     return path;
-  }, [chartData]);
+  }, [chartData, chartDimensions]);
 
   const areaPath = useMemo(() => {
     if (!chartPath) return '';
-    const width = 400;
-    const height = 180;
-    const padding = { bottom: 30, left: 10, right: 10 };
-    const chartWidth = width - padding.left - padding.right;
+    const { padding, chartWidth, chartHeight } = chartDimensions;
 
-    return `${chartPath} L ${padding.left + chartWidth} ${height - padding.bottom} L ${padding.left} ${height - padding.bottom} Z`;
-  }, [chartPath]);
+    return `${chartPath} L ${padding.left + chartWidth} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`;
+  }, [chartPath, chartDimensions]);
+
+  // Y-axis labels (rate values)
+  const yAxisLabels = useMemo(() => {
+    const { padding, chartHeight, minRate, maxRate } = chartDimensions;
+    const numLabels = 5;
+    const labels = [];
+
+    for (let i = 0; i < numLabels; i++) {
+      const rate = minRate + ((maxRate - minRate) * (numLabels - 1 - i)) / (numLabels - 1);
+      const y = padding.top + (i / (numLabels - 1)) * chartHeight;
+      labels.push({ rate, y });
+    }
+
+    return labels;
+  }, [chartDimensions]);
+
+  // X-axis labels (dates)
+  const xAxisLabels = useMemo(() => {
+    if (chartData.length === 0) return [];
+
+    const { padding, chartWidth, chartHeight } = chartDimensions;
+    const numLabels = Math.min(5, chartData.length);
+    const labels = [];
+
+    for (let i = 0; i < numLabels; i++) {
+      const dataIndex = Math.floor((i / (numLabels - 1)) * (chartData.length - 1));
+      const x = padding.left + (dataIndex / (chartData.length - 1)) * chartWidth;
+      const date = chartData[dataIndex].timestamp;
+
+      let label: string;
+      if (timeRange === '24h') {
+        label = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      } else if (timeRange === '7d') {
+        label = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+      } else {
+        label = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      }
+
+      labels.push({ label, x, y: padding.top + chartHeight + 20 });
+    }
+
+    return labels;
+  }, [chartData, chartDimensions, timeRange]);
 
   const stats = useMemo(() => {
     if (chartData.length === 0) {
@@ -373,7 +419,7 @@ export const ExchangeRateChart: React.FC<ExchangeRateChartProps> = ({ isDark }) 
       </Header>
 
       <ChartContainer>
-        <SVGChart viewBox="0 0 400 180" preserveAspectRatio="xMidYMid meet">
+        <SVGChart viewBox="0 0 400 200" preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="rateGradient" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stopColor="#30d158" stopOpacity="0.4" />
@@ -381,17 +427,44 @@ export const ExchangeRateChart: React.FC<ExchangeRateChartProps> = ({ isDark }) 
             </linearGradient>
           </defs>
 
-          {/* Grid lines */}
-          {[0, 1, 2, 3, 4].map(i => (
-            <line
-              key={i}
-              x1="10"
-              y1={10 + i * 35}
-              x2="390"
-              y2={10 + i * 35}
-              stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}
-              strokeDasharray="4,4"
-            />
+          {/* Y-axis labels */}
+          {yAxisLabels.map((item, i) => (
+            <g key={`y-${i}`}>
+              <text
+                x={chartDimensions.padding.left - 8}
+                y={item.y + 4}
+                textAnchor="end"
+                fill={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'}
+                fontSize="10"
+                fontFamily="sans-serif"
+              >
+                {item.rate.toFixed(3)}
+              </text>
+              {/* Horizontal grid line */}
+              <line
+                x1={chartDimensions.padding.left}
+                y1={item.y}
+                x2={chartDimensions.padding.left + chartDimensions.chartWidth}
+                y2={item.y}
+                stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}
+                strokeDasharray="4,4"
+              />
+            </g>
+          ))}
+
+          {/* X-axis labels */}
+          {xAxisLabels.map((item, i) => (
+            <text
+              key={`x-${i}`}
+              x={item.x}
+              y={item.y}
+              textAnchor="middle"
+              fill={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'}
+              fontSize="9"
+              fontFamily="sans-serif"
+            >
+              {item.label}
+            </text>
           ))}
 
           {/* Area fill */}
@@ -413,8 +486,8 @@ export const ExchangeRateChart: React.FC<ExchangeRateChartProps> = ({ isDark }) 
           {/* Current value dot */}
           {chartData.length > 0 && (
             <circle
-              cx="390"
-              cy={10 + 140 - ((stats.currentRate - (stats.startRate * 0.999)) / ((stats.currentRate * 1.001) - (stats.startRate * 0.999))) * 140}
+              cx={chartDimensions.padding.left + chartDimensions.chartWidth}
+              cy={chartDimensions.padding.top + chartDimensions.chartHeight - ((stats.currentRate - chartDimensions.minRate) / (chartDimensions.maxRate - chartDimensions.minRate)) * chartDimensions.chartHeight}
               r="5"
               fill="#30d158"
               stroke="#fff"

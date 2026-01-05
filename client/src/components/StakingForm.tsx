@@ -509,6 +509,33 @@ const DemoTag = styled.span`
   text-transform: uppercase;
 `;
 
+const FaucetBanner = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(88, 86, 214, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  color: #a78bfa;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
+    border-color: rgba(139, 92, 246, 0.5);
+    color: #c4b5fd;
+  }
+`;
+
+const FaucetIcon = styled.span`
+  font-size: 18px;
+`;
+
 const PreviewBox = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
     ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%)'
@@ -952,6 +979,18 @@ export const StakingForm: React.FC = () => {
           {currentBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} {tokenSymbol}
         </BalanceValue>
       </BalanceDisplay>
+
+      {/* Faucet Banner - Show when balance is low */}
+      {activeTab === 'stake' && csprBalance < MIN_STAKE_CSPR && (
+        <FaucetBanner
+          href="https://testnet.cspr.live/tools/faucet"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <FaucetIcon>🚰</FaucetIcon>
+          Need testnet CSPR? Get free tokens from the Faucet →
+        </FaucetBanner>
+      )}
 
       <form onSubmit={handleSubmit}>
         <InputGroup>

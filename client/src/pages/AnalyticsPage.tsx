@@ -8,6 +8,7 @@ import { TVLChart } from '../components/TVLChart';
 import { PortfolioHistory } from '../components/PortfolioHistory';
 import { Leaderboard } from '../components/Leaderboard';
 import { ExchangeRateChart } from '../components/ExchangeRateChart';
+import { ActivityFeed } from '../components/ActivityFeed';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -243,11 +244,28 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark = true }) =
         </SectionInner>
       </Section>
 
+      {/* Activity Feed Section */}
+      <Section>
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>05 / Activity</SectionLabel>
+            <SectionTitle>Pool Activity</SectionTitle>
+            <SectionDescription>
+              Real-time activity feed showing stakes, unstakes, and claims
+            </SectionDescription>
+          </SectionHeader>
+
+          <FullWidth className="animate-on-scroll">
+            <ActivityFeed isDark={isDark} maxItems={10} />
+          </FullWidth>
+        </SectionInner>
+      </Section>
+
       {/* Leaderboard Section */}
       <Section>
         <SectionInner>
           <SectionHeader className="animate-on-scroll">
-            <SectionLabel>05 / Community</SectionLabel>
+            <SectionLabel>06 / Community</SectionLabel>
             <SectionTitle>Top Stakers</SectionTitle>
             <SectionDescription>
               See the top stakers in the StakeVue community
