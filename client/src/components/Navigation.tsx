@@ -141,6 +141,8 @@ export const Navigation: React.FC<NavigationProps> = () => {
         <NavLinks>
           <NavItem to="/" end>Home</NavItem>
           <NavItem to="/stake">Stake</NavItem>
+          <NavItem to="/analytics">Analytics</NavItem>
+          <NavItem to="/validators">Validators</NavItem>
           <NavItem to="/guide">Guide</NavItem>
         </NavLinks>
 

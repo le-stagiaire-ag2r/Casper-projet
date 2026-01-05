@@ -2,13 +2,8 @@ import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Dashboard } from '../components/Dashboard';
-import { StakingForm } from '../components/StakingForm';
-import { StakeHistory } from '../components/StakeHistory';
-import { V15StatsCard } from '../components/V15StatsCard';
-import { WithdrawalStatus } from '../components/WithdrawalStatus';
-import { PriceAlertComponent } from '../components/PriceAlert';
-import { ExportCSV } from '../components/ExportCSV';
+import { ValidatorRanking } from '../components/ValidatorRanking';
+import { ValidatorComparator } from '../components/ValidatorComparator';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -61,7 +56,7 @@ const HeroSubtitle = styled.p`
   font-family: ${typography.fontFamily.body};
   font-size: ${typography.fontSize.lg};
   color: ${colors.text.secondary};
-  max-width: 500px;
+  max-width: 550px;
   margin: 0 auto;
   line-height: ${typography.lineHeight.relaxed};
 `;
@@ -117,6 +112,10 @@ const SectionDescription = styled.p`
   line-height: ${typography.lineHeight.relaxed};
 `;
 
+const FullWidth = styled.div`
+  margin-bottom: ${spacing[8]};
+`;
+
 const InfoBanner = styled.div`
   background: ${colors.accent.muted};
   border: 1px solid rgba(139, 92, 246, 0.2);
@@ -161,30 +160,6 @@ const InfoText = styled.p`
   line-height: ${typography.lineHeight.relaxed};
 `;
 
-const TwoColumnGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${spacing[6]};
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const FullWidth = styled.div`
-  margin-bottom: ${spacing[8]};
-`;
-
-const ToolsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${spacing[6]};
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
 const InfoSvgIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <circle cx="12" cy="12" r="10" />
@@ -193,11 +168,11 @@ const InfoSvgIcon = () => (
   </svg>
 );
 
-interface StakePageProps {
+interface ValidatorsPageProps {
   isDark?: boolean;
 }
 
-export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
+export const ValidatorsPage: React.FC<ValidatorsPageProps> = ({ isDark = true }) => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 });
@@ -227,17 +202,17 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
   return (
     <PageContainer>
       <HeroHeader>
-        <HeroLabel>Liquid Staking</HeroLabel>
+        <HeroLabel>Validators</HeroLabel>
         <HeroTitle className="hero-title">
-          Stake & Earn
-          <span>Deposit CSPR, receive stCSPR</span>
+          Validator Network
+          <span>Choose the best validator for your stake</span>
         </HeroTitle>
         <HeroSubtitle className="hero-subtitle">
-          Stake your CSPR tokens and receive liquid stCSPR while earning rewards automatically
+          Explore the Casper validator ecosystem, compare performance metrics, and find the perfect validator for your needs
         </HeroSubtitle>
       </HeroHeader>
 
-      {/* Contract Stats */}
+      {/* Info Banner */}
       <Section>
         <SectionInner>
           <InfoBanner className="animate-on-scroll">
@@ -245,78 +220,53 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
               <InfoSvgIcon />
             </InfoIcon>
             <InfoContent>
-              <InfoTitle>V22 Multi-Validator Staking</InfoTitle>
+              <InfoTitle>Why Validator Selection Matters</InfoTitle>
               <InfoText>
-                Choose your validator, stake min 500 CSPR, and earn rewards!
-                Unstaking queues a withdrawal (~7 eras unbonding period).
+                Different validators offer different commission rates and performance levels.
+                Choosing the right validator can maximize your staking rewards while supporting
+                network decentralization. StakeVue is the only liquid staking protocol that lets
+                you choose your validator!
               </InfoText>
             </InfoContent>
           </InfoBanner>
-
-          <FullWidth className="animate-on-scroll">
-            <V15StatsCard />
-          </FullWidth>
-
-          <div className="animate-on-scroll">
-            <Dashboard />
-          </div>
         </SectionInner>
       </Section>
 
-      {/* Staking Form & History */}
+      {/* Ranking Section */}
       <Section>
         <SectionInner>
           <SectionHeader className="animate-on-scroll">
-            <SectionLabel>01 / Stake</SectionLabel>
-            <SectionTitle>Stake & Unstake</SectionTitle>
+            <SectionLabel>01 / Ranking</SectionLabel>
+            <SectionTitle>Top Validators</SectionTitle>
             <SectionDescription>
-              Deposit CSPR to receive stCSPR tokens. Your balance grows as rewards accumulate.
-            </SectionDescription>
-          </SectionHeader>
-
-          <TwoColumnGrid className="animate-on-scroll">
-            <StakingForm />
-            <StakeHistory />
-          </TwoColumnGrid>
-        </SectionInner>
-      </Section>
-
-      {/* Withdrawal Status */}
-      <Section>
-        <SectionInner>
-          <SectionHeader className="animate-on-scroll">
-            <SectionLabel>02 / Withdrawals</SectionLabel>
-            <SectionTitle>Pending Withdrawals</SectionTitle>
-            <SectionDescription>
-              Track your unstaking requests and claim when ready
+              Validators ranked by performance, stake, and reliability
             </SectionDescription>
           </SectionHeader>
 
           <FullWidth className="animate-on-scroll">
-            <WithdrawalStatus />
+            <ValidatorRanking isDark={isDark} />
           </FullWidth>
         </SectionInner>
       </Section>
 
-      {/* Tools Section */}
+      {/* Comparator Section */}
       <Section>
         <SectionInner>
           <SectionHeader className="animate-on-scroll">
-            <SectionLabel>03 / Tools</SectionLabel>
-            <SectionTitle>Alerts & Export</SectionTitle>
+            <SectionLabel>02 / Compare</SectionLabel>
+            <SectionTitle>Validator Comparator</SectionTitle>
             <SectionDescription>
-              Set price alerts and export your staking data
+              Compare validators side by side to make an informed decision
             </SectionDescription>
           </SectionHeader>
 
-          <ToolsGrid className="animate-on-scroll">
-            <PriceAlertComponent isDark={isDark} />
-            <ExportCSV isDark={isDark} />
-          </ToolsGrid>
+          <FullWidth className="animate-on-scroll">
+            <ValidatorComparator isDark={isDark} />
+          </FullWidth>
         </SectionInner>
       </Section>
     </PageContainer>
   );
 };
 
-export default StakePage;
+export default ValidatorsPage;
