@@ -3,7 +3,15 @@ import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { useContractData } from '../hooks/useContractData';
 import { useToast } from './Toast';
-import { buildAddRewardsTransaction, sendTransaction, csprToMotes, motesToCspr } from '../services/transaction';
+import {
+  buildAddRewardsTransaction,
+  buildAdminDelegateTransaction,
+  buildAdminUndelegateTransaction,
+  buildAdminAddLiquidityTransaction,
+  sendTransaction,
+  csprToMotes,
+  motesToCspr
+} from '../services/transaction';
 import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
@@ -11,6 +19,9 @@ import { colors, typography, spacing, layout, effects } from '../styles/designTo
 const config = (window as any).config || {};
 const OWNER_ACCOUNT_HASH = config.owner_account_hash || '';
 const GAS_FEE_CSPR = parseFloat(config.add_rewards_payment || '10000000000') / 1_000_000_000;
+const APPROVED_VALIDATORS: string[] = config.approved_validators || [];
+
+type AdminTab = 'rewards' | 'delegate' | 'undelegate' | 'liquidity';
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -415,6 +426,67 @@ const ErrorText = styled.p`
   margin-top: ${spacing[2]};
 `;
 
+// Tabs
+const TabsContainer = styled.div`
+  display: flex;
+  gap: ${spacing[2]};
+  margin-bottom: ${spacing[6]};
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: ${spacing[3]};
+  flex-wrap: wrap;
+`;
+
+const Tab = styled.button<{ $active: boolean }>`
+  padding: ${spacing[2]} ${spacing[4]};
+  background: ${props => props.$active ? 'rgba(139, 92, 246, 0.2)' : 'transparent'};
+  border: 1px solid ${props => props.$active ? 'rgba(139, 92, 246, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
+  border-radius: ${layout.borderRadius.md};
+  color: ${props => props.$active ? colors.accent.primary : colors.text.secondary};
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  font-weight: ${props => props.$active ? typography.fontWeight.semibold : typography.fontWeight.normal};
+  cursor: pointer;
+  transition: all ${effects.transition.fast};
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+`;
+
+const ValidatorSelect = styled.select`
+  width: 100%;
+  padding: ${spacing[3]} ${spacing[4]};
+  background: ${colors.background.elevated};
+  border: 2px solid ${colors.border.default};
+  border-radius: ${layout.borderRadius.lg};
+  color: ${colors.text.primary};
+  font-family: ${typography.fontFamily.body};
+  font-size: ${typography.fontSize.sm};
+  cursor: pointer;
+  transition: all ${effects.transition.fast};
+
+  &:focus {
+    outline: none;
+    border-color: ${colors.accent.primary};
+  }
+
+  option {
+    background: ${colors.background.primary};
+    color: ${colors.text.primary};
+  }
+`;
+
+const InfoBox = styled.div`
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: ${layout.borderRadius.md};
+  padding: ${spacing[4]};
+  margin-bottom: ${spacing[4]};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.secondary};
+`;
+
 // Admin password from environment variable (set on Vercel)
 const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || 'stakevue2024';
 const ADMIN_UNLOCK_KEY = 'stakevue_admin_unlocked';
@@ -427,6 +499,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
   const theme = useTheme() as any;
   const isDark = theme?.mode === 'dark';
   const { activeAccount, send } = useCsprClick();
+  const contractData = useContractData();
   const {
     exchangeRate,
     totalPool,
@@ -434,10 +507,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
     simulateRewards,
     isLive,
     refresh,
-  } = useContractData();
+  } = contractData;
+  // These may not exist in the hook yet - use fallbacks
+  const availableLiquidity = (contractData as any).availableLiquidity || '0';
+  const pendingUndelegations = (contractData as any).pendingUndelegations || '0';
   const { success: toastSuccess, error: toastError, ToastComponent } = useToast();
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<AdminTab>('rewards');
+
+  // Form states
   const [amount, setAmount] = useState('');
+  const [selectedValidator, setSelectedValidator] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [deployHash, setDeployHash] = useState<string | null>(null);
 
@@ -570,6 +651,156 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
     setAmount('');
   };
 
+  // Handle admin_delegate
+  const handleDelegate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const numAmount = parseFloat(amount);
+    if (!numAmount || numAmount <= 0) return;
+
+    if (!selectedValidator) {
+      toastError('Error', 'Please select a validator');
+      return;
+    }
+
+    if (!activeAccount) {
+      toastError('Error', 'Please connect your wallet first');
+      return;
+    }
+
+    setIsProcessing(true);
+    setDeployHash(null);
+
+    try {
+      const transaction = await buildAdminDelegateTransaction(
+        activeAccount.publicKey,
+        selectedValidator,
+        amount
+      );
+
+      const result = await send(
+        transaction,
+        activeAccount.publicKey,
+        (status, data) => {
+          console.log('Admin delegate status:', status, data);
+        }
+      );
+
+      if (result.success) {
+        setDeployHash(result.deployHash || null);
+        playSuccessSound();
+        toastSuccess('Delegation Sent!', `${numAmount} CSPR delegated to validator`);
+        setAmount('');
+        setTimeout(refresh, 5000);
+      } else {
+        throw new Error(result.error || 'Transaction failed');
+      }
+    } catch (err: any) {
+      playErrorSound();
+      toastError('Transaction Failed', err.message || 'Failed to delegate');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle admin_undelegate
+  const handleUndelegate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const numAmount = parseFloat(amount);
+    if (!numAmount || numAmount <= 0) return;
+
+    if (!selectedValidator) {
+      toastError('Error', 'Please select a validator');
+      return;
+    }
+
+    if (!activeAccount) {
+      toastError('Error', 'Please connect your wallet first');
+      return;
+    }
+
+    setIsProcessing(true);
+    setDeployHash(null);
+
+    try {
+      const transaction = await buildAdminUndelegateTransaction(
+        activeAccount.publicKey,
+        selectedValidator,
+        amount
+      );
+
+      const result = await send(
+        transaction,
+        activeAccount.publicKey,
+        (status, data) => {
+          console.log('Admin undelegate status:', status, data);
+        }
+      );
+
+      if (result.success) {
+        setDeployHash(result.deployHash || null);
+        playSuccessSound();
+        toastSuccess('Undelegation Sent!', `${numAmount} CSPR undelegated from validator`);
+        setAmount('');
+        setTimeout(refresh, 5000);
+      } else {
+        throw new Error(result.error || 'Transaction failed');
+      }
+    } catch (err: any) {
+      playErrorSound();
+      toastError('Transaction Failed', err.message || 'Failed to undelegate');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle admin_add_liquidity
+  const handleAddLiquidity = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const numAmount = parseFloat(amount);
+    if (!numAmount || numAmount <= 0) return;
+
+    if (!activeAccount) {
+      toastError('Error', 'Please connect your wallet first');
+      return;
+    }
+
+    setIsProcessing(true);
+    setDeployHash(null);
+
+    try {
+      const transaction = await buildAdminAddLiquidityTransaction(
+        activeAccount.publicKey,
+        amount
+      );
+
+      const result = await send(
+        transaction,
+        activeAccount.publicKey,
+        (status, data) => {
+          console.log('Admin add liquidity status:', status, data);
+        }
+      );
+
+      if (result.success) {
+        setDeployHash(result.deployHash || null);
+        playSuccessSound();
+        toastSuccess('Liquidity Added!', `${numAmount} CSPR added to pool`);
+        setAmount('');
+        setTimeout(refresh, 5000);
+      } else {
+        throw new Error(result.error || 'Transaction failed');
+      }
+    } catch (err: any) {
+      playErrorSound();
+      toastError('Transaction Failed', err.message || 'Failed to add liquidity');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Format numbers
   const formatCspr = (motes: string) => {
     const cspr = Number(BigInt(motes || '0')) / 1_000_000_000;
@@ -612,15 +843,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
 
         <Title>
           <TitleIcon><WrenchIcon /></TitleIcon>
-          Add Rewards
-          <LiveIndicator>V18</LiveIndicator>
+          Admin Panel
+          <LiveIndicator>V22</LiveIndicator>
         </Title>
 
-        <Description>
-          Add CSPR to the staking pool without minting new stCSPR.
-          This increases the exchange rate, simulating validator rewards distribution.
-        </Description>
+        {/* Tabs */}
+        <TabsContainer>
+          <Tab $active={activeTab === 'rewards'} onClick={() => { setActiveTab('rewards'); setAmount(''); setDeployHash(null); }}>
+            Add Rewards
+          </Tab>
+          <Tab $active={activeTab === 'delegate'} onClick={() => { setActiveTab('delegate'); setAmount(''); setDeployHash(null); }}>
+            Delegate
+          </Tab>
+          <Tab $active={activeTab === 'undelegate'} onClick={() => { setActiveTab('undelegate'); setAmount(''); setDeployHash(null); }}>
+            Undelegate
+          </Tab>
+          <Tab $active={activeTab === 'liquidity'} onClick={() => { setActiveTab('liquidity'); setAmount(''); setDeployHash(null); }}>
+            Add Liquidity
+          </Tab>
+        </TabsContainer>
 
+        {/* Stats Grid */}
         <StatsGrid>
           <StatCard>
             <StatLabel>Exchange Rate</StatLabel>
@@ -635,94 +878,247 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
             </StatValue>
           </StatCard>
           <StatCard>
-            <StatLabel>stCSPR Supply</StatLabel>
+            <StatLabel>Available Liquidity</StatLabel>
             <StatValue>
-              {formatCspr(totalStcspr)}
+              {formatCspr(availableLiquidity || '0')} CSPR
             </StatValue>
           </StatCard>
           <StatCard>
-            <StatLabel>1 stCSPR =</StatLabel>
-            <StatValue $highlight>
-              {exchangeRate.toFixed(4)} CSPR
+            <StatLabel>Pending Undelegations</StatLabel>
+            <StatValue>
+              {formatCspr(pendingUndelegations || '0')} CSPR
             </StatValue>
           </StatCard>
         </StatsGrid>
 
-        <form onSubmit={handleSubmit}>
-          <InputGroup>
-            <Label>Reward Amount</Label>
-            <InputWrapper>
-              <Input
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                disabled={isProcessing}
-              />
-              <TokenLabel>CSPR</TokenLabel>
-            </InputWrapper>
-          </InputGroup>
+        {/* Add Rewards Tab */}
+        {activeTab === 'rewards' && (
+          <form onSubmit={handleSubmit}>
+            <Description>
+              Add CSPR to the staking pool without minting new stCSPR.
+              This increases the exchange rate, simulating validator rewards distribution.
+            </Description>
 
-          {preview && (
-            <>
-              <PreviewRow>
-                <PreviewLabel>New Exchange Rate</PreviewLabel>
-                <PreviewValue $highlight>
-                  {preview.newRate.toFixed(6)}
-                </PreviewValue>
-              </PreviewRow>
-              <PreviewRow>
-                <PreviewLabel>Rate Increase</PreviewLabel>
-                <PreviewValue $highlight>
-                  +{preview.percentIncrease.toFixed(2)}%
-                </PreviewValue>
-              </PreviewRow>
-              <PreviewRow>
-                <PreviewLabel>Gas Fee</PreviewLabel>
-                <PreviewValue>
-                  {GAS_FEE_CSPR} CSPR
-                </PreviewValue>
-              </PreviewRow>
-            </>
-          )}
+            <InputGroup>
+              <Label>Reward Amount</Label>
+              <InputWrapper>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  disabled={isProcessing}
+                />
+                <TokenLabel>CSPR</TokenLabel>
+              </InputWrapper>
+            </InputGroup>
 
-          <SubmitButton type="submit" disabled={isProcessing || !amount || parseFloat(amount) <= 0}>
-            {isProcessing ? (
+            {preview && (
               <>
-                <Spinner />
-                Processing...
+                <PreviewRow>
+                  <PreviewLabel>New Exchange Rate</PreviewLabel>
+                  <PreviewValue $highlight>
+                    {preview.newRate.toFixed(6)}
+                  </PreviewValue>
+                </PreviewRow>
+                <PreviewRow>
+                  <PreviewLabel>Rate Increase</PreviewLabel>
+                  <PreviewValue $highlight>
+                    +{preview.percentIncrease.toFixed(2)}%
+                  </PreviewValue>
+                </PreviewRow>
               </>
-            ) : (
-              <><GiftIcon /> Add Rewards to Pool</>
             )}
-          </SubmitButton>
 
-          {/* Demo simulate button */}
-          <SubmitButton
-            type="button"
-            onClick={handleDemoSimulate}
-            disabled={isProcessing || !amount || parseFloat(amount) <= 0}
-            style={{ background: 'linear-gradient(135deg, #5856d6 0%, #af52de 100%)', marginTop: '8px' }}
-          >
-            <BeakerIcon /> Simulate (Demo Mode)
-          </SubmitButton>
+            <SubmitButton type="submit" disabled={isProcessing || !amount || parseFloat(amount) <= 0}>
+              {isProcessing ? (
+                <>
+                  <Spinner />
+                  Processing...
+                </>
+              ) : (
+                <><GiftIcon /> Add Rewards to Pool</>
+              )}
+            </SubmitButton>
+          </form>
+        )}
 
-          {deployHash && (
-            <SuccessMessage>
-              Rewards added successfully!
-              <br />
-              <ExplorerLink
-                href={`${config.cspr_live_url}/deploy/${deployHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
+        {/* Delegate Tab */}
+        {activeTab === 'delegate' && (
+          <form onSubmit={handleDelegate}>
+            <Description>
+              Delegate pool funds to a validator. This moves CSPR from available liquidity to the validator via the auction contract.
+            </Description>
+
+            <InfoBox>
+              Available to delegate: <strong>{formatCspr(availableLiquidity || '0')} CSPR</strong>
+            </InfoBox>
+
+            <InputGroup>
+              <Label>Select Validator</Label>
+              <ValidatorSelect
+                value={selectedValidator}
+                onChange={(e) => setSelectedValidator(e.target.value)}
+                disabled={isProcessing}
               >
-                View on CSPR.live →
-              </ExplorerLink>
-            </SuccessMessage>
-          )}
-        </form>
+                <option value="">-- Select Validator --</option>
+                {APPROVED_VALIDATORS.map((v) => (
+                  <option key={v} value={v}>
+                    {v.substring(0, 8)}...{v.substring(v.length - 8)}
+                  </option>
+                ))}
+              </ValidatorSelect>
+            </InputGroup>
+
+            <InputGroup>
+              <Label>Amount to Delegate</Label>
+              <InputWrapper>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="500"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Min 500 CSPR"
+                  disabled={isProcessing}
+                />
+                <TokenLabel>CSPR</TokenLabel>
+              </InputWrapper>
+            </InputGroup>
+
+            <SubmitButton type="submit" disabled={isProcessing || !amount || !selectedValidator || parseFloat(amount) < 500}>
+              {isProcessing ? (
+                <>
+                  <Spinner />
+                  Processing...
+                </>
+              ) : (
+                'Delegate to Validator'
+              )}
+            </SubmitButton>
+          </form>
+        )}
+
+        {/* Undelegate Tab */}
+        {activeTab === 'undelegate' && (
+          <form onSubmit={handleUndelegate}>
+            <Description>
+              Undelegate from a validator. After the unbonding period (~7 eras), use "Add Liquidity" to return funds to the pool.
+            </Description>
+
+            <InfoBox>
+              Pending undelegations: <strong>{formatCspr(pendingUndelegations || '0')} CSPR</strong>
+            </InfoBox>
+
+            <InputGroup>
+              <Label>Select Validator</Label>
+              <ValidatorSelect
+                value={selectedValidator}
+                onChange={(e) => setSelectedValidator(e.target.value)}
+                disabled={isProcessing}
+              >
+                <option value="">-- Select Validator --</option>
+                {APPROVED_VALIDATORS.map((v) => (
+                  <option key={v} value={v}>
+                    {v.substring(0, 8)}...{v.substring(v.length - 8)}
+                  </option>
+                ))}
+              </ValidatorSelect>
+            </InputGroup>
+
+            <InputGroup>
+              <Label>Amount to Undelegate</Label>
+              <InputWrapper>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  disabled={isProcessing}
+                />
+                <TokenLabel>CSPR</TokenLabel>
+              </InputWrapper>
+            </InputGroup>
+
+            <SubmitButton
+              type="submit"
+              disabled={isProcessing || !amount || !selectedValidator || parseFloat(amount) <= 0}
+              style={{ background: 'linear-gradient(135deg, #ff9500 0%, #ff5e3a 100%)' }}
+            >
+              {isProcessing ? (
+                <>
+                  <Spinner />
+                  Processing...
+                </>
+              ) : (
+                'Undelegate from Validator'
+              )}
+            </SubmitButton>
+          </form>
+        )}
+
+        {/* Add Liquidity Tab */}
+        {activeTab === 'liquidity' && (
+          <form onSubmit={handleAddLiquidity}>
+            <Description>
+              Add CSPR to the available liquidity pool. Use this after undelegation unbonding completes to make funds available for claims.
+            </Description>
+
+            <InfoBox>
+              Current available liquidity: <strong>{formatCspr(availableLiquidity || '0')} CSPR</strong>
+            </InfoBox>
+
+            <InputGroup>
+              <Label>Amount to Add</Label>
+              <InputWrapper>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  disabled={isProcessing}
+                />
+                <TokenLabel>CSPR</TokenLabel>
+              </InputWrapper>
+            </InputGroup>
+
+            <SubmitButton
+              type="submit"
+              disabled={isProcessing || !amount || parseFloat(amount) <= 0}
+              style={{ background: 'linear-gradient(135deg, #30d158 0%, #34c759 100%)' }}
+            >
+              {isProcessing ? (
+                <>
+                  <Spinner />
+                  Processing...
+                </>
+              ) : (
+                'Add Liquidity to Pool'
+              )}
+            </SubmitButton>
+          </form>
+        )}
+
+        {/* Success message for all tabs */}
+        {deployHash && (
+          <SuccessMessage>
+            Transaction sent successfully!
+            <br />
+            <ExplorerLink
+              href={`${config.cspr_live_url}/deploy/${deployHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View on CSPR.live →
+            </ExplorerLink>
+          </SuccessMessage>
+        )}
       </Container>
     </>
   );
