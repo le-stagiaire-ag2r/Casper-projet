@@ -5,7 +5,7 @@ import { colors, typography, effects, layout } from '../styles/designTokens';
 
 const Nav = styled.nav`
   position: relative;
-  z-index: 100;
+  z-index: 50;
   background: ${colors.background.primary};
   border-bottom: 1px solid ${colors.border.default};
 `;
