@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import styled, { keyframes, useTheme } from 'styled-components';
 import { useCsprClick } from '../hooks/useCsprClick';
 import { useContractData } from '../hooks/useContractData';
@@ -12,6 +12,7 @@ import {
   csprToMotes,
   motesToCspr
 } from '../services/transaction';
+import { getValidatorDelegations, ValidatorDelegation } from '../services/contractReader';
 import { playSuccessSound, playErrorSound } from '../utils/notificationSound';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
@@ -487,6 +488,72 @@ const InfoBox = styled.div`
   color: ${colors.text.secondary};
 `;
 
+// Delegation Table Styles
+const DelegationTable = styled.div`
+  margin-bottom: ${spacing[6]};
+`;
+
+const DelegationTableTitle = styled.h4`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.base};
+  font-weight: ${typography.fontWeight.semibold};
+  color: ${colors.text.primary};
+  margin-bottom: ${spacing[3]};
+  display: flex;
+  align-items: center;
+  gap: ${spacing[2]};
+`;
+
+const DelegationRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: ${spacing[3]} ${spacing[4]};
+  background: rgba(20, 10, 30, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: ${layout.borderRadius.md};
+  margin-bottom: ${spacing[2]};
+
+  &:hover {
+    border-color: ${colors.accent.primary};
+  }
+`;
+
+const ValidatorInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${spacing[1]};
+`;
+
+const ValidatorKey = styled.span`
+  font-family: ${typography.fontFamily.mono};
+  font-size: ${typography.fontSize.sm};
+  color: ${colors.text.secondary};
+`;
+
+const DelegatedAmount = styled.span<{ $hasAmount?: boolean }>`
+  font-family: ${typography.fontFamily.display};
+  font-size: ${typography.fontSize.lg};
+  font-weight: ${typography.fontWeight.bold};
+  color: ${props => props.$hasAmount ? colors.status.success : colors.text.muted};
+`;
+
+const RefreshButton = styled.button`
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: ${layout.borderRadius.md};
+  color: ${colors.text.secondary};
+  padding: ${spacing[1]} ${spacing[2]};
+  font-size: ${typography.fontSize.xs};
+  cursor: pointer;
+  transition: all ${effects.transition.fast};
+
+  &:hover {
+    border-color: ${colors.accent.primary};
+    color: ${colors.accent.primary};
+  }
+`;
+
 // Admin password from environment variable (set on Vercel)
 const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || 'stakevue2024';
 const ADMIN_UNLOCK_KEY = 'stakevue_admin_unlocked';
@@ -529,6 +596,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
   });
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Validator delegations state
+  const [validatorDelegations, setValidatorDelegations] = useState<ValidatorDelegation[]>([]);
+  const [loadingDelegations, setLoadingDelegations] = useState(false);
+
+  // Fetch validator delegations on mount
+  useEffect(() => {
+    fetchValidatorDelegations();
+  }, []);
+
+  const fetchValidatorDelegations = async () => {
+    setLoadingDelegations(true);
+    try {
+      const delegations = await getValidatorDelegations();
+      setValidatorDelegations(delegations);
+    } catch (err) {
+      console.error('Failed to fetch validator delegations:', err);
+    }
+    setLoadingDelegations(false);
+  };
 
   const handleUnlock = () => {
     if (passwordInput === ADMIN_PASSWORD) {
@@ -890,6 +977,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ isOwner: isOwnerProp }) 
             </StatValue>
           </StatCard>
         </StatsGrid>
+
+        {/* Validator Delegation Overview */}
+        <DelegationTable>
+          <DelegationTableTitle>
+            Validator Delegations
+            <RefreshButton onClick={fetchValidatorDelegations} disabled={loadingDelegations}>
+              {loadingDelegations ? 'Loading...' : 'Refresh'}
+            </RefreshButton>
+          </DelegationTableTitle>
+
+          {validatorDelegations.length === 0 && !loadingDelegations && (
+            <InfoBox>No validators configured. Check config.approved_validators.</InfoBox>
+          )}
+
+          {validatorDelegations.map((v, index) => {
+            // Use delegatedCspr from API if available, otherwise calculate from motes
+            const delegatedCspr = v.delegatedCspr ?? Number(BigInt(v.delegatedAmount || '0')) / 1_000_000_000;
+            const hasAmount = delegatedCspr > 0;
+            return (
+              <DelegationRow key={v.publicKey}>
+                <ValidatorInfo>
+                  <ValidatorKey>
+                    Validator #{index + 1}: {v.publicKey.substring(0, 12)}...{v.publicKey.substring(v.publicKey.length - 8)}
+                  </ValidatorKey>
+                </ValidatorInfo>
+                <DelegatedAmount $hasAmount={hasAmount}>
+                  {hasAmount ? `${delegatedCspr.toLocaleString()} CSPR` : 'Not delegated'}
+                </DelegatedAmount>
+              </DelegationRow>
+            );
+          })}
+
+          {validatorDelegations.length > 0 && (
+            <InfoBox style={{ marginTop: spacing[3] }}>
+              Total delegated: <strong>
+                {validatorDelegations.reduce((sum, v) => {
+                  const cspr = v.delegatedCspr ?? Number(BigInt(v.delegatedAmount || '0')) / 1_000_000_000;
+                  return sum + cspr;
+                }, 0).toLocaleString()} CSPR
+              </strong>
+            </InfoBox>
+          )}
+        </DelegationTable>
 
         {/* Add Rewards Tab */}
         {activeTab === 'rewards' && (

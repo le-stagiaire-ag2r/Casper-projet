@@ -450,6 +450,90 @@ export function parseRequestIdFromEffects(effects: any[]): number | null {
   return null;
 }
 
+export interface ValidatorDelegation {
+  publicKey: string;
+  delegatedAmount: string; // in motes
+  delegatedCspr?: number; // in CSPR
+  isActive: boolean;
+}
+
+/**
+ * Get delegation amounts for all approved validators
+ * Returns an array of validators with their delegated amounts from the contract
+ */
+export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> {
+  const approvedValidators: string[] = config.approved_validators || [];
+
+  if (approvedValidators.length === 0) {
+    return [];
+  }
+
+  try {
+    // Fetch from API
+    const response = await fetch('/api/validator-delegations', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.delegations && Array.isArray(data.delegations)) {
+        return data.delegations;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch validator delegations from API:', err);
+  }
+
+  // Fallback: return validators with unknown amounts
+  return approvedValidators.map(pk => ({
+    publicKey: pk,
+    delegatedAmount: '0',
+    delegatedCspr: 0,
+    isActive: false,
+  }));
+}
+
+/**
+ * Get available liquidity from contract
+ */
+export async function getAvailableLiquidity(): Promise<string> {
+  try {
+    const response = await fetch('/api/contract-stats', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.availableLiquidity?.toString() || '0';
+    }
+  } catch (err) {
+    console.warn('Could not fetch available liquidity:', err);
+  }
+  return '0';
+}
+
+/**
+ * Get pending undelegations from contract
+ */
+export async function getPendingUndelegations(): Promise<string> {
+  try {
+    const response = await fetch('/api/contract-stats', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.pendingUndelegations?.toString() || '0';
+    }
+  } catch (err) {
+    console.warn('Could not fetch pending undelegations:', err);
+  }
+  return '0';
+}
+
 export default {
   readContractState,
   readUserStCsprBalance,
@@ -458,4 +542,7 @@ export default {
   getNextRequestId,
   getRequestIdFromTransaction,
   parseRequestIdFromEffects,
+  getValidatorDelegations,
+  getAvailableLiquidity,
+  getPendingUndelegations,
 };
