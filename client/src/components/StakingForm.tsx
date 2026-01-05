@@ -861,28 +861,32 @@ export const StakingForm: React.FC = () => {
       const result = await stake(amount, selectedValidator);
       // Update balance immediately on success (demo mode support)
       if (result.success || result.deployHash) {
-        const stcsprReceived = csprToStcspr(txAmount);
-        updateAfterStake(txAmount);
-        updateContractAfterStake(txAmount); // Update contract pool data
-        playSuccessSound();
-        triggerConfetti();
-        toastSuccess('Stake Successful!', `${txAmount} CSPR staked → ${stcsprReceived.toFixed(4)} stCSPR received`);
-        setAmount('');
-        // Show success banner
-        setSuccessTx({
-          type: 'stake',
-          amount: txAmount,
-          received: stcsprReceived,
-          deployHash: result.deployHash || '',
-        });
-        // Track transaction for tracker
-        if (result.deployHash) {
-          setTrackedTx({
-            deployHash: result.deployHash,
+        try {
+          const stcsprReceived = csprToStcspr(txAmount);
+          updateAfterStake(txAmount);
+          updateContractAfterStake(txAmount); // Update contract pool data
+          playSuccessSound();
+          triggerConfetti();
+          toastSuccess('Stake Successful!', `${txAmount} CSPR staked → ${stcsprReceived.toFixed(4)} stCSPR received`);
+          setAmount('');
+          // Show success banner
+          setSuccessTx({
             type: 'stake',
-            amount: (txAmount * 1_000_000_000).toString(),
-            timestamp: new Date(),
+            amount: txAmount,
+            received: stcsprReceived,
+            deployHash: result.deployHash || '',
           });
+          // Track transaction for tracker
+          if (result.deployHash) {
+            setTrackedTx({
+              deployHash: result.deployHash,
+              type: 'stake',
+              amount: (txAmount * 1_000_000_000).toString(),
+              timestamp: new Date(),
+            });
+          }
+        } catch (err) {
+          console.error('Error in stake success handler:', err);
         }
       }
     } else {
@@ -890,19 +894,20 @@ export const StakingForm: React.FC = () => {
       const result = await unstake(amount, selectedValidator);
       // Update balance immediately on success (demo mode support)
       if (result.success || result.deployHash) {
-        const csprReceived = stcsprToCspr(txAmount);
-        updateAfterUnstake(txAmount);
-        updateContractAfterUnstake(txAmount); // Update contract pool data
-        playSuccessSound();
-        toastSuccess('Withdrawal Queued!', `${txAmount} stCSPR → ${csprReceived.toFixed(4)} CSPR (available after ~7 eras)`);
-        setAmount('');
-        // Show success banner
-        setSuccessTx({
-          type: 'unstake',
-          amount: txAmount,
-          received: csprReceived,
-          deployHash: result.deployHash || '',
-        });
+        try {
+          const csprReceived = stcsprToCspr(txAmount);
+          updateAfterUnstake(txAmount);
+          updateContractAfterUnstake(txAmount); // Update contract pool data
+          playSuccessSound();
+          toastSuccess('Withdrawal Queued!', `${txAmount} stCSPR → ${csprReceived.toFixed(4)} CSPR (available after ~7 eras)`);
+          setAmount('');
+          // Show success banner
+          setSuccessTx({
+            type: 'unstake',
+            amount: txAmount,
+            received: csprReceived,
+            deployHash: result.deployHash || '',
+          });
         // Track transaction for tracker
         if (result.deployHash) {
           setTrackedTx({
@@ -991,6 +996,9 @@ export const StakingForm: React.FC = () => {
               console.warn('Failed to fetch real request_id:', e);
             }
           })();
+        }
+        } catch (err) {
+          console.error('Error in unstake success handler:', err);
         }
       }
     }
