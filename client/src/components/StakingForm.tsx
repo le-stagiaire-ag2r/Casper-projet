@@ -536,6 +536,67 @@ const FaucetIcon = styled.span`
   font-size: 18px;
 `;
 
+const AddressWidget = styled.div<{ $isDark: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.03)'
+    : 'rgba(0, 0, 0, 0.02)'};
+  border: 1px solid ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(0, 0, 0, 0.06)'};
+  border-radius: 10px;
+  margin-bottom: 16px;
+`;
+
+const AddressText = styled.div<{ $isDark: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-size: 12px;
+  color: ${props => props.$isDark
+    ? 'rgba(255, 255, 255, 0.6)'
+    : 'rgba(0, 0, 0, 0.6)'};
+`;
+
+const AddressLabel = styled.span`
+  color: #8b5cf6;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+`;
+
+const CopyAddressButton = styled.button<{ $isDark: boolean; $copied: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: ${props => props.$copied
+    ? 'rgba(48, 209, 88, 0.15)'
+    : props.$isDark
+      ? 'rgba(139, 92, 246, 0.15)'
+      : 'rgba(139, 92, 246, 0.1)'};
+  border: 1px solid ${props => props.$copied
+    ? 'rgba(48, 209, 88, 0.3)'
+    : 'rgba(139, 92, 246, 0.2)'};
+  border-radius: 6px;
+  color: ${props => props.$copied ? '#30d158' : '#8b5cf6'};
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${props => props.$copied
+      ? 'rgba(48, 209, 88, 0.2)'
+      : 'rgba(139, 92, 246, 0.25)'};
+  }
+`;
+
 const PreviewBox = styled.div<{ $isDark: boolean }>`
   background: ${props => props.$isDark
     ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%)'
@@ -626,6 +687,26 @@ export const StakingForm: React.FC = () => {
 
   // Track transaction for TransactionTracker
   const [trackedTx, setTrackedTx] = useState<TrackedTransaction | null>(null);
+
+  // Copy address state
+  const [addressCopied, setAddressCopied] = useState(false);
+
+  const copyAddress = async () => {
+    if (activeAccount?.publicKey) {
+      try {
+        await navigator.clipboard.writeText(activeAccount.publicKey);
+        setAddressCopied(true);
+        setTimeout(() => setAddressCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
+  const shortenAddress = (addr: string) => {
+    if (!addr) return '';
+    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+  };
 
   // Show error toast
   useEffect(() => {
@@ -966,6 +1047,24 @@ export const StakingForm: React.FC = () => {
           </Tab>
         </TabContainer>
       </Header>
+
+      {/* Connected Address Widget */}
+      {activeAccount?.publicKey && (
+        <AddressWidget $isDark={isDark}>
+          <AddressText $isDark={isDark}>
+            <AddressLabel>Connected</AddressLabel>
+            {shortenAddress(activeAccount.publicKey)}
+          </AddressText>
+          <CopyAddressButton
+            $isDark={isDark}
+            $copied={addressCopied}
+            onClick={copyAddress}
+            type="button"
+          >
+            {addressCopied ? '✓ Copied' : '📋 Copy'}
+          </CopyAddressButton>
+        </AddressWidget>
+      )}
 
       {/* Balance Display */}
       <BalanceDisplay $isDark={isDark}>
