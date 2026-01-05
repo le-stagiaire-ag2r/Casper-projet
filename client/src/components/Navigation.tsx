@@ -31,7 +31,6 @@ const Logo = styled(NavLink)`
   text-decoration: none;
   letter-spacing: ${typography.letterSpacing.tight};
   transition: color ${effects.transition.fast};
-  z-index: 101;
 
   &:hover {
     color: ${colors.accent.primary};
@@ -134,7 +133,6 @@ const MobileMenuButton = styled.button<{ $isOpen: boolean }>`
   background: transparent;
   border: none;
   cursor: pointer;
-  z-index: 101;
   padding: 8px;
 
   @media (min-width: 769px) {
@@ -188,7 +186,6 @@ const MobileMenu = styled.div<{ $isOpen: boolean }>`
   padding: 16px 0;
   border-bottom: 1px solid ${colors.border.default};
   animation: ${slideIn} 0.3s ease;
-  z-index: 99;
 
   @media (min-width: 769px) {
     display: none;
