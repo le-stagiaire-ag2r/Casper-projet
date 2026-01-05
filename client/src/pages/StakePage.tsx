@@ -329,7 +329,7 @@ export const StakePage: React.FC<StakePageProps> = ({ isDark = true }) => {
           </SectionHeader>
 
           <FullWidth className="animate-on-scroll">
-            <AdminPanel />
+            <AdminPanel isOwner={true} />
           </FullWidth>
         </SectionInner>
       </Section>
