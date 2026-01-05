@@ -7,6 +7,7 @@ import { GlobalStats } from '../components/GlobalStats';
 import { TVLChart } from '../components/TVLChart';
 import { PortfolioHistory } from '../components/PortfolioHistory';
 import { Leaderboard } from '../components/Leaderboard';
+import { ExchangeRateChart } from '../components/ExchangeRateChart';
 import { colors, typography, spacing, layout, effects } from '../styles/designTokens';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -207,11 +208,28 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark = true }) =
         </SectionInner>
       </Section>
 
+      {/* Exchange Rate Section */}
+      <Section>
+        <SectionInner>
+          <SectionHeader className="animate-on-scroll">
+            <SectionLabel>03 / Exchange Rate</SectionLabel>
+            <SectionTitle>stCSPR Exchange Rate</SectionTitle>
+            <SectionDescription>
+              Track how your stCSPR grows in value over time as rewards accrue
+            </SectionDescription>
+          </SectionHeader>
+
+          <FullWidth className="animate-on-scroll">
+            <ExchangeRateChart isDark={isDark} />
+          </FullWidth>
+        </SectionInner>
+      </Section>
+
       {/* Charts Section */}
       <Section>
         <SectionInner>
           <SectionHeader className="animate-on-scroll">
-            <SectionLabel>03 / Charts</SectionLabel>
+            <SectionLabel>04 / Charts</SectionLabel>
             <SectionTitle>TVL & Portfolio History</SectionTitle>
             <SectionDescription>
               Visualize trends and track your portfolio over time
@@ -229,7 +247,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark = true }) =
       <Section>
         <SectionInner>
           <SectionHeader className="animate-on-scroll">
-            <SectionLabel>04 / Community</SectionLabel>
+            <SectionLabel>05 / Community</SectionLabel>
             <SectionTitle>Top Stakers</SectionTitle>
             <SectionDescription>
               See the top stakers in the StakeVue community

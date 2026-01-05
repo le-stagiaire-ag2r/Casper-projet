@@ -10,6 +10,7 @@ import { useConfetti } from './Confetti';
 import ValidatorSelector from './stake/ValidatorSelector';
 import './stake/ValidatorSelector.css';
 import { getNextRequestId } from '../services/contractReader';
+import { TransactionTracker, TrackedTransaction } from './TransactionTracker';
 
 // Get config values
 const config = (window as any).config || {};
@@ -596,6 +597,9 @@ export const StakingForm: React.FC = () => {
     deployHash: string;
   } | null>(null);
 
+  // Track transaction for TransactionTracker
+  const [trackedTx, setTrackedTx] = useState<TrackedTransaction | null>(null);
+
   // Show error toast
   useEffect(() => {
     if (error && error !== lastError) {
@@ -752,6 +756,15 @@ export const StakingForm: React.FC = () => {
           received: stcsprReceived,
           deployHash: result.deployHash || '',
         });
+        // Track transaction for tracker
+        if (result.deployHash) {
+          setTrackedTx({
+            deployHash: result.deployHash,
+            type: 'stake',
+            amount: (txAmount * 1_000_000_000).toString(),
+            timestamp: new Date(),
+          });
+        }
       }
     } else {
       // V22: Read the REAL next_request_id from contract BEFORE unstaking
@@ -781,6 +794,15 @@ export const StakingForm: React.FC = () => {
           received: csprReceived,
           deployHash: result.deployHash || '',
         });
+        // Track transaction for tracker
+        if (result.deployHash) {
+          setTrackedTx({
+            deployHash: result.deployHash,
+            type: 'unstake',
+            amount: (txAmount * 1_000_000_000).toString(),
+            timestamp: new Date(),
+          });
+        }
 
         // Save withdrawal to localStorage for WithdrawalStatus component
         // V22 FIX: Use the REAL request_id from the contract, not a local counter
@@ -832,6 +854,16 @@ export const StakingForm: React.FC = () => {
     <>
       <ToastComponent />
       <ConfettiComponent />
+
+      {/* Transaction Tracker */}
+      <TransactionTracker
+        transaction={trackedTx}
+        onClose={() => setTrackedTx(null)}
+        onRetry={() => {
+          setTrackedTx(null);
+          // User can retry manually
+        }}
+      />
 
       {/* Success Banner */}
       {successTx && (
