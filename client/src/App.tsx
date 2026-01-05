@@ -58,69 +58,67 @@ const GlobalStyle = createGlobalStyle`
   }
 
   /* ===========================================
-     FIX: CSPR Click dropdown - prevent closing on hover
+     FIX: CSPR Click dropdown - FORCE on top of everything
      =========================================== */
 
-  /* Force ClickUI to be above everything */
+  /* CRITICAL: Force ALL CSPR Click dropdowns to be on top with fixed positioning */
+  [data-radix-popper-content-wrapper] {
+    z-index: 2147483647 !important; /* Max z-index value */
+    position: fixed !important;
+    isolation: isolate !important;
+  }
+
+  /* Force ClickUI topbar to be above navigation */
   #cspr-click-topbar,
   [class*="TopBar"],
   [class*="click-ui"],
   #cspr-click-ui {
-    z-index: 999999 !important;
+    z-index: 1000 !important;
     position: relative !important;
+    isolation: isolate !important;
   }
 
-  /* Force dropdown/popover z-index */
+  /* Force ALL dropdowns, popovers, menus to max z-index */
   [class*="Popover"],
   [class*="popover"],
-  [data-radix-popper-content-wrapper],
-  [class*="AccountMenu"] > div[style*="position"],
-  [class*="click-ui"] [role="menu"],
-  [class*="click-ui"] [role="listbox"] {
-    z-index: 9999999 !important;
+  [class*="AccountMenu"],
+  [class*="ProductsMenu"],
+  [role="menu"],
+  [role="listbox"],
+  [role="dialog"],
+  [data-radix-menu-content],
+  [data-radix-dropdown-menu-content],
+  [data-radix-popper-content-wrapper] * {
+    z-index: 2147483647 !important;
   }
 
-  /* Ensure menu items are clickable */
+  /* Ensure menu items are clickable and visible */
   [class*="AccountMenu"],
   [class*="Menu"],
   [class*="MenuItem"],
   [class*="click-ui"] ul,
   [class*="click-ui"] li,
   [class*="click-ui"] button,
-  [class*="click-ui"] a {
+  [class*="click-ui"] a,
+  [data-radix-popper-content-wrapper] button,
+  [data-radix-popper-content-wrapper] a {
     pointer-events: auto !important;
+    position: relative !important;
   }
 
   /* FIX: Create large invisible bridge between trigger button and dropdown */
   [data-radix-popper-content-wrapper] {
     padding-top: 15px !important;
     margin-top: -15px !important;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    margin-left: -10px !important;
-    margin-right: -10px !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    margin-left: -15px !important;
+    margin-right: -15px !important;
   }
 
-  /* FIX: Make the trigger button have extended hover area */
-  [class*="click-ui"] button[aria-haspopup="menu"],
-  [class*="click-ui"] [role="button"][aria-haspopup] {
-    position: relative !important;
-  }
-
-  [class*="click-ui"] button[aria-haspopup="menu"]::after,
-  [class*="click-ui"] [role="button"][aria-haspopup]::after {
-    content: '' !important;
-    position: absolute !important;
-    top: -5px !important;
-    left: -10px !important;
-    right: -10px !important;
-    bottom: -25px !important;
-    z-index: 1 !important;
-  }
-
-  /* FIX: Keep dropdown open and extend its clickable area */
-  [class*="click-ui"] [data-state="open"],
-  [class*="click-ui"] [data-state="open"] + [data-radix-popper-content-wrapper],
+  /* FIX: Keep dropdown open */
+  [data-state="open"],
+  [data-state="open"] + [data-radix-popper-content-wrapper],
   [data-radix-popper-content-wrapper]:hover,
   [data-radix-popper-content-wrapper]:focus-within {
     visibility: visible !important;
@@ -129,30 +127,10 @@ const GlobalStyle = createGlobalStyle`
     display: block !important;
   }
 
-  /* FIX: Prevent dropdown from closing with transition delay */
-  [data-radix-popper-content-wrapper] > * {
-    transition-delay: 150ms !important;
-  }
-
-  /* FIX: Extended hover zone around entire menu */
-  [class*="AccountMenu"],
-  [class*="click-ui"] [role="menu"] {
+  /* FIX: Extended hover zone */
+  [role="menu"] {
     padding: 12px !important;
     margin: -12px !important;
-    position: relative !important;
-  }
-
-  /* FIX: Add pseudo-element to extend hover area around dropdown */
-  [class*="AccountMenu"]::before,
-  [class*="click-ui"] [role="menu"]::before {
-    content: '' !important;
-    position: absolute !important;
-    top: -30px !important;
-    left: -20px !important;
-    right: -20px !important;
-    bottom: -20px !important;
-    z-index: -1 !important;
-    pointer-events: auto !important;
   }
 
   /* Selection */
