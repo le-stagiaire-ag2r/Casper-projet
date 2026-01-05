@@ -1,16 +1,13 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
 // V22 Contract main purse URef
 const CONTRACT_PURSE_UREF = 'uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007';
 // Rate precision (9 decimals)
-const RATE_PRECISION = 1_000_000_000;
+const RATE_PRECISION = 1000000000;
 // Known balance from blockchain explorer (1146.03 CSPR)
-const KNOWN_BALANCE_MOTES = 1_146_030_000_000;
-
+const KNOWN_BALANCE_MOTES = 1146030000000;
 // RPC URL
 const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -39,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const stateData = await stateResp.json();
-    const stateRootHash = stateData?.result?.state_root_hash;
+    const stateRootHash = stateData && stateData.result && stateData.result.state_root_hash;
 
     if (stateRootHash) {
       // Step 2: Query balance
@@ -59,14 +56,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const balData = await balResp.json();
 
-      if (balData?.result?.balance) {
+      if (balData && balData.result && balData.result.balance) {
         totalPool = parseInt(balData.result.balance, 10);
         source = 'live_rpc';
       }
     }
   } catch (e) {
     // Ignore errors, use fallback
-    console.log('RPC error, using fallback:', e);
+    console.log('RPC error, using fallback:', e.message);
   }
 
   // Always return 200 with data
@@ -81,4 +78,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     source: source,
     purseUref: CONTRACT_PURSE_UREF
   });
-}
+};
