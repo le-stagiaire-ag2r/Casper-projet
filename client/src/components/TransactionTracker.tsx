@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { AddressCopy } from './ui/AddressCopy';
 
 const spin = keyframes`
@@ -117,7 +117,7 @@ const StatusIcon = styled.div<{ $status: string }>`
         default: return '#8b5cf6';
       }
     }};
-    ${props => props.$status === 'pending' && `animation: ${spin} 1s linear infinite;`}
+    ${props => props.$status === 'pending' && css`animation: ${spin} 1s linear infinite;`}
   }
 `;
 
@@ -164,7 +164,7 @@ const ProgressFill = styled.div<{ $progress: number; $status: string }>`
     }
   }};
   transition: width 0.5s ease;
-  ${props => props.$status === 'pending' && `animation: ${pulse} 1s ease-in-out infinite;`}
+  ${props => props.$status === 'pending' && css`animation: ${pulse} 1s ease-in-out infinite;`}
 `;
 
 const DeployInfo = styled.div`
