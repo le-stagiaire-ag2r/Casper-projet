@@ -89,9 +89,38 @@ const GlobalStyle = createGlobalStyle`
     pointer-events: auto !important;
   }
 
+  /* FIX: Create invisible bridge between trigger and dropdown */
+  [data-radix-popper-content-wrapper] {
+    padding-top: 8px !important;
+    margin-top: -8px !important;
+  }
+
+  /* Extend hover area around dropdown */
+  [class*="AccountMenu"],
+  [class*="click-ui"] [role="menu"] {
+    padding: 10px !important;
+    margin: -10px !important;
+  }
+
+  /* FIX: Make dropdown stay visible longer */
+  [class*="click-ui"] [data-state="open"],
+  [class*="click-ui"] [data-state="open"] + [data-radix-popper-content-wrapper],
+  [data-radix-popper-content-wrapper]:hover,
+  [data-radix-popper-content-wrapper]:focus-within {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
   /* Extend hover area at bottom of dropdown */
-  [class*="AccountMenu"] {
-    padding-bottom: 15px !important;
+  [class*="AccountMenu"]::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -10px;
+    right: -10px;
+    bottom: -20px;
+    z-index: -1;
   }
 
   /* Selection */
