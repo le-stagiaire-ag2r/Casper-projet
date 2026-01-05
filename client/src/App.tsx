@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import {
@@ -280,6 +280,79 @@ const AppContent: React.FC<{
       <BuyCSPRMenuItem key="buy" />,
     ],
   };
+
+  // FIX: Prevent CSPR Click dropdown from closing too quickly
+  useEffect(() => {
+    let hoverTimeout: NodeJS.Timeout | null = null;
+    let isHoveringMenu = false;
+
+    const handleDropdownBehavior = () => {
+      // Find the dropdown wrapper
+      const dropdownWrapper = document.querySelector('[data-radix-popper-content-wrapper]');
+      const triggerButton = document.querySelector('[class*="click-ui"] button[aria-expanded="true"]');
+
+      if (!dropdownWrapper) return;
+
+      const keepOpen = () => {
+        isHoveringMenu = true;
+        if (hoverTimeout) {
+          clearTimeout(hoverTimeout);
+          hoverTimeout = null;
+        }
+        // Force dropdown to stay visible
+        (dropdownWrapper as HTMLElement).style.pointerEvents = 'auto';
+        (dropdownWrapper as HTMLElement).style.opacity = '1';
+        (dropdownWrapper as HTMLElement).style.visibility = 'visible';
+      };
+
+      const scheduleClose = () => {
+        isHoveringMenu = false;
+        // Give user 300ms to re-enter the dropdown
+        hoverTimeout = setTimeout(() => {
+          if (!isHoveringMenu) {
+            // Click outside to close properly
+            const backdrop = document.querySelector('[data-radix-dismissable-layer]');
+            if (backdrop) {
+              document.body.click();
+            }
+          }
+        }, 300);
+      };
+
+      // Add listeners to dropdown
+      dropdownWrapper.addEventListener('mouseenter', keepOpen);
+      dropdownWrapper.addEventListener('mouseleave', scheduleClose);
+
+      // Also add listeners to trigger button
+      if (triggerButton) {
+        triggerButton.addEventListener('mouseenter', keepOpen);
+        triggerButton.addEventListener('mouseleave', scheduleClose);
+      }
+    };
+
+    // Watch for dropdown appearing
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement) {
+              if (node.querySelector('[data-radix-popper-content-wrapper]') ||
+                  node.matches('[data-radix-popper-content-wrapper]')) {
+                setTimeout(handleDropdownBehavior, 50);
+              }
+            }
+          });
+        }
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+    };
+  }, []);
 
   return (
     <>

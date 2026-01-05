@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 import { AddressCopy } from './ui/AddressCopy';
+import { GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon } from './ui/Icons';
 
 const shimmer = keyframes`
   0% { background-position: -200% 0; }
@@ -314,11 +315,11 @@ export const ValidatorRanking: React.FC<ValidatorRankingProps> = ({ isDark }) =>
   const [isLive, setIsLive] = useState(false);
 
   // Get rank medal icon
-  const getRankIcon = (rank: number): string => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
-    return String(rank);
+  const getRankIcon = (rank: number): React.ReactNode => {
+    if (rank === 1) return <GoldMedalIcon size={22} />;
+    if (rank === 2) return <SilverMedalIcon size={22} />;
+    if (rank === 3) return <BronzeMedalIcon size={22} />;
+    return rank;
   };
 
   const fetchFromCsprCloud = useCallback(async (): Promise<Validator[] | null> => {
