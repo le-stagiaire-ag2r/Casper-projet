@@ -481,70 +481,49 @@ const CONTRACT_PURSE_UREF = 'uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1
 const CONTRACT_PURSE_BASE = '3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2';
 
 /**
- * Query RPC directly from browser to get delegation data
- * This works because browsers can access the RPC (unlike Vercel serverless)
+ * Query CSPR.cloud API to get delegation data
+ * Uses the CSPR.click proxy which works reliably
  */
-async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<ValidatorDelegation[]> {
-  const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
-
+async function queryDelegationsFromCsprCloud(approvedValidators: string[]): Promise<ValidatorDelegation[]> {
   try {
-    console.log('[RPC] Fetching auction info...');
-    const response = await fetch(RPC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'state_get_auction_info',
-        params: []
-      })
-    });
+    // Import dynamically to avoid circular deps
+    const { csprCloudApi, isProxyAvailable } = await import('./csprCloud');
 
-    const data = await response.json();
-    console.log('[RPC] Response received:', data.result ? 'has result' : 'no result');
-
-    if (!data.result?.auction_state?.bids) {
-      console.warn('[RPC] No auction bids in response. Structure:', Object.keys(data.result || {}));
+    if (!isProxyAvailable()) {
+      console.warn('[CSPR.cloud] Proxy not available (wallet not connected)');
       return [];
     }
 
-    const bids = data.result.auction_state.bids;
-    console.log(`[RPC] Found ${bids.length} total validator bids`);
+    console.log('[CSPR.cloud] Querying delegations for', approvedValidators.length, 'validators...');
 
     const delegations: ValidatorDelegation[] = [];
 
+    // Query each validator's delegators
     for (const validatorPk of approvedValidators) {
-      // Find this validator in the bids
-      const validatorBid = bids.find((bid: any) =>
-        bid.public_key?.toLowerCase() === validatorPk.toLowerCase()
-      );
-
       let delegatedAmount = '0';
       let delegatedCspr = 0;
       let isActive = false;
 
-      if (validatorBid?.bid?.delegators) {
-        const delegators = validatorBid.bid.delegators;
-        console.log(`[RPC] Validator ${validatorPk.slice(0,8)}... has ${delegators.length} delegators`);
+      try {
+        const response = await csprCloudApi.getValidatorDelegators(validatorPk, 200);
 
-        // Look for our contract's delegation by checking bonding_purse
-        for (const delegator of delegators) {
-          const bondingPurse = delegator.bonding_purse || '';
+        if (response.data && Array.isArray(response.data)) {
+          // Look for our contract's delegation by checking bonding_purse
+          for (const delegator of response.data) {
+            const bondingPurse = delegator.bonding_purse || '';
 
-          // Check if this delegator's bonding purse matches our contract
-          if (bondingPurse.includes(CONTRACT_PURSE_BASE)) {
-            delegatedAmount = delegator.staked_amount || '0';
-            delegatedCspr = parseInt(delegatedAmount, 10) / 1000000000;
-            isActive = true;
-            console.log(`[RPC] ✓ Found our delegation to ${validatorPk.slice(0,8)}...: ${delegatedCspr} CSPR`);
-            break;
+            // Check if this delegator's bonding purse matches our contract
+            if (bondingPurse.includes(CONTRACT_PURSE_BASE)) {
+              delegatedAmount = delegator.stake || '0';
+              delegatedCspr = parseInt(delegatedAmount, 10) / 1000000000;
+              isActive = true;
+              console.log(`[CSPR.cloud] ✓ Found delegation to ${validatorPk.slice(0,8)}...: ${delegatedCspr} CSPR`);
+              break;
+            }
           }
         }
-
-        // Debug: show first delegator structure if we didn't find ours
-        if (!isActive && delegators.length > 0) {
-          console.log(`[RPC] Sample delegator structure:`, JSON.stringify(delegators[0]).slice(0, 200));
-        }
+      } catch (err) {
+        console.warn(`[CSPR.cloud] Failed to query validator ${validatorPk.slice(0,8)}...`, err);
       }
 
       delegations.push({
@@ -556,11 +535,11 @@ async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<Va
     }
 
     const foundCount = delegations.filter(d => d.isActive).length;
-    console.log(`[RPC] Found ${foundCount} active delegations from contract`);
+    console.log(`[CSPR.cloud] Found ${foundCount} active delegations from contract`);
 
     return delegations;
   } catch (err) {
-    console.error('[RPC] Query failed:', err);
+    console.error('[CSPR.cloud] Query failed:', err);
     return [];
   }
 }
@@ -576,22 +555,22 @@ export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> 
     return [];
   }
 
-  // Try client-side RPC query first (most reliable from browser)
+  // Try CSPR.cloud API first (most reliable, uses CSPR.click proxy)
   try {
-    console.log('Querying delegations directly from RPC...');
-    const rpcDelegations = await queryDelegationsFromRPC(approvedValidators);
+    console.log('Querying delegations from CSPR.cloud...');
+    const cloudDelegations = await queryDelegationsFromCsprCloud(approvedValidators);
 
     // Check if we got any active delegations
-    const hasActiveDelegations = rpcDelegations.some(d => d.isActive);
-    if (rpcDelegations.length > 0 && hasActiveDelegations) {
-      console.log('Got live delegation data from RPC');
-      return rpcDelegations;
+    const hasActiveDelegations = cloudDelegations.some(d => d.isActive);
+    if (cloudDelegations.length > 0 && hasActiveDelegations) {
+      console.log('Got live delegation data from CSPR.cloud');
+      return cloudDelegations;
     }
   } catch (err) {
-    console.warn('Client-side RPC query failed:', err);
+    console.warn('CSPR.cloud query failed:', err);
   }
 
-  // Fallback to API
+  // Fallback to API (has hardcoded values)
   try {
     const response = await fetch('/api/validator-delegations', {
       method: 'GET',
@@ -601,6 +580,7 @@ export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> 
     if (response.ok) {
       const data = await response.json();
       if (data.delegations && Array.isArray(data.delegations)) {
+        console.log('Using fallback API data');
         return data.delegations;
       }
     }
