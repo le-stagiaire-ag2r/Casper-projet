@@ -6,8 +6,8 @@ const RATE_PRECISION = 1000000000;
 // Fallback balance
 const FALLBACK_BALANCE = 1146030000000;
 
-// CSPR.cloud API (faster than direct RPC)
-const CSPR_CLOUD_URL = 'https://api.testnet.cspr.cloud/v1';
+// CSPR.click proxy for Cloud API (faster and more reliable)
+const CSPR_CLICK_PROXY = 'https://accounts.cspr.click/api/cloud-proxy';
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,12 +23,12 @@ module.exports = async function handler(req, res) {
   let source = 'fallback';
 
   try {
-    // Try CSPR.cloud API - query the purse balance
+    // Try CSPR.click proxy for Cloud API
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     const response = await fetch(
-      CSPR_CLOUD_URL + '/accounts/' + PURSE_HASH + '/balance',
+      CSPR_CLICK_PROXY + '/accounts/' + PURSE_HASH + '/balance',
       {
         signal: controller.signal,
         headers: { 'Accept': 'application/json' }
@@ -40,11 +40,11 @@ module.exports = async function handler(req, res) {
       const data = await response.json();
       if (data && data.data && data.data.balance) {
         totalPool = parseInt(data.data.balance, 10);
-        source = 'cspr_cloud';
+        source = 'cspr_click_proxy';
       }
     }
   } catch (e) {
-    console.log('CSPR.cloud error, using fallback:', e.message);
+    console.log('CSPR.click proxy error, using fallback:', e.message);
   }
 
   return res.status(200).json({
