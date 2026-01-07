@@ -86,31 +86,50 @@ async function readFromAPI(): Promise<ContractState> {
 
 /**
  * Read directly from Casper RPC (fallback)
+ * Queries the contract's main purse balance directly
  */
 async function readFromRPC(): Promise<ContractState> {
+  // V22 Contract purse URef
+  const PURSE_UREF = 'uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007';
+
   const stateRootHash = await getStateRootHash();
 
-  // Query contract named keys
-  const [exchangeRateValue, poolValue, supplyValue] = await Promise.all([
-    queryContractKey(stateRootHash, 'exchange_rate'),
-    queryContractKey(stateRootHash, 'total_cspr_pool'),
-    queryContractKey(stateRootHash, 'total_stcspr_supply'),
-  ]);
+  // Try to get purse balance directly
+  let totalPool = '0';
 
-  // Parse values
-  const exchangeRateRaw = parseU512(exchangeRateValue);
-  const totalPool = parseU512(poolValue);
-  const totalStcspr = parseU512(supplyValue);
+  try {
+    const balanceResult = await rpcCall('state_get_balance', {
+      state_root_hash: stateRootHash,
+      purse_uref: PURSE_UREF,
+    });
 
-  // Convert exchange rate from fixed point to float
-  const exchangeRate = Number(BigInt(exchangeRateRaw || RATE_PRECISION.toString())) / RATE_PRECISION;
+    if (balanceResult?.balance_value) {
+      totalPool = balanceResult.balance_value;
+    }
+  } catch (e) {
+    console.warn('state_get_balance failed, trying query_balance:', e);
+
+    // Try newer query_balance method
+    try {
+      const queryResult = await rpcCall('query_balance', {
+        purse_identifier: { purse_uref: PURSE_UREF },
+        state_identifier: { StateRootHash: stateRootHash },
+      });
+
+      if (queryResult?.balance) {
+        totalPool = queryResult.balance;
+      }
+    } catch (e2) {
+      console.warn('query_balance also failed:', e2);
+    }
+  }
 
   return {
-    exchangeRate: exchangeRate || 1.0,
-    totalPool: totalPool || '0',
-    totalStcspr: totalStcspr || '0',
+    exchangeRate: 1.0,
+    totalPool: totalPool,
+    totalStcspr: totalPool,
     lastUpdated: new Date(),
-    source: 'rpc',
+    source: 'rpc_direct',
   };
 }
 
