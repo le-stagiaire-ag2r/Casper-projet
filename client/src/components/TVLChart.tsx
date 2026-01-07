@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import styled from 'styled-components';
-import { csprCloudApi, isProxyAvailable, motesToCSPR } from '../services/csprCloud';
 
 const Container = styled.div<{ $isDark: boolean }>`
   background: rgba(20, 10, 30, 0.6);
@@ -141,8 +140,8 @@ interface DataPoint {
   tvl: number;
 }
 
-// Fallback TVL when API fails (Dec 2024 mainnet data)
-const FALLBACK_TVL = 6_977_000_000;
+// Fallback TVL for contract (in CSPR)
+const FALLBACK_TVL = 1082; // 550 + 532 delegated
 
 export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
@@ -151,18 +150,19 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
-  // Fetch TVL from CSPR.cloud via proxy
-  const fetchTVLFromProxy = useCallback(async () => {
-    if (!isProxyAvailable()) {
-      return null;
-    }
-
+  // Fetch contract TVL from our API
+  const fetchContractTVL = useCallback(async () => {
     try {
-      const metricsResponse = await csprCloudApi.getAuctionMetrics();
-      const totalStaked = motesToCSPR(metricsResponse.data.total_active_era_stake);
-      return totalStaked;
+      const response = await fetch('/api/contract-stats');
+      if (response.ok) {
+        const data = await response.json();
+        // totalPoolCspr is in CSPR (not motes)
+        const tvl = data.totalPoolCspr || 0;
+        return tvl;
+      }
+      return null;
     } catch (error) {
-      console.error('Failed to fetch TVL from CSPR.cloud:', error);
+      console.error('Failed to fetch contract TVL:', error);
       return null;
     }
   }, []);
@@ -172,10 +172,10 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
     const fetchTVL = async () => {
       setLoading(true);
 
-      // Try CSPR.cloud via proxy first
-      const liveTVL = await fetchTVLFromProxy();
-      if (liveTVL && liveTVL > 0) {
-        setCurrentTVL(liveTVL);
+      // Fetch from contract-stats API
+      const contractTVL = await fetchContractTVL();
+      if (contractTVL && contractTVL > 0) {
+        setCurrentTVL(contractTVL);
         setIsLive(true);
         setLoading(false);
         return;
@@ -192,7 +192,7 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
     // Refresh every 60 seconds
     const interval = setInterval(fetchTVL, 60000);
     return () => clearInterval(interval);
-  }, [fetchTVLFromProxy]);
+  }, [fetchContractTVL]);
 
   // Generate simulated historical data based on real current TVL
   useEffect(() => {
@@ -292,7 +292,10 @@ export const TVLChart: React.FC<TVLChartProps> = ({ isDark }) => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(2)}M`;
     }
-    return `${(value / 1000).toFixed(0)}K`;
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(2)}K`;
+    }
+    return `${value.toFixed(2)}`;
   };
 
   const change24h = ((currentTVL - (data[0]?.tvl || currentTVL)) / (data[0]?.tvl || currentTVL)) * 100;
