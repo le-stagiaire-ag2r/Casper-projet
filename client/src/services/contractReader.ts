@@ -476,6 +476,80 @@ export interface ValidatorDelegation {
   isActive: boolean;
 }
 
+// Contract's main purse URef (used to identify delegations)
+const CONTRACT_PURSE_UREF = 'uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007';
+const CONTRACT_PURSE_BASE = '3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2';
+
+/**
+ * Query RPC directly from browser to get delegation data
+ * This works because browsers can access the RPC (unlike Vercel serverless)
+ */
+async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<ValidatorDelegation[]> {
+  const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
+
+  try {
+    const response = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'state_get_auction_info',
+        params: []
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.result?.auction_state?.bids) {
+      console.warn('No auction bids in RPC response');
+      return [];
+    }
+
+    const bids = data.result.auction_state.bids;
+    const delegations: ValidatorDelegation[] = [];
+
+    for (const validatorPk of approvedValidators) {
+      // Find this validator in the bids
+      const validatorBid = bids.find((bid: any) =>
+        bid.public_key?.toLowerCase() === validatorPk.toLowerCase()
+      );
+
+      let delegatedAmount = '0';
+      let delegatedCspr = 0;
+      let isActive = false;
+
+      if (validatorBid?.bid?.delegators) {
+        // Look for our contract's delegation by checking bonding_purse
+        for (const delegator of validatorBid.bid.delegators) {
+          const bondingPurse = delegator.bonding_purse || '';
+
+          // Check if this delegator's bonding purse matches our contract
+          if (bondingPurse.includes(CONTRACT_PURSE_BASE)) {
+            delegatedAmount = delegator.staked_amount || '0';
+            delegatedCspr = parseInt(delegatedAmount, 10) / 1000000000;
+            isActive = true;
+            console.log(`Found delegation to ${validatorPk.slice(0,8)}...: ${delegatedCspr} CSPR`);
+            break;
+          }
+        }
+      }
+
+      delegations.push({
+        publicKey: validatorPk,
+        delegatedAmount,
+        delegatedCspr,
+        isActive,
+      });
+    }
+
+    return delegations;
+  } catch (err) {
+    console.warn('RPC query failed:', err);
+    return [];
+  }
+}
+
 /**
  * Get delegation amounts for all approved validators
  * Returns an array of validators with their delegated amounts from the contract
@@ -487,8 +561,23 @@ export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> 
     return [];
   }
 
+  // Try client-side RPC query first (most reliable from browser)
   try {
-    // Fetch from API
+    console.log('Querying delegations directly from RPC...');
+    const rpcDelegations = await queryDelegationsFromRPC(approvedValidators);
+
+    // Check if we got any active delegations
+    const hasActiveDelegations = rpcDelegations.some(d => d.isActive);
+    if (rpcDelegations.length > 0 && hasActiveDelegations) {
+      console.log('Got live delegation data from RPC');
+      return rpcDelegations;
+    }
+  } catch (err) {
+    console.warn('Client-side RPC query failed:', err);
+  }
+
+  // Fallback to API
+  try {
     const response = await fetch('/api/validator-delegations', {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
@@ -504,7 +593,7 @@ export async function getValidatorDelegations(): Promise<ValidatorDelegation[]> 
     console.warn('Could not fetch validator delegations from API:', err);
   }
 
-  // Fallback: return validators with unknown amounts
+  // Final fallback: return validators with unknown amounts
   return approvedValidators.map(pk => ({
     publicKey: pk,
     delegatedAmount: '0',
