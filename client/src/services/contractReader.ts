@@ -488,6 +488,7 @@ async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<Va
   const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
 
   try {
+    console.log('[RPC] Fetching auction info...');
     const response = await fetch(RPC_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -500,13 +501,16 @@ async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<Va
     });
 
     const data = await response.json();
+    console.log('[RPC] Response received:', data.result ? 'has result' : 'no result');
 
     if (!data.result?.auction_state?.bids) {
-      console.warn('No auction bids in RPC response');
+      console.warn('[RPC] No auction bids in response. Structure:', Object.keys(data.result || {}));
       return [];
     }
 
     const bids = data.result.auction_state.bids;
+    console.log(`[RPC] Found ${bids.length} total validator bids`);
+
     const delegations: ValidatorDelegation[] = [];
 
     for (const validatorPk of approvedValidators) {
@@ -520,8 +524,11 @@ async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<Va
       let isActive = false;
 
       if (validatorBid?.bid?.delegators) {
+        const delegators = validatorBid.bid.delegators;
+        console.log(`[RPC] Validator ${validatorPk.slice(0,8)}... has ${delegators.length} delegators`);
+
         // Look for our contract's delegation by checking bonding_purse
-        for (const delegator of validatorBid.bid.delegators) {
+        for (const delegator of delegators) {
           const bondingPurse = delegator.bonding_purse || '';
 
           // Check if this delegator's bonding purse matches our contract
@@ -529,9 +536,14 @@ async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<Va
             delegatedAmount = delegator.staked_amount || '0';
             delegatedCspr = parseInt(delegatedAmount, 10) / 1000000000;
             isActive = true;
-            console.log(`Found delegation to ${validatorPk.slice(0,8)}...: ${delegatedCspr} CSPR`);
+            console.log(`[RPC] ✓ Found our delegation to ${validatorPk.slice(0,8)}...: ${delegatedCspr} CSPR`);
             break;
           }
+        }
+
+        // Debug: show first delegator structure if we didn't find ours
+        if (!isActive && delegators.length > 0) {
+          console.log(`[RPC] Sample delegator structure:`, JSON.stringify(delegators[0]).slice(0, 200));
         }
       }
 
@@ -543,9 +555,12 @@ async function queryDelegationsFromRPC(approvedValidators: string[]): Promise<Va
       });
     }
 
+    const foundCount = delegations.filter(d => d.isActive).length;
+    console.log(`[RPC] Found ${foundCount} active delegations from contract`);
+
     return delegations;
   } catch (err) {
-    console.warn('RPC query failed:', err);
+    console.error('[RPC] Query failed:', err);
     return [];
   }
 }
