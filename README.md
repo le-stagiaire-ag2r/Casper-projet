@@ -100,6 +100,23 @@ StakeVue:               💰 ────> 🪙 stCSPR ────> 🌍 DeFi /
   <br><em>Browse and select from approved validators</em>
 </p>
 
+<p align="center">
+  <img src="docs/images/guide.png" alt="Complete Guide" width="100%"/>
+  <br><em>Master Liquid Staking - Complete educational guide</em>
+</p>
+
+<p align="center">
+  <img src="docs/images/faq.png" alt="FAQ Section" width="100%"/>
+  <br><em>Frequently Asked Questions with expandable answers</em>
+</p>
+
+### 🔗 On-Chain Proof
+
+<p align="center">
+  <img src="docs/images/contract-proof.png" alt="Contract Proof on CSPR.live" width="100%"/>
+  <br><em>Real contract data on <a href="https://testnet.cspr.live/uref/uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007">cspr.live</a> showing 1,146 CSPR TVL</em>
+</p>
+
 ---
 
 ## 🎭 Who Is This For?
