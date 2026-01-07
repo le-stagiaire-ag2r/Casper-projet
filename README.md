@@ -2,8 +2,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/🔥_Status-LIVE_ON_TESTNET-00D4FF?style=for-the-badge"/>
-  <img src="https://img.shields.io/badge/Version-22-8B5CF6?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Version-23-8B5CF6?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Security-95%2F100-22C55E?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/TVL-1.14K_CSPR-30D158?style=for-the-badge"/>
 </p>
 
 <p align="center">
@@ -312,6 +313,30 @@ cargo odra build
 cargo odra test
 ```
 
+### Project Structure
+
+```
+Casper-projet/
+├── client/                 # React frontend (Vercel deployed)
+│   ├── api/               # Vercel serverless APIs
+│   │   ├── contract-stats.js      # TVL & pool statistics
+│   │   ├── validator-delegations.js # Delegation data
+│   │   └── price.js               # CSPR price from CoinGecko
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   ├── services/      # API & blockchain services
+│   │   ├── hooks/         # Custom React hooks
+│   │   └── pages/         # Page components
+│   └── vercel.json        # Vercel configuration
+├── scripts/               # Admin helper scripts
+│   ├── add-rewards.js     # Reward distribution script
+│   └── check-stats.js     # Pool statistics checker
+├── stakevue_contract/     # Odra smart contract
+│   ├── src/lib.rs         # Main contract code
+│   └── Odra.toml          # Contract configuration
+└── archive/               # Historical versions & docs
+```
+
 ---
 
 ## 📊 Live Stats
@@ -321,9 +346,26 @@ cargo odra test
 | **Contract** | [`2d6a39...`](https://testnet.cspr.live/contract/2d6a399bca8c71bb007de1cbcd57c7d6a54dc0283376a08fe6024a33c02b0ad3) |
 | **Network** | Casper Testnet 2.0 |
 | **Framework** | Odra 2.5.0 |
-| **Validators** | 11 active |
+| **Total Value Locked** | ~1,146 CSPR |
+| **Active Delegations** | 2 validators |
+| **Validators Approved** | 11 |
 | **Tests** | 12/12 passing |
 | **Unbonding** | ~14 hours (7 eras) |
+
+### Current Delegation Distribution
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                  TVL BREAKDOWN (~1,146 CSPR)               │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  💧 Liquid (in contract)        ~64 CSPR   ████░░░░░░  5%  │
+│  🔒 Delegated to MAKE           550 CSPR   ██████████ 48%  │
+│  🔒 Delegated to Validator #4   532 CSPR   █████████░ 47%  │
+│                                                            │
+│  Total: ~1,146 CSPR earning ~10% APY on testnet           │
+└────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -371,10 +413,57 @@ Not financial advice!
 
 ---
 
+## 🆕 What's New in V23
+
+### Admin Panel Dashboard
+
+V23 introduces a comprehensive admin dashboard for managing the staking pool:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     🔐 ADMIN PANEL                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────┐│
+│  │ Add Rewards │  │  Delegate   │  │ Undelegate  │  │ Add Liq ││
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────┘│
+│                                                                 │
+│  📊 Pool Stats                                                  │
+│  ├── Total Pool: 1,146 CSPR                                    │
+│  ├── Liquid: 64 CSPR                                           │
+│  └── Delegated: 1,082 CSPR                                     │
+│                                                                 │
+│  📋 Validator Delegations                                       │
+│  ├── #1 MAKE: 550 CSPR ✅                                      │
+│  ├── #4 Validator: 532 CSPR ✅                                 │
+│  └── #2-#11: Not delegated                                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Admin Functions Explained
+
+| Function | Description |
+|----------|-------------|
+| **Add Rewards** | Distribute staking rewards to increase exchange rate |
+| **Delegate** | Send CSPR from pool to a validator (minimum 500 CSPR) |
+| **Undelegate** | Recall CSPR from validator (~14 eras unbonding) |
+| **Add Liquidity** | Return undelegated CSPR to liquid pool |
+
+### Analytics Dashboard
+
+- **Real-time TVL tracking** - Contract TVL, not network total
+- **Delegation breakdown** - See exactly which validators hold your pool's CSPR
+- **Historical charts** - TVL evolution over time
+- **CSPR.cloud integration** - Live price data and network stats
+
+---
+
 ## 📜 Version History
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **V23** | Jan 2026 | **Analytics & Admin Panel** - Live TVL tracking, delegation dashboard, multi-validator management, CSPR.cloud integration |
 | **V22** | Dec 2025 | SDK Compatibility - U512 for request_unstake, fixes Error 19 |
 | **V21** | Dec 2025 | Odra 2.5.0 framework upgrade |
 | **V20** | Dec 2025 | Pool Architecture (Wise Lending style) - fixes error 64658 |
