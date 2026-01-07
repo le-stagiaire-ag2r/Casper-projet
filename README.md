@@ -73,6 +73,35 @@ StakeVue:               💰 ────> 🪙 stCSPR ────> 🌍 DeFi /
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="docs/images/hero.png" alt="StakeVue Hero - Landing Page" width="100%"/>
+  <br><em>Landing page with real-time CSPR stats and staking interface</em>
+</p>
+
+<p align="center">
+  <img src="docs/images/dashboard.png" alt="Portfolio Dashboard" width="100%"/>
+  <br><em>Portfolio dashboard showing your staked assets and rewards</em>
+</p>
+
+<p align="center">
+  <img src="docs/images/stake.png" alt="Stake Form" width="100%"/>
+  <br><em>Stake form with validator selection and transaction history</em>
+</p>
+
+<p align="center">
+  <img src="docs/images/calculator.png" alt="Rewards Calculator" width="100%"/>
+  <br><em>Interactive rewards calculator to simulate your earnings</em>
+</p>
+
+<p align="center">
+  <img src="docs/images/validators.png" alt="Validators List" width="100%"/>
+  <br><em>Browse and select from approved validators</em>
+</p>
+
+---
+
 ## 🎭 Who Is This For?
 
 ### 🦈 **The DeFi Shark**
