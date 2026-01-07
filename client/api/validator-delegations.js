@@ -123,9 +123,10 @@ module.exports = async function handler(req, res) {
   // If no delegations found via auction_info, return with known delegation
   // This is a fallback based on confirmed on-chain data
   if (totalDelegated === 0) {
-    // We know from cspr.live that 550 CSPR is delegated to MAKE
+    // Known delegations from cspr.live
     const knownDelegations = {
-      "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca": 550000000000 // 550 CSPR
+      "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca": 550000000000, // 550 CSPR to MAKE
+      "017d96b9a63abcb61c870a4f55187a0a7ac24096bdb5fc585c12a686a4d892009e": 532000000000  // 532 CSPR to Validator #2
     };
 
     delegations = APPROVED_VALIDATORS.map(pk => {
