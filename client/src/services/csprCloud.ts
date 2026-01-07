@@ -229,6 +229,15 @@ export const csprCloudApi = {
   },
 
   /**
+   * Get validator delegators
+   */
+  async getValidatorDelegators(validatorPublicKey: string, limit: number = 100): Promise<PaginatedResponse<CsprCloudDelegation>> {
+    return proxyFetch<PaginatedResponse<CsprCloudDelegation>>(
+      `/validators/${validatorPublicKey}/delegators?limit=${limit}`
+    );
+  },
+
+  /**
    * Get account delegation rewards
    */
   async getAccountDelegationRewards(
