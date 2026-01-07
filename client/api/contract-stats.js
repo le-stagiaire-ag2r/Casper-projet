@@ -1,13 +1,11 @@
 // V22 Contract main purse URef
 const CONTRACT_PURSE_UREF = 'uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007';
-const PURSE_HASH = '3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2';
 // Rate precision (9 decimals)
 const RATE_PRECISION = 1000000000;
 // Fallback balance
 const FALLBACK_BALANCE = 1146030000000;
-
-// CSPR.click proxy for Cloud API (faster and more reliable)
-const CSPR_CLICK_PROXY = 'https://accounts.cspr.click/api/cloud-proxy';
+// Casper RPC
+const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,28 +21,56 @@ module.exports = async function handler(req, res) {
   let source = 'fallback';
 
   try {
-    // Try CSPR.click proxy for Cloud API
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    // Step 1: Get state root hash (with 15s timeout)
+    const controller1 = new AbortController();
+    const timeout1 = setTimeout(() => controller1.abort(), 15000);
 
-    const response = await fetch(
-      CSPR_CLICK_PROXY + '/accounts/' + PURSE_HASH + '/balance',
-      {
-        signal: controller.signal,
-        headers: { 'Accept': 'application/json' }
-      }
-    );
-    clearTimeout(timeoutId);
+    const stateResp = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'chain_get_state_root_hash',
+        params: {}
+      }),
+      signal: controller1.signal
+    });
+    clearTimeout(timeout1);
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.data && data.data.balance) {
-        totalPool = parseInt(data.data.balance, 10);
-        source = 'cspr_click_proxy';
+    const stateData = await stateResp.json();
+    const stateRootHash = stateData && stateData.result && stateData.result.state_root_hash;
+
+    if (stateRootHash) {
+      // Step 2: Query purse balance (with 15s timeout)
+      const controller2 = new AbortController();
+      const timeout2 = setTimeout(() => controller2.abort(), 15000);
+
+      const balResp = await fetch(RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'query_balance',
+          params: {
+            purse_identifier: { purse_uref: CONTRACT_PURSE_UREF },
+            state_identifier: { StateRootHash: stateRootHash }
+          }
+        }),
+        signal: controller2.signal
+      });
+      clearTimeout(timeout2);
+
+      const balData = await balResp.json();
+
+      if (balData && balData.result && balData.result.balance) {
+        totalPool = parseInt(balData.result.balance, 10);
+        source = 'live_rpc';
       }
     }
   } catch (e) {
-    console.log('CSPR.click proxy error, using fallback:', e.message);
+    console.log('RPC error, using fallback:', e.message);
   }
 
   return res.status(200).json({
