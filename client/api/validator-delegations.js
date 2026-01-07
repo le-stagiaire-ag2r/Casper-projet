@@ -125,8 +125,8 @@ module.exports = async function handler(req, res) {
   if (totalDelegated === 0) {
     // Known delegations from cspr.live
     const knownDelegations = {
-      "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca": 550000000000, // 550 CSPR to MAKE
-      "017d96b9a63abcb61c870a4f55187a0a7ac24096bdb5fc585c12a686a4d892009e": 532000000000  // 532 CSPR to Validator #2
+      "0106ca7c39cd272dbf21a86eeb3b36b7c26e2e9b94af64292419f7862936bca2ca": 550000000000, // 550 CSPR to MAKE (Validator #1)
+      "012d58e05b2057a84115709e0a6ccf000c6a83b4e8dfa389a680c1ab001864f1f2": 532000000000  // 532 CSPR to Validator #4
     };
 
     delegations = APPROVED_VALIDATORS.map(pk => {
