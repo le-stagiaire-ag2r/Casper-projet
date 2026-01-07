@@ -5,31 +5,8 @@ const RATE_PRECISION = 1000000000;
 // Fallback balance
 const FALLBACK_BALANCE = 1146030000000;
 
-// Multiple RPC endpoints to try
-const RPC_ENDPOINTS = [
-  'https://rpc.testnet.casperlabs.io/rpc',
-  'https://node.testnet.cspr.cloud/rpc',
-  'https://casper-testnet.make.services/rpc'
-];
-
-async function tryRpcCall(url, body, timeout) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    return await resp.json();
-  } catch (e) {
-    clearTimeout(timeoutId);
-    throw e;
-  }
-}
+// RPC endpoint
+const RPC_URL = 'https://rpc.testnet.casperlabs.io/rpc';
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -43,43 +20,61 @@ module.exports = async function handler(req, res) {
 
   let totalPool = FALLBACK_BALANCE;
   let source = 'fallback';
-  let usedRpc = null;
+  let debug = {};
 
-  // Try each RPC endpoint
-  for (const rpcUrl of RPC_ENDPOINTS) {
-    try {
-      // Step 1: Get state root hash
-      const stateData = await tryRpcCall(rpcUrl, {
+  try {
+    // Step 1: Get state root hash
+    const stateResp = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         jsonrpc: '2.0',
         id: 1,
         method: 'chain_get_state_root_hash',
         params: {}
-      }, 8000);
+      })
+    });
 
-      const stateRootHash = stateData && stateData.result && stateData.result.state_root_hash;
-      if (!stateRootHash) continue;
+    const stateData = await stateResp.json();
+    debug.stateResponse = stateData;
 
-      // Step 2: Query purse balance
-      const balData = await tryRpcCall(rpcUrl, {
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'query_balance',
-        params: {
-          purse_identifier: { purse_uref: CONTRACT_PURSE_UREF },
-          state_identifier: { StateRootHash: stateRootHash }
-        }
-      }, 8000);
+    const stateRootHash = stateData && stateData.result && stateData.result.state_root_hash;
 
-      if (balData && balData.result && balData.result.balance) {
+    if (stateRootHash) {
+      debug.stateRootHash = stateRootHash;
+
+      // Step 2: Try state_get_balance (legacy method)
+      const balResp = await fetch(RPC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'state_get_balance',
+          params: {
+            state_root_hash: stateRootHash,
+            purse_uref: CONTRACT_PURSE_UREF
+          }
+        })
+      });
+
+      const balData = await balResp.json();
+      debug.balanceResponse = balData;
+
+      // Check for balance_value (legacy response format)
+      if (balData && balData.result && balData.result.balance_value) {
+        totalPool = parseInt(balData.result.balance_value, 10);
+        source = 'live_rpc_legacy';
+      }
+      // Check for balance (newer response format)
+      else if (balData && balData.result && balData.result.balance) {
         totalPool = parseInt(balData.result.balance, 10);
         source = 'live_rpc';
-        usedRpc = rpcUrl;
-        break; // Success, stop trying
       }
-    } catch (e) {
-      console.log('RPC failed:', rpcUrl, e.message);
-      continue; // Try next RPC
     }
+  } catch (e) {
+    debug.error = e.message;
+    console.log('RPC error:', e.message);
   }
 
   return res.status(200).json({
@@ -91,7 +86,7 @@ module.exports = async function handler(req, res) {
     totalStcsprFormatted: totalPool / RATE_PRECISION,
     timestamp: new Date().toISOString(),
     source: source,
-    rpcUsed: usedRpc,
-    purseUref: CONTRACT_PURSE_UREF
+    purseUref: CONTRACT_PURSE_UREF,
+    debug: debug
   });
 };
