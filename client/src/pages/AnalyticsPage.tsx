@@ -137,29 +137,54 @@ interface AnalyticsPageProps {
 
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ isDark = true }) => {
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 });
-      gsap.fromTo('.hero-subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.2 });
+    let ctx: gsap.Context | null = null;
 
-      gsap.utils.toArray('.animate-on-scroll').forEach((el: any) => {
-        gsap.fromTo(
-          el,
-          { opacity: 0, y: 50 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 85%',
-            },
-          }
-        );
+    try {
+      ctx = gsap.context(() => {
+        // Simple fade-in animations (works on all browsers)
+        gsap.fromTo('.hero-title', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8 });
+        gsap.fromTo('.hero-subtitle', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.2 });
+
+        // ScrollTrigger animations with safety check
+        const elements = document.querySelectorAll('.animate-on-scroll');
+        if (elements && elements.length > 0) {
+          elements.forEach((el) => {
+            gsap.fromTo(
+              el,
+              { opacity: 0, y: 50 },
+              {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                ease: 'power3.out',
+                scrollTrigger: {
+                  trigger: el,
+                  start: 'top 85%',
+                },
+              }
+            );
+          });
+        }
       });
-    });
+    } catch (error) {
+      // Fallback: just show elements without animation on unsupported browsers
+      console.warn('GSAP animation failed, showing content without animation:', error);
+      document.querySelectorAll('.hero-title, .hero-subtitle, .animate-on-scroll').forEach((el) => {
+        (el as HTMLElement).style.opacity = '1';
+      });
+    }
 
-    return () => ctx.revert();
+    return () => {
+      if (ctx) {
+        try {
+          ctx.revert();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+      // Kill all ScrollTriggers to prevent memory leaks
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
   }, []);
 
   return (
