@@ -350,9 +350,31 @@ export const ExchangeRateChart: React.FC<ExchangeRateChartProps> = ({ isDark }) 
     const numLabels = Math.min(5, chartData.length);
     const labels = [];
 
+    // Safety check for division by zero
+    if (numLabels <= 1 || chartData.length <= 1) {
+      // Single data point - show one label
+      if (chartData.length > 0 && chartData[0]?.timestamp) {
+        const date = chartData[0].timestamp;
+        let label: string;
+        if (timeRange === '24h') {
+          label = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        } else if (timeRange === '7d') {
+          label = date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+        } else {
+          label = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        }
+        labels.push({ label, x: padding.left + chartWidth / 2, y: padding.top + chartHeight + 20 });
+      }
+      return labels;
+    }
+
     for (let i = 0; i < numLabels; i++) {
       const dataIndex = Math.floor((i / (numLabels - 1)) * (chartData.length - 1));
       const x = padding.left + (dataIndex / (chartData.length - 1)) * chartWidth;
+
+      // Safety check for undefined data
+      if (!chartData[dataIndex]?.timestamp) continue;
+
       const date = chartData[dataIndex].timestamp;
 
       let label: string;
