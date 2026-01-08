@@ -5,7 +5,7 @@ import { colors, typography, effects, layout } from '../styles/designTokens';
 
 const Nav = styled.nav`
   position: relative;
-  z-index: auto;
+  z-index: 1000;
   background: ${colors.background.primary};
   border-bottom: 1px solid ${colors.border.default};
 `;
@@ -180,8 +180,10 @@ const MobileMenu = styled.div<{ $isOpen: boolean }>`
   top: 100%;
   left: 0;
   right: 0;
+  z-index: 9999;
   background: rgba(10, 5, 20, 0.98);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   flex-direction: column;
   padding: 16px 0;
   border-bottom: 1px solid ${colors.border.default};
