@@ -117,7 +117,7 @@ StakeVue:               💰 ────> 🪙 stCSPR ────> 🌍 DeFi /
   <br><em>Real contract data on <a href="https://testnet.cspr.live/uref/uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007">cspr.live</a> showing 1,146 CSPR TVL</em>
 </p>
 
-### 🔐 Admin Operations Proof
+### 🔐 Admin Operations Proof password ; stakevue2024
 
 <p align="center">
   <img src="docs/images/admin-proofs.png" alt="Admin Operations Proof" width="100%"/>
