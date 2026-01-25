@@ -117,6 +117,20 @@ StakeVue:               💰 ────> 🪙 stCSPR ────> 🌍 DeFi /
   <br><em>Real contract data on <a href="https://testnet.cspr.live/uref/uref-3e8ff29a521e5902bcfc106c2e1fe94aa29fa8a6246ed1fe375d350f5d34f6e2-007">cspr.live</a> showing 1,146 CSPR TVL</em>
 </p>
 
+### 🔐 Admin Operations Proof
+
+<p align="center">
+  <img src="docs/images/admin-proofs.png" alt="Admin Operations Proof" width="100%"/>
+  <br><em>Verified admin operations on Casper Testnet 2.0</em>
+</p>
+
+<p align="center">
+  <a href="https://testnet.cspr.live/deploy/8a8bdc17b37e54fa9ebc80911d89805bacc4e0447bc51e8eff0c63c09a74d1af">🔗 Claim Transaction</a> •
+  <a href="https://testnet.cspr.live/deploy/7c8fbf09003e3b5993867435efe0208882ffe4958772cf9f642deca7ac66b402">🔗 Admin Delegate</a> •
+  <a href="https://testnet.cspr.live/deploy/b146e82cb373ed6c5354c16ad2649428ec970fc332bed7e58d41fea06671dcbe">🔗 Admin Undelegate</a> •
+  <a href="https://testnet.cspr.live/deploy/e2779ff03b264cdeba7f748e79fdda1b695ca2f0b09215a82d57108b2c72b422">🔗 Admin Add Liquidity</a>
+</p>
+
 ---
 
 ## 🎭 Who Is This For?
